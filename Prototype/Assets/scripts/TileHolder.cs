@@ -5,9 +5,11 @@ public class TileHolder : MonoBehaviour {
 
 	public SpriteRenderer rend;
 //	public bool occupied = false;  //already holding a tile
-	public Tile occupingTile;
+	public Tile occupyingTile;
 	Color originalColor;
 	public Color highlightedColor;
+	public Model model;
+	public int spotNumber;
 
 	public bool preSet;
 
@@ -40,39 +42,30 @@ public class TileHolder : MonoBehaviour {
 		}
 	
 	}
+
+	void OnMouseDown()
+	{
+		if (model.selectedTile != null && !preSet && occupyingTile == null ) 
+		{
+			model.StartMove( this );
+		}
+
+		UpdateSubmitButton ();
+	}
 	
 
 	public void SetOccupied( Tile tile )
 	{
-		occupingTile = tile;
+		occupyingTile = tile;
 	}
 
-	public void SwapTiles( Tile newTile )
+	void UpdateSubmitButton()
 	{
-		//if newTile is coming from an occupied holder
-		if (newTile.previouslyOccupiedHolder != null) 
-		{
-			Debug.Log ("swapped with previously occupied ");
-			occupingTile.targetHolderScript = newTile.previouslyOccupiedHolder;
-			occupingTile.targetHolderScript.occupingTile = occupingTile;
-			occupingTile.transform.position = occupingTile.targetHolderScript.transform.position;
-			newTile.previouslyOccupiedHolder = null;
-		}
-		else
-		{
-			Debug.Log ("just swapped ");
-			occupingTile.transform.position = newTile.lastHeldPosition;
-		}
-
-
-		//snap new tile this holder position
-		newTile.transform.position = transform.position;
-
-		//set new holder occupation
-		occupingTile = newTile;
-
-		Highlight (false);
+		bool submissionReady = model.ReadyForSubmission();
+		model.controller.ActivateSubmissionButton( submissionReady );
 	}
+
+
 
 
 

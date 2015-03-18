@@ -67,9 +67,24 @@ public class View : MonoBehaviour {
 
 	}
 
+	public void StageNewProblem(List<Tile> tilesToPositionInHolders, List<TileHolder> occupiedHolders )
+	{
+		//set all holders to open
+		//set all staging areas to open
+
+		//place preset tiles in their preset holders
+	}
+
+	public void PresetTilesWithHolders( List<Tile> tilesToPositionInHolders, List<TileHolder> occupiedHolders)
+	{
+
+	}
+
 	public List<StagingArea> CreateBoard( int tileCount )
 	{
 		List<StagingArea> stagingAreas = new List<StagingArea>();
+		List<TileHolder> holders = new List<TileHolder> ();
+		List<Tile> tiles = new List<Tile> ();
 
 		//calculate positions for tile holders
 		List <Vector3> tilePositions = GetTileHolderPositions (tileCount);
@@ -82,17 +97,27 @@ public class View : MonoBehaviour {
 			//create tile holders and place centered on board, spaced evenly
 			GameObject holder = ( GameObject ) Instantiate( tileHolder, tilePosition, Quaternion.identity );
 			holder.transform.parent = transform;
+			TileHolder holderScript =  holder.GetComponent<TileHolder>();
+			holderScript.model = model;
+			holderScript.spotNumber = tileIndex + 1;
+			holders.Add( holderScript );
 
 			//create a tile with a unique color and color name
 			//place tiles above holders
-			tilePosition += new Vector3 ( 0, tileHolderWidth + tileHolderSpace, 0 );
-			GameObject tile = ( GameObject ) Instantiate( coloredTile, tilePosition, Quaternion.identity );
+			Vector3 stagingPosition = tilePosition + new Vector3 ( 0, tileHolderWidth + tileHolderSpace, 0 );
+			StagingArea stagingArea = new StagingArea( stagingPosition, true );
+			GameObject tile = ( GameObject ) Instantiate( coloredTile, stagingPosition, Quaternion.identity );
 			tile.name = colorNames[ tileIndex ];
-			tile.renderer.material.color = tileColors[ tileIndex ];
+			tile.GetComponent<Renderer>().material.color = tileColors[ tileIndex ];
+			Tile tileScript = tile.GetComponent<Tile>();
+			tileScript.SetCurrentStaging( stagingArea );
 			tile.transform.parent = transform;
-			StagingArea stagingArea = new StagingArea( tilePosition, true );
+
+			tiles.Add (tileScript);
 			stagingAreas.Add ( stagingArea );
 		}
+		model.SetHolders (holders);
+		model.SetTilesToOrder (tiles);
 		return stagingAreas;
 	}
 
@@ -109,9 +134,11 @@ public class View : MonoBehaviour {
 		{
 			Vector3 tilePosition = startPosition + new Vector3( tile * ( tileHolderWidth + tileHolderSpace ), 0, 0 );
 			tilePositions.Add ( tilePosition );
-//			Debug.Log ( tilePosition);
+
 		}
 
 		return tilePositions;
 	}
+
+
 }
