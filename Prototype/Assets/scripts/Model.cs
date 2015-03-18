@@ -23,7 +23,7 @@ public class Model : MonoBehaviour {
 
 	// Use this for initialization
 	void Awake () {
-		currentLevel = 1; 
+		currentLevel = 0; 
 		currentTotalTileCount = 4;
 	}
 	

@@ -53,7 +53,6 @@ public class Logic : MonoBehaviour {
 
 		int totalRules = maxAbsPosRules + maxRelativePosRules + maxAdjacencyRules + maxConditionals;
 		Debug.Log ("total rules : " + totalRules);
-
 		for( int abs = 0; abs < maxAbsPosRules; abs ++ )
 		{
 			//create absolute position rule
@@ -64,8 +63,13 @@ public class Logic : MonoBehaviour {
 			
 			Rule absPositionRule = new AbsolutePositionRule( 0, absPosTile, absPosTile2, absPosHolder ); 
 			rules += "\n" + absPositionRule.ConstructVerbal();
-			
 			trialRules.Add (absPositionRule);
+
+			//testing possible submissions
+			List<Tile> emptyTileList = new List<Tile>();
+			absPositionRule.GetAllPossibleSubmissions( emptyTileList, tiles );
+
+
 		}
 
 		for( int relatives = 0; relatives < maxRelativePosRules; relatives ++ )
@@ -91,27 +95,32 @@ public class Logic : MonoBehaviour {
 			//get impossible order
 //		}
 	}
-
-	bool IsRuleStackPossible( List<Rule> rules )
-	{
-
-		//for each possible submission in first rule
-		foreach( KeyValuePair<string, List<Tile>> pair in rules[ 0 ].correctSubmissions )
-		{ 
-			//for each other rule
-			for(int rule = 1; rule < rules.Count; rule ++ )
-				//if a possible submission is not possible in another rule
-			{
-				if( !rules[ rule ].correctSubmissions.ContainsKey( pair.Key ))
-				{
-					break;
-				}
-			}
-			return true;
-		}
-		return false;
-
-	}
+//
+//	bool IsRuleStackPossible( List<Rule> rules )
+//	{
+//
+//		//for each possible submission in first rule
+//		foreach( KeyValuePair<string, List<Tile>> pair in rules[ 0 ].correctSubmissions )
+//		{ 
+//			//for each other rule
+//			for(int rule = 1; rule < rules.Count; rule ++ )
+//				//if a possible submission is not possible in another rule
+//				
+//				foreach( KeyValuePair<string, List<Tile>> pair2 in rules[ rule ].correctSubmissions )
+//
+//				{
+//					if(SubmissionKeyNameMatch( pair.Key, pair2.Key ))
+//					{
+//						break;
+//					}
+//			}
+//			return true;
+//			}
+//				
+//		}
+//		return false;
+//
+//	}
 
 	bool SubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
 	{
@@ -164,6 +173,7 @@ public class Logic : MonoBehaviour {
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
+		Debug.Log (currentLevel);
 		ResetStats ();
 		if (currentLevel == 0) 
 		{
