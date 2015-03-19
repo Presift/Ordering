@@ -11,8 +11,8 @@ public class Rule
 	public TileHolder holder;
 	public string verbal;
 	public int difficulty;
-	public List<List<Tile>> incorrectSubmission = new List<List<Tile>> ();
-	public List<List<Tile>> correctSubmissions = new List<List<Tile>> ();
+	public Dictionary<string, List<Tile>> correctSubmissions = new Dictionary<string, List<Tile>>();
+	public Dictionary<string, List<Tile>> incorrectSubmissions = new Dictionary<string, List<Tile>>();
 
 
 
@@ -59,6 +59,80 @@ public class Rule
 		return false;
 	}
 
+	public string GetKeyWithNoMatchesToKey( string testKey, Dictionary<string, List<Tile>> dict )
+	{
+//		int fewestMatches = testKey.Length;
+//		string differentKey = testKey;
+
+		foreach( KeyValuePair<string, List<Tile>> pair in dict )
+		{
+			for( int charIndex = 0; charIndex < testKey.Length; charIndex ++ )
+			{
+				if( testKey[ charIndex ] == pair.Key[ charIndex ] )
+				{
+					break;
+				}
+			}
+			Debug.Log ("found a key with no matches ");
+			return pair.Key;
+		}
+
+		Debug.Log ("not key found with 0 matches ");
+		return testKey;
+	}
+
+	public bool WildCardKeyInDictionary( string testKey, Dictionary<string, List<Tile>> dict )
+	{
+		bool keyFoundInDict = false;
+		
+		//if test key match not found in possible trial rule submissions
+		foreach( KeyValuePair<string, List<Tile>> pair in dict )
+		{ 
+			if( WildCardSubmissionKeyNameMatch( pair.Key, testKey ))
+			{
+				keyFoundInDict = true;
+				break;
+			}
+		}
+
+		return keyFoundInDict;
+	}
+
+	bool WildCardSubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
+	{
+		List<char> usedChars = new List<char> ();
+		for( int charIndex = 0; charIndex < key1.Length; charIndex ++ )
+		{
+			if( key1[ charIndex ] == key2[ charIndex ] )
+			{
+				continue;
+			}
+			//else if one char is n
+			else if( key1[charIndex] == 'n' )
+			{
+				if( usedChars.Contains( key2[charIndex] ))
+				{
+					return false;
+				}
+				usedChars.Add ( key2[charIndex] );
+			}
+			else if(key2[charIndex] == 'n' )
+			{
+				if( usedChars.Contains( key1[charIndex] ))
+				{
+					return false;
+				}
+				usedChars.Add ( key1[charIndex] );
+			}
+			else
+			{
+				return false;
+			}
+		}
+		
+		return true;
+	}
+
 	public void GetAllPossibleSubmissions( List<Tile> tilesInOrder, List<Tile> tilesInBank )  //called first with empty tilesToOrder and full List
 	{
 
@@ -95,13 +169,18 @@ public class Rule
 
 	public virtual void TriagePossibleSubmission( List<Tile> possibleSubmission )
 	{
+		string keyName = "";
+		for( int i = 0; i < possibleSubmission.Count; i ++ )
+		{
+			keyName += possibleSubmission[ i ].name[ 0 ];
+		}
 		if( SubmissionFollowsRule( possibleSubmission ))
 	   	{
-			correctSubmissions.Add ( possibleSubmission );
+			correctSubmissions.Add ( keyName, possibleSubmission );
 		}
 		else 
 		{
-			incorrectSubmission.Add (possibleSubmission );
+			incorrectSubmissions.Add ( keyName, possibleSubmission );
 		}
 	}
 	
@@ -401,57 +480,131 @@ public class AbsolutePositionRule : Rule
 
 public class RuleStack: Rule
 {
-	List<Rule> ruleStack;
-
-	public RuleStack( List<Rule> newRules )
+	public List<Rule> ruleStack;
+	public Dictionary<string, List<Tile>> consolidatedCorrectSubmissions;
+	public Dictionary<string, List<Tile>> sharedImpossibleSubmissions;
+	
+	
+	public RuleStack()
 	{
-		ruleStack = newRules;
+		ruleStack = new List<Rule> ();
+		consolidatedCorrectSubmissions = new Dictionary<string, List<Tile>> ();
 	}
 
 	public RuleStack( Rule newRule )
 	{
 		ruleStack = new List<Rule> ();
+
 		this.AddRule (newRule);
+		Debug.Log ("rule added ");
 	}
 
 	public void AddRule( Rule newRule )
 	{
+		if (ruleStack.Count == 0) 
+		{
+			consolidatedCorrectSubmissions = newRule.correctSubmissions;
+			sharedImpossibleSubmissions = newRule.incorrectSubmissions;
+		}
+		else
+		{
+			RemoveCorrectSubmissionsNotShared( newRule );
+			RemoveIncorrectSubmissionsNotShared( newRule );
+		}
 		ruleStack.Add (newRule);
 	}
 
-	public bool RuleConflictsWithRuleStack( Rule newRule )
+	public bool RuleInStack( Rule newRule )
 	{
 		if( ruleStack.Count == 0 )
 		{
+			return false;
+		}
+		else
+		{
+			for( int i = 0; i < ruleStack.Count; i ++ )
+			{
+				if( ruleStack[i] == newRule )
+				{
+					return true; 
+				}
+			}
+			return false;
+		}
+	}
+
+	public void RemoveCorrectSubmissionsNotShared( Rule newRule )
+	{
+		foreach( KeyValuePair<string, List<Tile>> pair in newRule.correctSubmissions )
+		{ 
+			string submission1 = pair.Key;
+			if( !consolidatedCorrectSubmissions.ContainsKey( submission1))
+			{
+				consolidatedCorrectSubmissions.Remove( submission1 );
+			}
+		}
+	}
+
+	public void RemoveIncorrectSubmissionsNotShared( Rule newRule )
+	{
+		foreach( KeyValuePair<string, List<Tile>> pair in newRule.incorrectSubmissions )
+		{ 
+			string submission1 = pair.Key;
+			if( !sharedImpossibleSubmissions.ContainsKey( submission1))
+			{
+				sharedImpossibleSubmissions.Remove( submission1 );
+			}
+		}
+	}
+
+	public bool SharesImpossibleRules( Rule newRule )
+	{
+		if(ruleStack.Count == 0 )
+		{
 			return true;
 		}
-
-		int agreementPoints = 0;
-
-		for( int correctSubmission = 0; correctSubmission < newRule.correctSubmissions.Count; correctSubmission ++ )
+		else
 		{
-			List<Tile> submission1 = newRule.correctSubmissions[ correctSubmission ];
-
-			for( int rule = 0; rule < ruleStack.Count; rule ++ )
-			{
-				Rule ruleFromStack = ruleStack[ rule ];
-
-				if( ruleFromStack.correctSubmissions.Contains ( submission1 ))
-				{
-					agreementPoints ++;
-				}
-				else
-				{
-					break;
-				}
-
-				if( agreementPoints == ruleStack.Count )
+			foreach( KeyValuePair<string, List<Tile>> pair in newRule.incorrectSubmissions )
+			{ 
+				string submission1 = pair.Key;
+				
+				if( sharedImpossibleSubmissions.ContainsKey( submission1))
 				{
 					return true;
 				}
 			}
+			return false;
 		}
-		return false;
+	}
+	public bool RuleConflictsWithRuleStack( Rule newRule )
+	{
+		if( ruleStack.Count == 0 )
+		{
+			return false;
+		}
+
+
+		foreach( KeyValuePair<string, List<Tile>> pair in newRule.correctSubmissions )
+		{ 
+			string submission1 = pair.Key;
+
+			if( consolidatedCorrectSubmissions.ContainsKey( submission1))
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public override string ConstructVerbal() // 0 is in a spot, 1 is NOT in a spot
+	{
+		verbal = "";
+		for(int i = 0; i < ruleStack.Count; i ++ )
+		{
+			verbal += ruleStack[ i ].verbal + "\n";
+		}
+		return verbal;
 	}
 }
 

@@ -69,15 +69,28 @@ public class View : MonoBehaviour {
 
 	public void StageNewProblem(List<Tile> tilesToPositionInHolders, List<TileHolder> occupiedHolders )
 	{
-		//set all holders to open
-		//set all staging areas to open
 
-		//place preset tiles in their preset holders
 	}
 
-	public void PresetTilesWithHolders( List<Tile> tilesToPositionInHolders, List<TileHolder> occupiedHolders)
+	public void PresetTilesWithHolders( string presets, List<Tile> tilesToOrder, List<TileHolder> holders )
 	{
-
+		for( int i = 0; i < presets.Length; i ++ )
+		{
+			//if preset is a tile to be placed
+			if(presets[ i ] != 'n' )
+			{
+				for(int tile = 0; tile < tilesToOrder.Count; tile ++ )
+				{
+					if( tilesToOrder[ tile ].name[ 0 ] == presets[ i ] )
+					{
+						Tile tileScript = tilesToOrder[ tile ].GetComponent<Tile>();
+						tileScript.StartMove( holders[i]);
+						holders[ i ].preSet = true;
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	public List<StagingArea> CreateBoard( int tileCount )
@@ -119,6 +132,21 @@ public class View : MonoBehaviour {
 		model.SetHolders (holders);
 		model.SetTilesToOrder (tiles);
 		return stagingAreas;
+	}
+
+	public void WipePreviousProblem( List<Tile> tiles, List<TileHolder> tileHolders, List<StagingArea> stagingAreas )
+	{
+		//set all holders to open
+		//set all staging areas to open
+		for( int i = 0; i < tiles.Count; i ++ )
+		{
+			tileHolders[i].occupyingTile = null;
+			tileHolders[i].preSet = false;
+			tiles[i].currentHolder = null;
+			tiles[i].targetHolder = null;
+			tiles[i].currentStaging = null;
+			stagingAreas[i].occupied = false;
+		}
 	}
 
 	List<Vector3> GetTileHolderPositions( int tileCount)

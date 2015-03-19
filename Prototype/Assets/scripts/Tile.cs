@@ -53,7 +53,7 @@ public class Tile : MonoBehaviour {
 	}
 
 
-	public void StartMove( TileHolder newTile )
+	public void StartMove( TileHolder newHolder )
 	{
 		//if currently in holder tile
 		if( currentHolder != null )
@@ -70,11 +70,11 @@ public class Tile : MonoBehaviour {
 		}
 
 		//if new holder is not staging area
-		if (newTile != null) 
+		if (newHolder != null) 
 		{
-			transform.position = newTile.transform.position;
-			newTile.SetOccupied( this );
-			currentHolder = newTile;
+			transform.position = newHolder.transform.position;
+			newHolder.SetOccupied( this );
+			currentHolder = newHolder;
 		}
 		else
 		{

@@ -36,19 +36,39 @@ public class Controller : MonoBehaviour {
 		submitButton.interactable = activate;
 	}
 
-	public void CheckAnswer()
+	public void CheckSubmission()
 	{
-		bool answer = true;
-		List<Tile> submission = model.OrderedTiles ();
-		for (int i = 0; i < logic.trialRules.Count; i ++) 
+		if(model.impossible)
 		{
-			if( !logic.trialRules[ i ].SubmissionFollowsRule( submission ))
+			RespondToAnswer( false );
+		}
+		else
+		{
+			List<Tile> submission = model.OrderedTiles ();
+			
+			if( logic.trialRules.consolidatedCorrectSubmissions.ContainsValue( submission ))
 			{
-				answer =  false;
+				RespondToAnswer( true );
+			}
+			else
+			{
+				RespondToAnswer (false);
 			}
 		}
-		Debug.Log ("called ");
-		RespondToAnswer (answer);
+	
+
+	}
+
+	public void CheckImpossible()
+	{
+		if(model.impossible )
+		{
+			RespondToAnswer( true );
+		}
+		else
+		{
+			RespondToAnswer( false );
+		}
 	}
 
 	public void RespondToAnswer( bool correctAnswer )
@@ -101,10 +121,16 @@ public class Controller : MonoBehaviour {
 	
 	public void NewProblem()
 	{
-		Debug.Log ("creating new problem");
-		//determine logic for new problem
+		view.WipePreviousProblem (model.tilesToOrder, model.holders, model.stagingAreas);
 
-		//set board for new problem
+		Debug.Log ("creating new problem");
+		//determine logic for new problem and set board for new problem
+		string presetBoard = logic.NewProblemSetUp (model.OrderedTiles());
+
+		view.PresetTilesWithHolders (presetBoard, model.tilesToOrder, model.holders);
+
+		bool submissionReady = model.ReadyForSubmission();
+		ActivateSubmissionButton( submissionReady );
 	}
 
 	public void DestroyChildren( Transform parent )

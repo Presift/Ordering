@@ -18,6 +18,7 @@ public class Model : MonoBehaviour {
 	public Controller controller;
 
 	public Tile selectedTile;
+	public bool impossible;
 
 
 
@@ -30,6 +31,11 @@ public class Model : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
+	}
+
+	public void SetImpossible( bool notPossible )
+	{
+		impossible = notPossible;
 	}
 
 	public void SetStagingState( StagingArea area, bool occupied )
