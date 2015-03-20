@@ -59,6 +59,8 @@ public class Logic : MonoBehaviour {
 		for( int conditional = 0; conditional < maxConditionals; conditional ++ )
 		{
 			Conditional newConditional = CreateConditionalRule( holders, tiles );
+			Debug.Log ( newConditional.ConstructVerbal());
+			Debug.Log (newConditional.verbal );
 			if( !trialRules.RuleConflictsWithRuleStack( newConditional ))
 			{
 				trialRules.AddRule( newConditional );
@@ -408,7 +410,7 @@ public class Logic : MonoBehaviour {
 		if (currentLevel == 0) 
 		{
 //			maxRuleDifficulty = 8;
-			maxConditionals = 1;
+//			maxConditionals = 1;
 			maxAbsPosRules = 1;
 //			chanceOfImpossible = 100;
 //			maxImpossiblePerTrial = 1;

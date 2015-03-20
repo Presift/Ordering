@@ -247,12 +247,12 @@ public class AdjacencyRule : Rule
 
 		if( ruleType == 0 )
 		{
-			verbal =  tile1.name + " is adjacent to " + tile2.name + ".";
+			verbal =  tile1.name + " is next to " + tile2.name + ".";
 			return verbal;
 		}
 		else
 		{
-			verbal =  tile1.name + " is NOT adjacent to " + tile2.name + ".";
+			verbal =  tile1.name + " is NOT next to " + tile2.name + ".";
 			return verbal;
 		}
 	}
@@ -513,8 +513,9 @@ public class Conditional: Rule
 
 	public bool IsValidRule()
 	{
-		if( correctSubmissions.Count > 0 )
+		if( correctSubmissions.Count > 0 && rule1 != rule2 )
 		{
+
 			return true;
 		}
 		return false;
