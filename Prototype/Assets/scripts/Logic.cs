@@ -40,7 +40,7 @@ public class Logic : MonoBehaviour {
 	void Start () {
 
 	}
-	
+
 	// Update is called once per frame
 	void Update () {
 	
@@ -183,9 +183,15 @@ public class Logic : MonoBehaviour {
 
 	Conditional CreateConditionalRule( List<TileHolder> holders, List<Tile> tilesToOrder )
 	{
-		//choose 2 types of rules randomly
+		//choose 2 types of rules randomly ( not of same type )
 		int random = Random.Range (0, 2);
 		int random2 = Random.Range (0, 2);
+
+		while( random == random2 )
+		{
+			random2 = Random.Range( 0, 2 );
+		}
+
 		Rule rule1;
 		Rule rule2;
 
@@ -239,9 +245,9 @@ public class Logic : MonoBehaviour {
 		if( impossiblesUsed < maxImpossiblePerTrial )
 		{
 			createImpossible = HappenedByChance( chanceOfImpossible );
-			Debug.Log ("create impossible : " + createImpossible );
-		}
 
+		}
+		Debug.Log ("create impossible : " + createImpossible );
 		if( createImpossible )
 		{
 			presetTiles = AttemptToCreateImpossibleBoard( previousSubmission );
@@ -293,6 +299,7 @@ public class Logic : MonoBehaviour {
 	{
 		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
 		RuleStack rulesToBreak = CreateRuleStackFromRandomRulesInCurrentTrial( maxRulesToSetNewProblem );
+		Debug.Log (" SHARED IMPOSSIBLE : " + rulesToBreak.sharedImpossibleSubmissions.Count);
 		Debug.Log ("combined rules : " + rulesToBreak.ruleStack.Count);
 //		Debug.Log ("impossibles : " + rulesToBreak.incorrectSubmissions.Count );
 		string presetTiles = null;
@@ -302,9 +309,9 @@ public class Logic : MonoBehaviour {
 		while( submissionsRemaining && presetTiles == null )
 		{
 			//for each shared impossible
-			foreach( KeyValuePair<string, List<Tile>> pair in rulesToBreak.incorrectSubmissions )
+			foreach( KeyValuePair<string, List<Tile>> pair in rulesToBreak.sharedImpossibleSubmissions )
 			{ 
-				impossibleOrder = rulesToBreak.incorrectSubmissions[ pair.Key ];
+				impossibleOrder = rulesToBreak.sharedImpossibleSubmissions[ pair.Key ];
 				trialRules.PrintTileList( impossibleOrder );
 //				Debug.Log ("impossible key : " + impossibleOrder );
 				presetTiles = GetPresetTileOrder( impossibleOrder );
@@ -407,14 +414,16 @@ public class Logic : MonoBehaviour {
 	public void UpdateLevelingStats( int currentLevel )
 	{
 		ResetStats ();
+
+//		maxRelativePosRules = 1;
+//		tilesCount = 3;
+//		maxAbsPosRules = 1;
+//		usingEitherOr = true;
+//		maxAdjacencyRules = 1;
+
 		if (currentLevel == 0) 
 		{
-//			maxRuleDifficulty = 8;
-//			maxConditionals = 1;
-			maxAbsPosRules = 1;
-//			chanceOfImpossible = 100;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetNewProblem = 1;
+			maxRelativePosRules = 1;
 			tilesCount = 3;
 
 		}
@@ -422,6 +431,7 @@ public class Logic : MonoBehaviour {
 		{
 //			maxRuleDifficulty = 10;
 			maxRelativePosRules = 1;
+			maxAbsPosRules = 1;
 			tilesCount = 3;
 			chanceOfImpossible = 75;
 			maxImpossiblePerTrial = 1;
@@ -460,6 +470,16 @@ public class Logic : MonoBehaviour {
 		else if( currentLevel == 5 )
 		{
 			maxRelativePosRules = 1;
+			maxConditionals = 1;
+			tilesCount = 4;
+			chanceOfImpossible = 50;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 6 )
+		{
+			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
 			tilesCount = 4;
 			chanceOfImpossible = 50;
@@ -467,6 +487,10 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
 		}
+
+		chanceOfImpossible = 100;
+		maxImpossiblePerTrial = 1;
+		maxRulesToSetNewProblem = 2;
 	}
 
 	void ResetStats()

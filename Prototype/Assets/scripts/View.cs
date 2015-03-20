@@ -4,6 +4,9 @@ using System.Collections.Generic;
 
 public class View : MonoBehaviour {
 
+	public Controller control;
+	public Model model;
+
 	public List<Color> tileColors;
 	public List<string> colorNames;
 
@@ -14,11 +17,20 @@ public class View : MonoBehaviour {
 	public float tileAsFractionOfHolder;
 	public float spaceAsFractionOfHolder;
 
+	public GameObject correctImage;
+	public GameObject incorrectImage;
+	GameObject activeImage;
+
+	bool showFeedback = false;
+	float feedbackShowDuration = 1f;
+	float timeShowingFeedback = 0;
+
+
 	Vector3 centerBoardPosition = new Vector3( 0, 0, 0 );
 	
 	GameObject tileHolder;
 	GameObject coloredTile;
-	public Model model;
+
 
 	// Use this for initialization
 	void Awake () {
@@ -36,6 +48,49 @@ public class View : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
+		if( showFeedback )
+		{
+			TimeFeedbackDisplay();
+		}
+	}
+
+	public void DisplayFeedback( bool show, bool correctAnswer )
+	{
+		if ( show )
+		{
+			showFeedback = true;
+			if( correctAnswer )
+			{
+				activeImage = correctImage;
+			}
+			else
+			{
+				activeImage = incorrectImage;
+			}
+		}
+		else
+		{
+			timeShowingFeedback = 0;
+			showFeedback = false;
+			control.NextStep( activeImage == correctImage );
+		}
+
+		activeImage.SetActive ( showFeedback );
+
+	}
+
+	void TimeFeedbackDisplay()
+	{
+
+		if( timeShowingFeedback < feedbackShowDuration )
+		{
+			timeShowingFeedback += Time.deltaTime;
+		}
+		else
+		{
+			DisplayFeedback( false, true );
+			activeImage = null;
+		}
 	}
 
 	void CalculateSizes()
@@ -161,7 +216,6 @@ public class View : MonoBehaviour {
 		List<Vector3> tilePositions = new List<Vector3>();
 
 		float totalWidth = tileCount * tileHolderWidth + ((tileCount - 1) * tileHolderSpace);
-//		Debug.Log (totalWidth);
 
 		Vector3 startPosition = centerBoardPosition - new Vector3 ((totalWidth - tileHolderWidth) / 2, 0, 0);
 

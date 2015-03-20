@@ -12,13 +12,14 @@ public class Controller : MonoBehaviour {
 	public Logic logic;
 	public Text scoreDisplay;
 	public Text levelDisplay;
+	public Text problemDisplay;
 
 
 	// Use this for initialization
 	void Start () {
 
-		scoreDisplay.text = "Score : " + model.score;
-		levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
+		UpdateDisplay ();
+
 		NewTrial ();
 	}
 	
@@ -78,12 +79,16 @@ public class Controller : MonoBehaviour {
 
 	public void RespondToAnswer( bool correctAnswer )
 	{
-//		Debug.Log (correctAnswer);
+		view.DisplayFeedback ( true, correctAnswer );
+	
+	}
+
+	public void NextStep( bool correctAnswer )
+	{
 		if (correctAnswer) {
 			int scoreIncrease = ( model.currentLevel + 1 ) * model.pointsForCorrect;
 			model.score += scoreIncrease;
-			scoreDisplay.text = "Score : " + model.score;
-
+			
 			//if trial is not yet completed
 			if( model.currentProblemInTrial < ( logic.problemsPerTrial - 1 ))
 			{
@@ -96,19 +101,26 @@ public class Controller : MonoBehaviour {
 			{
 				//update level
 				model.UpdateLevel( correctAnswer );
-				levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
-				//start new trial
 				NewTrial();
 			}
 		} 
 		else 
 		{
 			model.UpdateLevel( correctAnswer );
-			levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
+			NewTrial();
 		}
+		
+		UpdateDisplay ();
 	}
 
-	public void NewTrial()
+	void UpdateDisplay()
+	{
+		scoreDisplay.text = "Score : " + model.score;
+		problemDisplay.text = "Problem : " + (model.currentProblemInTrial + 1);
+		levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
+	}
+
+	void NewTrial()
 	{
 //		Debug.Log ("starting new trial ");
 		logic.UpdateLevelingStats (model.currentLevel);

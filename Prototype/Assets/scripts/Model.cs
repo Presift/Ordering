@@ -158,7 +158,7 @@ public class Model : MonoBehaviour {
 		else
 		{
 			//decrease level
-			currentLevel = Mathf.Max ( 0, currentLevel --);
+			currentLevel = Mathf.Max ( 0, currentLevel - 1);
 		}
 			
 	}
