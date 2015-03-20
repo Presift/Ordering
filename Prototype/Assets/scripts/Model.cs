@@ -49,15 +49,18 @@ public class Model : MonoBehaviour {
 		}
 	}
 
-	public List<Tile> OrderedTiles()
+	public string OrderedTileKey()
 	{
-		List<Tile> ordered = new List<Tile> ();
+//		Debug.Log ("SUBMISSION");
+//		List<Tile> ordered = new List<Tile> ();
+		string submissionKey = "";;
 
 		for( int i = 0; i < holders.Count; i ++ )
 		{
-			ordered.Add ( holders[ i ].occupyingTile );
+//			Debug.Log (holders[ i ].occupyingTile.name);
+			submissionKey += holders[ i ].occupyingTile.name[ 0 ];
 		}
-		return ordered;
+		return submissionKey;
 	}
 	
 
@@ -155,7 +158,7 @@ public class Model : MonoBehaviour {
 		else
 		{
 			//decrease level
-			currentLevel --;
+			currentLevel = Mathf.Max ( 0, currentLevel --);
 		}
 			
 	}

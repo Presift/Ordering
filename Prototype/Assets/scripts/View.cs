@@ -83,9 +83,11 @@ public class View : MonoBehaviour {
 				{
 					if( tilesToOrder[ tile ].name[ 0 ] == presets[ i ] )
 					{
-						Tile tileScript = tilesToOrder[ tile ].GetComponent<Tile>();
-						tileScript.StartMove( holders[i]);
+//						Tile tileScript = tilesToOrder[ tile ].GetComponent<Tile>();
+						tilesToOrder[ tile ].StartMove( holders[i]);
+						tilesToOrder[ tile ].preset = true;
 						holders[ i ].preSet = true;
+						holders[i].Highlight( true );
 						break;
 					}
 				}
@@ -140,12 +142,17 @@ public class View : MonoBehaviour {
 		//set all staging areas to open
 		for( int i = 0; i < tiles.Count; i ++ )
 		{
-			tileHolders[i].occupyingTile = null;
-			tileHolders[i].preSet = false;
+			if( tileHolders[i].occupyingTile != null )
+			{
+				tileHolders[i].SetOccupied( null );
+				tileHolders[i].preSet = false;
+			}
+
 			tiles[i].currentHolder = null;
+			tiles[i].preset = false;
+			tileHolders[i].Highlight( false );
 			tiles[i].targetHolder = null;
-			tiles[i].currentStaging = null;
-			stagingAreas[i].occupied = false;
+			tiles[i].StartMove( null );
 		}
 	}
 

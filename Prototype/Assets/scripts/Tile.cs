@@ -7,6 +7,7 @@ public class Tile : MonoBehaviour {
 	public TileHolder targetHolder;
 	public TileHolder currentHolder;
 	public StagingArea currentStaging;
+	public bool preset;
 
 	// Use this for initialization
 	void Start () {
@@ -47,8 +48,11 @@ public class Tile : MonoBehaviour {
 	//MOVEMENT
 	void OnMouseDown()
 	{
+		if (!preset)
+		{
+			model.ManageCurrentSelection (this);
+		}
 
-		model.ManageCurrentSelection (this);
 
 	}
 
@@ -80,7 +84,7 @@ public class Tile : MonoBehaviour {
 		{
 			//go to staging area
 			StagingArea area = model.GetUnoccupiedStagingArea();
-			Debug.Log (area);
+//			Debug.Log (area);
 			SetCurrentStaging( area ); 
 
 		}

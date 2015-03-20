@@ -8,44 +8,36 @@ public class Rule
 	public int ruleType;
 	public Tile tile1;
 	public Tile tile2;
-	public TileHolder holder;
+	public int absolutePositionIndex;
 	public string verbal;
 	public int difficulty;
 	public Dictionary<string, List<Tile>> correctSubmissions = new Dictionary<string, List<Tile>>();
 	public Dictionary<string, List<Tile>> incorrectSubmissions = new Dictionary<string, List<Tile>>();
 
-
-
-
-	public Rule( int newRuleType , Tile newTile1, Tile newTile2, int difficultyPoints )
-	{
-		ruleType = newRuleType;
-		tile1 = newTile1;
-		tile2 = newTile2;
-		difficulty = difficultyPoints;
-	}
-
-	public Rule( int newRuleType, Tile newTile1, TileHolder holderPosition, int difficultyPoints )
-	{
-		ruleType = newRuleType;
-		tile1 = newTile1;
-		holder = holderPosition;
-		difficulty = difficultyPoints;
-	}
-
-	public Rule( int newRuleType, Tile newTile1, Tile newTile2, TileHolder newHolder )
-	{
-		ruleType = newRuleType;
-		tile1 = newTile1;
-		tile2 = newTile2;
-		holder = newHolder;
-	}
-
-
+	
 	protected Rule ()
 	{
 	}
 
+	public void PrintEachDictionaryValue( Dictionary<string, List<Tile>> dict )
+	{
+		foreach( KeyValuePair<string, List<Tile>> pair in dict )
+		{
+			List<Tile> value = dict[ pair.Key ];
+			PrintTileList( value );
+		}
+	}
+
+	public void PrintTileList( List<Tile> tileList )
+	{
+		string listReadOut = "";
+//		Debug.Log ("tile list count : " + tileList.Count);
+		for (int i = 0; i < tileList.Count; i ++ )
+		{
+			listReadOut += tileList[ i ].name + " , ";
+		}
+		Debug.Log ( listReadOut );
+	}
 
 	public virtual string ConstructVerbal()
 	{
@@ -74,10 +66,11 @@ public class Rule
 				}
 			}
 			Debug.Log ("found a key with no matches ");
+			Debug.Log (pair.Key);
 			return pair.Key;
 		}
 
-		Debug.Log ("not key found with 0 matches ");
+		Debug.Log ("no key found with 0 matches ");
 		return testKey;
 	}
 
@@ -133,27 +126,19 @@ public class Rule
 		return true;
 	}
 
-	public void GetAllPossibleSubmissions( List<Tile> tilesInOrder, List<Tile> tilesInBank )  //called first with empty tilesToOrder and full List
+	public void GetAllPossibleSubmissions( List<Tile> tilesInOrder, List<Tile> tilesInBank)  //called first with empty tilesToOrder and full List
 	{
-
 		if( tilesInBank.Count != 0 )
 		{
 			//continue permutating
 			for( int i = 0; i < tilesInBank.Count; i ++ )
 			{
-				List<Tile> newPermutation = tilesInOrder;
+				List<Tile> newPermutation = new List<Tile> ( tilesInOrder );
 				newPermutation.Add ( tilesInBank[i] );
-//				Debug.Log (tilesInBank[i].name + " added to tiles list ");
-				List<Tile> newTileBank = new List<Tile>();
 
-				for( int bankItem = 0; bankItem < tilesInBank.Count; bankItem ++ )
-				{
-//					Debug.Log ("bank item : " + bankItem);
-					newTileBank.Add (tilesInBank[ bankItem ]);
-				}
+				List<Tile> newTileBank = new List<Tile>( tilesInBank );
 
 				newTileBank.RemoveAt( i );
-//				Debug.Log ("new bank : " + newTileBank.Count + ", original bank : " + tilesInBank.Count);
 
 				GetAllPossibleSubmissions( newPermutation, newTileBank );  //combine this list of tiles with newTilePermuation list?
 
@@ -161,7 +146,7 @@ public class Rule
 		}
 		else
 		{
-//			possibleSubmissions.Add ( tilesInOrder );
+//			PrintTileList ( tilesInOrder );
 			TriagePossibleSubmission( tilesInOrder );
 		}
 
@@ -189,11 +174,13 @@ public class Rule
 
 public class RelativePositionRule : Rule 
 {
-	public RelativePositionRule( int newRuleType, Tile newTile1, Tile newTile2)
+	public RelativePositionRule( int newRuleType, Tile newTile1, Tile newTile2, List<Tile> tilesInBank)
 	{
 		ruleType = newRuleType;
 		tile1 = newTile1;
 		tile2 = newTile2;
+		List<Tile> tilesInOrder = new List<Tile> ();
+		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 	}
 
 	public override string ConstructVerbal()  // rule type of 0 is before, rule type of 1 is after
@@ -211,101 +198,35 @@ public class RelativePositionRule : Rule
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{
+		//get positions of tiles
+		int tile1Index = 0;
+		int tile2Index = 0;
+		
+		for( int i = 0; i < submission.Count; i ++ )
+		{
+			if( submission[i] == tile1 )
+			{
+				tile1Index = i;
+			}
+			else if(submission[i] == tile2 )
+			{
+				tile2Index = i;
+			}
+		}
+
 		switch (ruleType) 
 		{
 		case 0:
-			if( tile1.currentHolder.spotNumber < tile2.currentHolder.spotNumber )
-			{
-				return true;
-			}
-			return false;
+			return ( tile1Index < tile2Index );
+
 		case 1:
-			if( tile1.currentHolder.spotNumber > tile2.currentHolder.spotNumber )
-			{
-				return true;
-			}
-			return false;
+			return ( tile1Index > tile2Index );
+
 		default:
 			Debug.Log ("not a valid rule type");
 			return true;
 		}
 	}
-
-//	public override void TriagePossibleSubmissions( List<List<Tile>> possibleSubmissions )
-//	{
-//		
-//	}
-
-//	public override void SetCorrectSubmissions( List<Tile> tilesToOrder )
-//	{
-//		correctSubmissions = new Dictionary<string,List<Tile> > ();
-//
-//		if( ruleType == 0 ) //before rule
-//		{
-//			for(int tile1Pos = 0; tile1Pos < ( tilesToOrder.Count - 1 ); tile1Pos ++ )
-//			{
-//				for( int tile2Pos = ( tile1Pos + 1 ); tile2Pos < tilesToOrder.Count; tile2Pos ++ )
-//				{
-//					string keyName = "";
-//					List<Tile> correctSubmission = new List<Tile>();
-//					for( int i = 0; i < tilesToOrder.Count; i ++ )
-//					{
-//
-//						if( i == tile1Pos )
-//						{
-//							keyName += tile1.name[ 0 ];
-//							correctSubmission.Add (tile1);
-//						}
-//						else if( i == tile2Pos )
-//						{
-//							keyName += tile2.name[ 0 ];
-//							correctSubmission.Add (tile2);
-//						}
-//						else
-//						{
-//							keyName += "n";
-//							correctSubmission.Add ( null );
-//						}
-//
-//					}
-//					correctSubmissions.Add (keyName, correctSubmission );
-//				}
-//			}
-//		}
-//		else
-//		{
-//			for(int tile1Pos = 1; tile1Pos < ( tilesToOrder.Count ); tile1Pos ++ )
-//			{
-//				for( int tile2Pos = ( tile1Pos - 1 ); tile2Pos >= 0; tile2Pos -- )
-//				{
-//					string keyName = "";
-//					List<Tile> correctSubmission = new List<Tile>();
-//					for( int i = 0; i < tilesToOrder.Count; i ++ )
-//					{
-//						
-//						if( i == tile1Pos )
-//						{
-//							keyName += tile1.name[ 0 ];
-//							correctSubmission.Add (tile1);
-//						}
-//						else if( i == tile2Pos )
-//						{
-//							keyName += tile2.name[ 0 ];
-//							correctSubmission.Add (tile2);
-//						}
-//						else
-//						{
-//							keyName += "n";
-//							correctSubmission.Add ( null );
-//						}
-//						
-//					}
-//					correctSubmissions.Add (keyName, correctSubmission );
-//				}
-//			}
-//		}
-//	}
-	
 
 }
 
@@ -313,11 +234,13 @@ public class RelativePositionRule : Rule
 
 public class AdjacencyRule : Rule 
 {
-	public AdjacencyRule( int newRuleType, Tile newTile1, Tile newTile2 )
+	public AdjacencyRule( int newRuleType, Tile newTile1, Tile newTile2, List<Tile> tilesInBank  )
 	{
 		ruleType = newRuleType;
 		tile1 = newTile1;
 		tile2 = newTile2;
+		List<Tile> tilesInOrder = new List<Tile> ();
+		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 	}
 	public override string ConstructVerbal() // 0 is adjacent, 1 is NOT adjacent
 	{
@@ -336,20 +259,31 @@ public class AdjacencyRule : Rule
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{
+		//get positions of tiles
+		int tile1Index = 0;
+		int tile2Index = 0;
+
+		for( int i = 0; i < submission.Count; i ++ )
+		{
+			if( submission[i] == tile1 )
+			{
+				tile1Index = i;
+			}
+			else if(submission[i] == tile2 )
+			{
+				tile2Index = i;
+			}
+		}
+
+		int distanceApart = Mathf.Abs (tile1Index - tile2Index); 
+
 		switch (ruleType) 
 		{
 		case 0:
-			if( tile1.currentHolder.spotNumber == holder.spotNumber )
-			{
-				return true;
-			}
-			return false;
+
+			return ( distanceApart == 1 );
 		case 1:
-			if( tile1.currentHolder.spotNumber != holder.spotNumber )
-			{
-				return true;
-			}
-			return false;
+			return ( distanceApart != 1 );
 		default:
 			Debug.Log ("not a valid rule type");
 			return true;
@@ -365,36 +299,40 @@ public class AdjacencyRule : Rule
 public class AbsolutePositionRule : Rule 
 {
 
-	public AbsolutePositionRule( int newRuleType, Tile newTile1, TileHolder newHolder )
+	public AbsolutePositionRule( int newRuleType, Tile newTile1, int positionIndex, List<Tile> tilesInBank )
 	{
 		ruleType = newRuleType;
 		tile1 = newTile1;
-		holder = newHolder;
+		absolutePositionIndex = positionIndex;
+		List<Tile> tilesInOrder = new List<Tile> ();
+		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 	}
 
-	public AbsolutePositionRule( int newRuleType, Tile newTile1, Tile newTile2, TileHolder newHolder )
+	public AbsolutePositionRule( int newRuleType, Tile newTile1, Tile newTile2, int positionIndex, List<Tile> tilesInBank )
 	{
 		ruleType = newRuleType;
 		tile1 = newTile1;
 		tile2 = newTile2;
-		holder = newHolder;
+		List<Tile> tilesInOrder = new List<Tile> ();
+		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
 	}
 
 	public override string ConstructVerbal() // 0 is in a spot, 1 is NOT in a spot
 	{
 		if( tile2 != null )
 		{
-			verbal = tile1.name + " or " + tile2.name + " is in position " + holder.spotNumber + ".";
+			verbal = tile1.name + " or " + tile2.name + " is in position " + (absolutePositionIndex + 1 ) + ".";
+			return verbal;
 		}
 
 		if( ruleType == 0 )
 		{
-			verbal =  tile1.name + " is in position " + holder.spotNumber + ".";
+			verbal =  tile1.name + " is in position " + (absolutePositionIndex + 1 ) + ".";
 			return verbal;
 		}
 		else
 		{
-			verbal =  tile1.name + " is not in position " + holder.spotNumber + ".";
+			verbal =  tile1.name + " is not in position " + (absolutePositionIndex + 1 ) + ".";
 			return verbal;
 		}
 	}
@@ -403,23 +341,16 @@ public class AbsolutePositionRule : Rule
 	{
 		if (tile2 != null) 
 		{
-			return ( tile1.currentHolder.spotNumber == holder.spotNumber	|| tile2.currentHolder.spotNumber == holder.spotNumber );
+			return ( submission[ absolutePositionIndex ] == tile1 ) || (submission[ absolutePositionIndex ] == tile2 );
+
 		}
 
 		switch (ruleType) 
 		{
 		case 0:
-			if( tile1.currentHolder.spotNumber == holder.spotNumber )
-			{
-				return true;
-			}
-			return false;
+			return submission[ absolutePositionIndex ] == tile1; 
 		case 1:
-			if( tile1.currentHolder.spotNumber != holder.spotNumber )
-			{
-				return true;
-			}
-			return false;
+			return submission[ absolutePositionIndex ] != tile1;
 		default:
 			Debug.Log ("not a valid rule type");
 			return true;
@@ -429,66 +360,18 @@ public class AbsolutePositionRule : Rule
 
 }
 
-//public class MultiRule : Rule 
-//{
-//	public Rule rule1;
-//	public Rule rule2;
-//
-//	public MultiRule( Rule newRule1, Rule newRule2, int difficultyPoints )
-//	{
-//		rule1 = newRule1;
-//		rule2 = newRule2;
-//		difficulty = difficultyPoints;
-//	}
-//
-//	public override string ConstructVerbal()
-//	{
-//		verbal = "If " + rule1.verbal + ", " + rule2.verbal;
-//		return verbal;
-//	}
-//	
-//	public override bool SubmissionFollowsRule( List<Tile> submission )
-//	{
-//		if (rule1.SubmissionFollowsRule ( submission )) 
-//		{
-//			if( rule2.SubmissionFollowsRule( submission ))
-//			{
-//				return true;
-//			}
-//			else
-//			{
-//				return false;
-//			}
-//		}
-//
-//		if( !rule2.SubmissionFollowsRule( submission ))
-//		{
-//			if(!rule1.SubmissionFollowsRule( submission ))
-//			{
-//				return true;
-//			}
-//			else
-//			{
-//				return false;
-//			}
-//		}
-//
-//		return true;
-//		
-//	}
-//}
+
 
 public class RuleStack: Rule
 {
 	public List<Rule> ruleStack;
-	public Dictionary<string, List<Tile>> consolidatedCorrectSubmissions;
-	public Dictionary<string, List<Tile>> sharedImpossibleSubmissions;
+//	public Dictionary<string, List<Tile>> consolidatedCorrectSubmissions  = new Dictionary<string, List<Tile>> ();
+//	public Dictionary<string, List<Tile>> sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ();
 	
 	
 	public RuleStack()
 	{
 		ruleStack = new List<Rule> ();
-		consolidatedCorrectSubmissions = new Dictionary<string, List<Tile>> ();
 	}
 
 	public RuleStack( Rule newRule )
@@ -503,8 +386,8 @@ public class RuleStack: Rule
 	{
 		if (ruleStack.Count == 0) 
 		{
-			consolidatedCorrectSubmissions = newRule.correctSubmissions;
-			sharedImpossibleSubmissions = newRule.incorrectSubmissions;
+			correctSubmissions = newRule.correctSubmissions;
+			incorrectSubmissions = newRule.incorrectSubmissions;
 		}
 		else
 		{
@@ -512,6 +395,11 @@ public class RuleStack: Rule
 			RemoveIncorrectSubmissionsNotShared( newRule );
 		}
 		ruleStack.Add (newRule);
+
+//		Debug.Log ("POSSIBLE SUBMISSIONS");
+//		PrintEachDictionaryValue (consolidatedCorrectSubmissions);
+//		Debug.Log ("IMPOSSIBLE SUBMISISONS");
+//		PrintEachDictionaryValue (sharedImpossibleSubmissions);
 	}
 
 	public bool RuleInStack( Rule newRule )
@@ -538,9 +426,9 @@ public class RuleStack: Rule
 		foreach( KeyValuePair<string, List<Tile>> pair in newRule.correctSubmissions )
 		{ 
 			string submission1 = pair.Key;
-			if( !consolidatedCorrectSubmissions.ContainsKey( submission1))
+			if( !correctSubmissions.ContainsKey( submission1))
 			{
-				consolidatedCorrectSubmissions.Remove( submission1 );
+				incorrectSubmissions.Remove( submission1 );
 			}
 		}
 	}
@@ -550,9 +438,9 @@ public class RuleStack: Rule
 		foreach( KeyValuePair<string, List<Tile>> pair in newRule.incorrectSubmissions )
 		{ 
 			string submission1 = pair.Key;
-			if( !sharedImpossibleSubmissions.ContainsKey( submission1))
+			if( !incorrectSubmissions.ContainsKey( submission1))
 			{
-				sharedImpossibleSubmissions.Remove( submission1 );
+				incorrectSubmissions.Remove( submission1 );
 			}
 		}
 	}
@@ -569,7 +457,7 @@ public class RuleStack: Rule
 			{ 
 				string submission1 = pair.Key;
 				
-				if( sharedImpossibleSubmissions.ContainsKey( submission1))
+				if( incorrectSubmissions.ContainsKey( submission1))
 				{
 					return true;
 				}
@@ -589,7 +477,7 @@ public class RuleStack: Rule
 		{ 
 			string submission1 = pair.Key;
 
-			if( consolidatedCorrectSubmissions.ContainsKey( submission1))
+			if( incorrectSubmissions.ContainsKey( submission1))
 			{
 				return false;
 			}
@@ -613,11 +501,23 @@ public class Conditional: Rule
 	public Rule rule1;
 	public Rule rule2;
 	
-	public Conditional( Rule newRule1, Rule newRule2, int difficultyPoints )
+	public Conditional( Rule newRule1, Rule newRule2, List<Tile> tilesInBank )
 	{
 		rule1 = newRule1;
 		rule2 = newRule2;
-		difficulty = difficultyPoints;
+//		difficulty = difficultyPoints;
+		List<Tile> tilesInOrder = new List<Tile> ();
+		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
+
+	}
+
+	public bool IsValidRule()
+	{
+		if( correctSubmissions.Count > 0 )
+		{
+			return true;
+		}
+		return false;
 	}
 	
 	public override string ConstructVerbal()

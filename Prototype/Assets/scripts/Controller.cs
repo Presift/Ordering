@@ -11,17 +11,14 @@ public class Controller : MonoBehaviour {
 	public Text rules;
 	public Logic logic;
 	public Text scoreDisplay;
+	public Text levelDisplay;
 
 
 	// Use this for initialization
 	void Start () {
 
-//		model.stagingAreas = view.CreateBoard ( model.currentTotalTileCount );
-//		bool submissionReady = model.ReadyForSubmission();
-//		ActivateSubmissionButton( submissionReady );
-//
-//		logic.tilesToOrder = model.tilesToOrder;
-
+		scoreDisplay.text = "Score : " + model.score;
+		levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
 		NewTrial ();
 	}
 	
@@ -40,19 +37,25 @@ public class Controller : MonoBehaviour {
 	{
 		if(model.impossible)
 		{
+			Debug.Log ("INCORRECT");
 			RespondToAnswer( false );
+
 		}
 		else
 		{
-			List<Tile> submission = model.OrderedTiles ();
-			
-			if( logic.trialRules.consolidatedCorrectSubmissions.ContainsValue( submission ))
+			string submissionKey = model.OrderedTileKey ();
+
+			if( logic.trialRules.correctSubmissions.ContainsKey( submissionKey))
 			{
+				Debug.Log ("CORRECT");
 				RespondToAnswer( true );
+
 			}
 			else
 			{
+				Debug.Log ("INCORRECT");
 				RespondToAnswer (false);
+
 			}
 		}
 	
@@ -63,17 +66,19 @@ public class Controller : MonoBehaviour {
 	{
 		if(model.impossible )
 		{
+			Debug.Log ("CORRECT");
 			RespondToAnswer( true );
 		}
 		else
 		{
+			Debug.Log ("INCORRECT");
 			RespondToAnswer( false );
 		}
 	}
 
 	public void RespondToAnswer( bool correctAnswer )
 	{
-		Debug.Log (correctAnswer);
+//		Debug.Log (correctAnswer);
 		if (correctAnswer) {
 			int scoreIncrease = ( model.currentLevel + 1 ) * model.pointsForCorrect;
 			model.score += scoreIncrease;
@@ -91,6 +96,7 @@ public class Controller : MonoBehaviour {
 			{
 				//update level
 				model.UpdateLevel( correctAnswer );
+				levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
 				//start new trial
 				NewTrial();
 			}
@@ -98,12 +104,13 @@ public class Controller : MonoBehaviour {
 		else 
 		{
 			model.UpdateLevel( correctAnswer );
+			levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
 		}
 	}
 
 	public void NewTrial()
 	{
-		Debug.Log ("starting new trial ");
+//		Debug.Log ("starting new trial ");
 		logic.UpdateLevelingStats (model.currentLevel);
 		model.currentProblemInTrial = 0; 
 		//destroy children of view
@@ -125,7 +132,7 @@ public class Controller : MonoBehaviour {
 
 		Debug.Log ("creating new problem");
 		//determine logic for new problem and set board for new problem
-		string presetBoard = logic.NewProblemSetUp (model.OrderedTiles());
+		string presetBoard = logic.NewProblemSetUp (model.tilesToOrder);
 
 		view.PresetTilesWithHolders (presetBoard, model.tilesToOrder, model.holders);
 
