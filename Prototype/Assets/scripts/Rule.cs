@@ -371,7 +371,6 @@ public class AbsolutePositionRule : Rule
 public class RuleStack: Rule
 {
 	public List<Rule> ruleStack;
-//	public Dictionary<string, List<Tile>> consolidatedCorrectSubmissions  = new Dictionary<string, List<Tile>> ();
 	public Dictionary<string, List<Tile>> sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ();
 	
 	
@@ -497,6 +496,35 @@ public class RuleStack: Rule
 		if( ruleStack.Count == 0 )
 		{
 			return false;
+		}
+
+		for( int i = 0; i < ruleStack.Count; i ++ )
+		{
+			//if rule is conditional
+			if( ruleStack[ i ] is Conditional )
+			{
+				Conditional conditionalRule = ( Conditional )ruleStack[ i ];
+				bool newRuleSatisfiesConditional1 = true;  //always satisfies clause 1 of conditional
+				bool newRuleNegatesConditional1 = true;		//always breaks clause 1 of conditional
+
+				//if newRule always satisfies 1st clause in conditional  or newRule always contradicts 1st clause of conditional
+				foreach( KeyValuePair<string, List<Tile>> pair in newRule.correctSubmissions )
+				{
+					if( !conditionalRule.rule1.SubmissionFollowsRule( pair.Value ))
+					{
+						newRuleSatisfiesConditional1 = false;
+					}
+					if( conditionalRule.rule1.SubmissionFollowsRule( pair.Value ))
+					{
+						newRuleNegatesConditional1 = false;
+					}
+				}
+
+				if( newRuleNegatesConditional1 || newRuleSatisfiesConditional1 )
+				{
+					return true;
+				}
+			}
 		}
 
 

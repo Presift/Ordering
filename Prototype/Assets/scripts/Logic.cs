@@ -462,17 +462,29 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 1;
 			maxConditionals = 1;
 			tilesCount = 4;
-			chanceOfImpossible = 50;
+			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
+			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 5 )
 		{
 			maxRelativePosRules = 1;
 			maxConditionals = 1;
+			maxAdjacencyRules = 1;
 			tilesCount = 4;
-			chanceOfImpossible = 50;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 6 )
+		{
+			maxRelativePosRules = 1;
+			maxRelativePosRules = 1;
+			maxAdjacencyRules = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
@@ -481,8 +493,9 @@ public class Logic : MonoBehaviour {
 		{
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
-			tilesCount = 4;
-			chanceOfImpossible = 50;
+			maxConditionals = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
