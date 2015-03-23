@@ -13,7 +13,7 @@ public class Rule
 	public int difficulty;
 	public Dictionary<string, List<Tile>> correctSubmissions = new Dictionary<string, List<Tile>>();
 	public Dictionary<string, List<Tile>> incorrectSubmissions = new Dictionary<string, List<Tile>>();
-
+	public List<Tile> tilesUsedInRule = new List<Tile>();
 	
 	protected Rule ()
 	{
@@ -73,6 +73,7 @@ public class Rule
 		Debug.Log ("no key found with 0 matches ");
 		return testKey;
 	}
+	
 
 	public bool WildCardKeyInDictionary( string testKey, Dictionary<string, List<Tile>> dict )
 	{
@@ -187,6 +188,8 @@ public class RelativePositionRule : Rule
 		tile2 = newTile2;
 		List<Tile> tilesInOrder = new List<Tile> ();
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
+		tilesUsedInRule.Add (tile1);
+		tilesUsedInRule.Add (tile2);
 	}
 
 	public override string ConstructVerbal()  // rule type of 0 is before, rule type of 1 is after
@@ -202,6 +205,7 @@ public class RelativePositionRule : Rule
 		return verbal;
 	}
 	
+
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{
 		//get positions of tiles
@@ -247,6 +251,8 @@ public class AdjacencyRule : Rule
 		tile2 = newTile2;
 		List<Tile> tilesInOrder = new List<Tile> ();
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
+		tilesUsedInRule.Add (tile1);
+		tilesUsedInRule.Add (tile2);
 	}
 	public override string ConstructVerbal() // 0 is adjacent, 1 is NOT adjacent
 	{
@@ -312,6 +318,7 @@ public class AbsolutePositionRule : Rule
 		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
+		tilesUsedInRule.Add (tile1);
 	}
 
 	public AbsolutePositionRule( int newRuleType, Tile newTile1, Tile newTile2, int positionIndex, List<Tile> tilesInBank )
@@ -321,6 +328,8 @@ public class AbsolutePositionRule : Rule
 		tile2 = newTile2;
 		List<Tile> tilesInOrder = new List<Tile> ();
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
+		tilesUsedInRule.Add (tile1);
+		tilesUsedInRule.Add (tile2);
 	}
 
 	public override string ConstructVerbal() // 0 is in a spot, 1 is NOT in a spot
@@ -561,9 +570,15 @@ public class Conditional: Rule
 	{
 		rule1 = newRule1;
 		rule2 = newRule2;
-//		difficulty = difficultyPoints;
 		List<Tile> tilesInOrder = new List<Tile> ();
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
+
+		tilesUsedInRule = rule1.tilesUsedInRule;
+
+		for( int i = 0; i < newRule2.tilesUsedInRule.Count; i++ )
+		{
+			tilesUsedInRule.Add ( newRule2.tilesUsedInRule[ i ] );
+		}
 
 	}
 

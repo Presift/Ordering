@@ -48,48 +48,70 @@ public class Logic : MonoBehaviour {
 
 	public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
 	{
-//		string rules = "";
 		int difficultyPointsSpend = 0;
 		impossiblesUsed = 0;
 		trialRules = new RuleStack ();
+
+		//create tile dictionary where each tile has yet ot be used
+		Dictionary<Tile, int > tileUsage = new Dictionary< Tile , int > ();
+		for( int i = 0; i < tiles.Count; i ++ )
+		{
+			tileUsage.Add ( tiles[ i ], 0 );
+		}
 
 		int totalRules = maxAbsPosRules + maxRelativePosRules + maxAdjacencyRules + maxConditionals;
 		Debug.Log ("max rules : " + totalRules);
 
 		for( int conditional = 0; conditional < maxConditionals; conditional ++ )
 		{
-			Conditional newConditional = CreateConditionalRule( holders, tiles );
+			Conditional newConditional = CreateConditionalRule( holders, tiles, tileUsage );
 			Debug.Log ( newConditional.ConstructVerbal());
 			Debug.Log (newConditional.verbal );
 			if( !trialRules.RuleConflictsWithRuleStack( newConditional ))
 			{
 				trialRules.AddRule( newConditional );
 			}
+			else
+			{
+				RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
+			}
 		}
 		for( int abs = 0; abs < maxAbsPosRules; abs ++ )
 		{
-			AbsolutePositionRule newAbs = CreateAbsoluteRule( holders, tiles );
+			AbsolutePositionRule newAbs = CreateAbsoluteRule( holders, tiles, tileUsage );
 			if( !trialRules.RuleConflictsWithRuleStack( newAbs ))
 			{
 				trialRules.AddRule( newAbs );
+			}
+			else
+			{
+				RemoveTilesUsedInRuleFromDict( tileUsage, newAbs );
 			}
 		}
 
 		for( int relatives = 0; relatives < maxRelativePosRules; relatives ++ )
 		{
-			RelativePositionRule newRel = CreateRelativeRule( tiles );
+			RelativePositionRule newRel = CreateRelativeRule( tiles, tileUsage );
 			if( !trialRules.RuleConflictsWithRuleStack(newRel))
 			{
 				trialRules.AddRule( newRel );
+			}
+			else
+			{
+				RemoveTilesUsedInRuleFromDict( tileUsage, newRel );
 			}
 		}
 
 		for( int adjacency = 0; adjacency < maxAdjacencyRules; adjacency ++ )
 		{
-			AdjacencyRule newAdj = CreateAdjacencyRule( tiles );
+			AdjacencyRule newAdj = CreateAdjacencyRule( tiles, tileUsage );
 			if( !trialRules.RuleConflictsWithRuleStack( newAdj ))
 			{
 				trialRules.AddRule( newAdj );
+			}
+			else
+			{
+				RemoveTilesUsedInRuleFromDict( tileUsage, newAdj );
 			}
 		}
 
@@ -99,45 +121,85 @@ public class Logic : MonoBehaviour {
 		return trialRules.verbal;
 	}
 
-	RelativePositionRule CreateRelativeRule( List<Tile> tilesToOrder )
+	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded )
+	{
+		int maxReusedTiles = 1;
+		int reusedTiles = 0;
+		List<Tile> tilesToUse = new List<Tile> ();
+
+		foreach( KeyValuePair< Tile , int > pair in tileUsage )
+		{
+			Tile tile = pair.Key;
+			//if tile has been used only once and reused tiles is less than max resused tiels
+			if( ( pair.Value < 1 ) && ( reusedTiles < maxReusedTiles ))
+			{
+//				tileUsage [ tile ] ++;
+				tilesToUse.Add ( tile );
+				reusedTiles ++;
+			}
+			else if( pair.Value == 0 )
+			{
+//				tileUsage [ tile ] ++;
+				tilesToUse.Add ( tile );
+			}
+			if( tilesToUse.Count == tilesNeeded )
+			{
+				for( int i = 0; i < tilesToUse.Count; i ++ )
+				{
+					tileUsage[tilesToUse[i]] ++;
+				}
+
+				return tilesToUse;
+			}
+		}
+
+		Debug.Log (" not enough tiles added ");
+		return tilesToUse;
+	}
+
+	RelativePositionRule CreateRelativeRule( List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
 
 		//randomly determine before/after rule
 		int order = Random.Range (0, 1);
+//
+//		int relPosTile = Random.Range (0, tilesToOrder.Count);
+//		int relPosTile2 = Random.Range (0, tilesToOrder.Count);
+//		
+//		while (relPosTile == relPosTile2) 
+//		{
+//			relPosTile2 = Random.Range (0, tilesToOrder.Count);
+//		}
 
-		int relPosTile = Random.Range (0, tilesToOrder.Count);
-		int relPosTile2 = Random.Range (0, tilesToOrder.Count);
+		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2);
 		
-		while (relPosTile == relPosTile2) 
-		{
-			relPosTile2 = Random.Range (0, tilesToOrder.Count);
-		}
-		
-		RelativePositionRule relPositionRule = new RelativePositionRule( order, tilesToOrder[relPosTile], tilesToOrder[relPosTile2], tilesToOrder  ); 
+		RelativePositionRule relPositionRule = new RelativePositionRule( order, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		relPositionRule.ConstructVerbal();
 		
 		return relPositionRule;
 	}
 
-	AdjacencyRule CreateAdjacencyRule(  List<Tile> tilesToOrder )
+	AdjacencyRule CreateAdjacencyRule( List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
 		int nextTo = Random.Range (0, 1);  //determins next to/not next to
 
-		int relPosTile = Random.Range (0, tilesToOrder.Count);
-		int relPosTile2 = Random.Range (0, tilesToOrder.Count);
+//		int relPosTile = Random.Range (0, tilesToOrder.Count);
+//		int relPosTile2 = Random.Range (0, tilesToOrder.Count);
+//
+//		while (relPosTile == relPosTile2) 
+//		{
+//			relPosTile2 = Random.Range (0, tilesToOrder.Count);
+//		}
 
-		while (relPosTile == relPosTile2) 
-		{
-			relPosTile2 = Random.Range (0, tilesToOrder.Count);
-		}
+		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2);
 		
-		AdjacencyRule adjRule = new AdjacencyRule( nextTo, tilesToOrder[relPosTile], tilesToOrder[relPosTile2], tilesToOrder  ); 
+		AdjacencyRule adjRule = new AdjacencyRule( nextTo, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		adjRule.ConstructVerbal();
 		
 		return adjRule;
 	}
 
-	AbsolutePositionRule CreateAbsoluteRule( List<TileHolder> holders, List<Tile> tilesToOrder )
+	AbsolutePositionRule CreateAbsoluteRule( List<TileHolder> holders, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage)
 	{
 
 		//create absolute position rule
@@ -151,20 +213,23 @@ public class Logic : MonoBehaviour {
 			int random = Random.Range (0, 1);
 			if( random == 0 ) //create rule with 2 tiles
 			{
-				int absPosTile2 = Random.Range (0, tilesToOrder.Count);
+//				int absPosTile2 = Random.Range (0, tilesToOrder.Count);
+//				
+//				while (absPosTile == absPosTile2) 
+//				{
+//					absPosTile2 = Random.Range (0, tilesToOrder.Count);
+//				}
+
+				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2);
 				
-				while (absPosTile == absPosTile2) 
-				{
-					absPosTile2 = Random.Range (0, tilesToOrder.Count);
-				}
-				
-				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToOrder[absPosTile], tilesToOrder[absPosTile2], absolutePosition, tilesToOrder ); 
+				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], tilesToUse[1], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
 				
 				return absPositionRule;
 			}
 			{
-				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToOrder[absPosTile], absolutePosition, tilesToOrder ); 
+				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1);
+				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
 				
 				return absPositionRule;
@@ -173,7 +238,8 @@ public class Logic : MonoBehaviour {
 		}
 		else
 		{
-			AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToOrder[absPosTile], absolutePosition, tilesToOrder ); 
+			List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1);
+			AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
 			absPositionRule.ConstructVerbal();
 			
 			return absPositionRule;
@@ -181,8 +247,10 @@ public class Logic : MonoBehaviour {
 	
 	}
 
-	Conditional CreateConditionalRule( List<TileHolder> holders, List<Tile> tilesToOrder )
+	Conditional CreateConditionalRule( List<TileHolder> holders, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
+		List<Tile> tilesUsedInRules = new List<Tile> ();
+
 		//choose 2 types of rules randomly ( not of same type )
 		int random = Random.Range (0, 2);
 		int random2 = Random.Range (0, 2);
@@ -197,29 +265,28 @@ public class Logic : MonoBehaviour {
 
 		if( random == 0 )
 		{
-			rule1 = CreateAbsoluteRule( holders, tilesToOrder );
+			rule1 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
 		}
 		else if( random == 1 )
 		{
-			rule1 = CreateAdjacencyRule( tilesToOrder );
+			rule1 = CreateAdjacencyRule( tilesToOrder, tileUsage );
 		}
 		else
 		{
-			rule1 = CreateRelativeRule( tilesToOrder );
+			rule1 = CreateRelativeRule( tilesToOrder, tileUsage );
 		}
-
 		
 		if( random2 == 0 )
 		{
-			rule2 = CreateAbsoluteRule( holders, tilesToOrder );
+			rule2 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
 		}
 		else if( random2 == 1 )
 		{
-			rule2 = CreateAdjacencyRule( tilesToOrder );
+			rule2 = CreateAdjacencyRule( tilesToOrder, tileUsage );
 		}
 		else
 		{
-			rule2 = CreateRelativeRule( tilesToOrder );
+			rule2 = CreateRelativeRule( tilesToOrder, tileUsage );
 		}
 
 		Conditional newConditional = new Conditional (rule1, rule2, tilesToOrder );
@@ -227,14 +294,26 @@ public class Logic : MonoBehaviour {
 
 		while( !validRule )
 		{
-			newConditional = CreateConditionalRule( holders, tilesToOrder );
+			//remove a point for each used tile in tileUsage dict
+			RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
+			newConditional = CreateConditionalRule( holders, tilesToOrder, tileUsage );
 			validRule = newConditional.IsValidRule();
 		}
 
 		return newConditional;
 	}
 
+	public void RemoveTilesUsedInRuleFromDict( Dictionary < Tile, int > tileUsage, Rule rule )
+	{
+		List<Tile> tilesUsed = rule.tilesUsedInRule;
 
+		for( int i = 0; i < tilesUsed.Count; i ++ )
+		{
+			Tile tileToUnuse = tilesUsed[ i ];
+			tileUsage[ tileToUnuse ] --;
+		}
+	}
+	
 
 	public string NewProblemSetUp( List<Tile> previousSubmission )
 	{

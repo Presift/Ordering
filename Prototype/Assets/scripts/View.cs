@@ -166,6 +166,7 @@ public class View : MonoBehaviour {
 
 			//create tile holders and place centered on board, spaced evenly
 			GameObject holder = ( GameObject ) Instantiate( tileHolder, tilePosition, Quaternion.identity );
+			SetTextOnHolder( holder, (tileIndex + 1 ).ToString());
 			holder.transform.parent = transform;
 			TileHolder holderScript =  holder.GetComponent<TileHolder>();
 			holderScript.model = model;
@@ -190,6 +191,15 @@ public class View : MonoBehaviour {
 		model.SetTilesToOrder (tiles);
 		return stagingAreas;
 	}
+
+	void SetTextOnHolder( GameObject textHolder, string text )
+	{
+		Transform textObj = textHolder.transform.GetChild( 0 );
+		textObj.GetComponent<TextMesh> ().text = text;
+	
+
+	}
+
 
 	public void WipePreviousProblem( List<Tile> tiles, List<TileHolder> tileHolders, List<StagingArea> stagingAreas )
 	{
