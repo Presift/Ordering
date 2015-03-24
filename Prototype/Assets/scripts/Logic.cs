@@ -53,11 +53,13 @@ public class Logic : MonoBehaviour {
 		impossiblesUsed = 0;
 		trialRules = new RuleStack ();
 
+		List<Tile> shuffledTiles = ShuffleThis (tiles);
+
 		//create tile dictionary where each tile has yet ot be used
 		Dictionary<Tile, int > tileUsage = new Dictionary< Tile , int > ();
-		for( int i = 0; i < tiles.Count; i ++ )
+		for( int i = 0; i < shuffledTiles.Count; i ++ )
 		{
-			tileUsage.Add ( tiles[ i ], 0 );
+			tileUsage.Add ( shuffledTiles[ i ], 0 );
 		}
 
 		int totalRules = maxAbsPosRules + maxRelativePosRules + maxAdjacencyRules + maxConditionals;
@@ -655,17 +657,37 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
 		}
+		else if( currentLevel == 7 )
+		{
+			maxRelativePosRules = 1;
+			maxAdjacencyRules = 1;
+			maxConditionals = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 3;
+			usingEitherOr = true;
+		}
+
+//		maxRelativePosRules = 1;
+//		maxAdjacencyRules = 1;
+//		tilesCount = 4;
+//		chanceOfImpossible = 100;
+//		maxImpossiblePerTrial = 1;
+//		maxRulesToSetNewProblem = 2;
+//		usingEitherOr = true;
 
 		maxRelativePosRules = 1;
 		maxAdjacencyRules = 1;
-		tilesCount = 4;
-		chanceOfImpossible = 100;
+		maxConditionals = 1;
+		tilesCount = 5;
+		chanceOfImpossible = 30;
 		maxImpossiblePerTrial = 1;
-		maxRulesToSetNewProblem = 2;
+		maxRulesToSetNewProblem = 3;
 		usingEitherOr = true;
-
+		
 	}
-
+	
 	void ResetStats()
 	{
 		maxAbsPosRules = 0;
@@ -677,6 +699,19 @@ public class Logic : MonoBehaviour {
 		maxRulesToSetNewProblem = 0;
 		usingEitherOr = false;
 
+	}
+
+	List<Tile> ShuffleThis(List<Tile> listToShuffle ){
+		List<Tile> data = new List<Tile> (listToShuffle);
+		int size = data.Count;
+		
+		for (int i = 0; i < size; i++){
+			int indexToSwap = Random.Range(i, size);
+			Tile oldValue = data[i];
+			data[i] = data[indexToSwap];
+			data[indexToSwap] = oldValue;
+		}
+		return data;
 	}
 
 	bool HappenedByChance( int chance ) //out of 100

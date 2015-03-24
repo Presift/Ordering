@@ -160,4 +160,24 @@ public class Controller : MonoBehaviour {
 			Destroy(child.gameObject);
 		}
 	}
+
+	public void ResetBoard()
+	{
+		//for each tile in game
+		for( int tile = 0; tile < model.tilesToOrder.Count; tile ++ )
+		{
+			if( !model.holders[ tile ].preset )
+			{
+				model.holders[ tile ].SetOccupied( null );
+			}
+
+			if( !model.tilesToOrder[ tile ].preset )
+			{
+				model.tilesToOrder[tile].currentHolder = null;
+				model.tilesToOrder[tile].targetHolder = null;
+				model.tilesToOrder[tile].StartMove( null );
+			}
+
+		}
+	}
 }

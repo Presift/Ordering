@@ -141,7 +141,7 @@ public class View : MonoBehaviour {
 //						Tile tileScript = tilesToOrder[ tile ].GetComponent<Tile>();
 						tilesToOrder[ tile ].StartMove( holders[i]);
 						tilesToOrder[ tile ].preset = true;
-						holders[ i ].preSet = true;
+						holders[ i ].preset = true;
 						holders[i].Highlight( true );
 						break;
 					}
@@ -210,7 +210,7 @@ public class View : MonoBehaviour {
 			if( tileHolders[i].occupyingTile != null )
 			{
 				tileHolders[i].SetOccupied( null );
-				tileHolders[i].preSet = false;
+				tileHolders[i].preset = false;
 			}
 
 			tiles[i].currentHolder = null;

@@ -11,7 +11,7 @@ public class TileHolder : MonoBehaviour {
 	public Model model;
 	public int spotNumber;
 
-	public bool preSet;
+	public bool preset;
 
 
 
@@ -45,7 +45,7 @@ public class TileHolder : MonoBehaviour {
 
 	void OnMouseDown()
 	{
-		if (model.selectedTile != null && !preSet && occupyingTile == null ) 
+		if (model.selectedTile != null && !preset && occupyingTile == null ) 
 		{
 			model.StartMove( this );
 		}
