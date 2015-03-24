@@ -73,6 +73,33 @@ public class Rule
 		Debug.Log ("no key found with 0 matches ");
 		return testKey;
 	}
+
+//	public List<string> GetKeyWithFewestMatchesToKey( string testKey, Dictionary<string, List<Tile>> dict )
+//	{
+//		List<string> diffKeyAndAnyMatchingChars = new List< string > ();
+//
+//		int fewestMatches = testKey.Length;
+//		string mostDiffKey = testKey;
+//		
+//		foreach( KeyValuePair<string, List<Tile>> pair in dict )
+//		{
+//			for( int charIndex = 0; charIndex < testKey.Length; charIndex ++ )
+//			{
+//				if( testKey[ charIndex ] == pair.Key[ charIndex ] )
+//				{
+//					break;
+//				}
+//			}
+//			Debug.Log ("found a key with no matches ");
+//			Debug.Log (pair.Key);
+//			return pair.Key;
+//		}
+//		
+//		Debug.Log ("no key found with 0 matches ");
+//		return testKey;
+//	}
+	
+
 	
 
 	public bool WildCardKeyInDictionary( string testKey, Dictionary<string, List<Tile>> dict )
@@ -400,8 +427,8 @@ public class RuleStack: Rule
 	{
 		if (ruleStack.Count == 0) 
 		{
-			correctSubmissions = newRule.correctSubmissions;
-			sharedImpossibleSubmissions = newRule.incorrectSubmissions;
+			correctSubmissions = new Dictionary<string, List<Tile>> ( newRule.correctSubmissions );
+			sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ( newRule.incorrectSubmissions );
 		}
 		else
 		{
@@ -409,11 +436,44 @@ public class RuleStack: Rule
 			RemoveIncorrectSubmissionsNotShared( newRule );
 		}
 		ruleStack.Add (newRule);
-//		Debug.Log (newRule.verbal);
-//		Debug.Log ("POSSIBLE SUBMISSIONS");
-//		PrintEachDictionaryValue (correctSubmissions);
-//		Debug.Log ("IMPOSSIBLE SUBMISSIONS");
-//		PrintEachDictionaryValue (sharedImpossibleSubmissions);
+	}
+
+	public List<Rule> GetRulesInStackNotInList( List <Rule > rules )
+	{
+		List<Rule> rulesNotInList = new List<Rule> ();
+
+		for( int i = 0; i < ruleStack.Count; i ++ )
+		{
+			if( !rules.Contains( ruleStack[ i ] ))
+			{
+				rulesNotInList.Add( ruleStack[ i ]);
+			}
+		}
+
+		return rulesNotInList;
+	}
+
+	public void RemoveLastRuleAdded()
+	{
+		Rule ruleToRemove = ruleStack [ruleStack.Count - 1];
+		ruleStack.Remove (ruleToRemove);
+
+		if( ruleStack.Count == 2 )
+		{
+			correctSubmissions = ruleStack[ 0 ].correctSubmissions;
+			sharedImpossibleSubmissions = ruleStack[ 0 ].incorrectSubmissions;
+		}
+		else
+		{
+			List< Rule > rulesToReAdd = new List<Rule>( ruleStack );
+			ruleStack = new List<Rule>();
+
+			for( int i = 0; i < rulesToReAdd.Count; i ++ )
+			{
+				AddRule( rulesToReAdd[ i ] );
+			}
+		}
+
 	}
 
 
@@ -445,9 +505,6 @@ public class RuleStack: Rule
 			string submission1 = pair.Key;
 			if( !newRule.correctSubmissions.ContainsKey( submission1))
 			{
-//				Debug.Log ("correct removed ");
-//				PrintTileList( correctSubmissions[ submission1 ] );
-//				correctSubmissions.Remove( submission1 );
 				keysToRemove.Add ( submission1 );
 			}
 		}
@@ -467,9 +524,6 @@ public class RuleStack: Rule
 			string submission1 = pair.Key;
 			if( !newRule.incorrectSubmissions.ContainsKey( submission1))
 			{
-//				Debug.Log ("incorrect removed");
-//				incorrectSubmissions.Remove( submission1 );
-//				PrintTileList( incorrectSubmissions[ submission1 ] );
 				keysToRemove.Add ( submission1 );
 			}
 		}
@@ -499,6 +553,18 @@ public class RuleStack: Rule
 			return false;
 		}
 	}
+
+//	public List<string> GetKeysToSatisfyRule( )
+//	{
+//
+//	}
+
+//	public List<string> GetKeysInCommon( List< string > keySet1, List< string > keySet2 )
+//	{
+//		List<string> stringsInCommon;
+//
+//		//for each key in keySet1
+//	}
 
 	public bool RuleConflictsWithRuleStack( Rule newRule )
 	{

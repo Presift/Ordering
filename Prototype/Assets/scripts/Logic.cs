@@ -49,6 +49,7 @@ public class Logic : MonoBehaviour {
 	public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
 	{
 		int difficultyPointsSpend = 0;
+		int rulesCreated = 0;
 		impossiblesUsed = 0;
 		trialRules = new RuleStack ();
 
@@ -70,6 +71,7 @@ public class Logic : MonoBehaviour {
 			if( !trialRules.RuleConflictsWithRuleStack( newConditional ))
 			{
 				trialRules.AddRule( newConditional );
+				rulesCreated ++;
 			}
 			else
 			{
@@ -82,6 +84,7 @@ public class Logic : MonoBehaviour {
 			if( !trialRules.RuleConflictsWithRuleStack( newAbs ))
 			{
 				trialRules.AddRule( newAbs );
+				rulesCreated ++;
 			}
 			else
 			{
@@ -95,6 +98,7 @@ public class Logic : MonoBehaviour {
 			if( !trialRules.RuleConflictsWithRuleStack(newRel))
 			{
 				trialRules.AddRule( newRel );
+				rulesCreated ++;
 			}
 			else
 			{
@@ -108,6 +112,7 @@ public class Logic : MonoBehaviour {
 			if( !trialRules.RuleConflictsWithRuleStack( newAdj ))
 			{
 				trialRules.AddRule( newAdj );
+				rulesCreated ++;
 			}
 			else
 			{
@@ -121,25 +126,31 @@ public class Logic : MonoBehaviour {
 		return trialRules.verbal;
 	}
 
-	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded )
+	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded, int rulesCreated )
 	{
+		int minReusedTiles = 0;
+		if( rulesCreated >= 1 )
+		{
+			minReusedTiles = 1;
+		}
+
 		int maxReusedTiles = 1;
 		int reusedTiles = 0;
+
 		List<Tile> tilesToUse = new List<Tile> ();
+
 
 		foreach( KeyValuePair< Tile , int > pair in tileUsage )
 		{
 			Tile tile = pair.Key;
 			//if tile has been used only once and reused tiles is less than max resused tiels
-			if( ( pair.Value < 1 ) && ( reusedTiles < maxReusedTiles ))
+			if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
 			{
-//				tileUsage [ tile ] ++;
 				tilesToUse.Add ( tile );
 				reusedTiles ++;
 			}
-			else if( pair.Value == 0 )
+			else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
 			{
-//				tileUsage [ tile ] ++;
 				tilesToUse.Add ( tile );
 			}
 			if( tilesToUse.Count == tilesNeeded )
@@ -162,16 +173,8 @@ public class Logic : MonoBehaviour {
 
 		//randomly determine before/after rule
 		int order = Random.Range (0, 1);
-//
-//		int relPosTile = Random.Range (0, tilesToOrder.Count);
-//		int relPosTile2 = Random.Range (0, tilesToOrder.Count);
-//		
-//		while (relPosTile == relPosTile2) 
-//		{
-//			relPosTile2 = Random.Range (0, tilesToOrder.Count);
-//		}
 
-		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2);
+		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count );
 		
 		RelativePositionRule relPositionRule = new RelativePositionRule( order, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		relPositionRule.ConstructVerbal();
@@ -183,15 +186,7 @@ public class Logic : MonoBehaviour {
 	{
 		int nextTo = Random.Range (0, 1);  //determins next to/not next to
 
-//		int relPosTile = Random.Range (0, tilesToOrder.Count);
-//		int relPosTile2 = Random.Range (0, tilesToOrder.Count);
-//
-//		while (relPosTile == relPosTile2) 
-//		{
-//			relPosTile2 = Random.Range (0, tilesToOrder.Count);
-//		}
-
-		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2);
+		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count);
 		
 		AdjacencyRule adjRule = new AdjacencyRule( nextTo, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		adjRule.ConstructVerbal();
@@ -213,14 +208,9 @@ public class Logic : MonoBehaviour {
 			int random = Random.Range (0, 1);
 			if( random == 0 ) //create rule with 2 tiles
 			{
-//				int absPosTile2 = Random.Range (0, tilesToOrder.Count);
-//				
-//				while (absPosTile == absPosTile2) 
-//				{
-//					absPosTile2 = Random.Range (0, tilesToOrder.Count);
-//				}
 
-				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2);
+
+				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count);
 				
 				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], tilesToUse[1], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
@@ -228,7 +218,7 @@ public class Logic : MonoBehaviour {
 				return absPositionRule;
 			}
 			{
-				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1);
+				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, trialRules.ruleStack.Count);
 				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
 				
@@ -238,7 +228,7 @@ public class Logic : MonoBehaviour {
 		}
 		else
 		{
-			List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1);
+			List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, trialRules.ruleStack.Count);
 			AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
 			absPositionRule.ConstructVerbal();
 			
@@ -329,7 +319,7 @@ public class Logic : MonoBehaviour {
 		Debug.Log ("create impossible : " + createImpossible );
 		if( createImpossible )
 		{
-			presetTiles = AttemptToCreateImpossibleBoard( previousSubmission );
+			presetTiles = AttemptToCreateImpossibleBoard( previousSubmission, model.tilesToOrder );
 		}
 		else
 		{
@@ -349,9 +339,12 @@ public class Logic : MonoBehaviour {
 			oldSubmission += previousSubmission[ tile ].name[ 0 ];
 		}
 
+		Debug.Log (" previous : " + oldSubmission);
+
 		//find a possible submission that does not match previous submission
 		string newSubmission = trialRules.GetKeyWithNoMatchesToKey (oldSubmission, trialRules.correctSubmissions);
 
+		Debug.Log (" new : " + newSubmission);
 		//create string with only 1 placed tile in newSubmission
 		int random = Random.Range (0, newSubmission.Length - 1);
 
@@ -374,35 +367,40 @@ public class Logic : MonoBehaviour {
 		return presetTiles;
 	}
 
-	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission )
+	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
 	{
+		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
+		{
+			Debug.Log (trialRules.ruleStack[ i ].verbal );
+			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
+		}
+
 		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
 		RuleStack rulesToBreak = CreateRuleStackFromRandomRulesInCurrentTrial( maxRulesToSetNewProblem );
+		List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
 		Debug.Log (" SHARED IMPOSSIBLE : " + rulesToBreak.sharedImpossibleSubmissions.Count);
 		Debug.Log ("combined rules : " + rulesToBreak.ruleStack.Count);
-//		Debug.Log ("impossibles : " + rulesToBreak.incorrectSubmissions.Count );
+
 		string presetTiles = null;
-		bool submissionsRemaining = true;
 		List<Tile> impossibleOrder = null;
-		
-		while( submissionsRemaining && presetTiles == null )
+
+		Debug.Log ("AFTER BREAK STACK");
+		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
 		{
-			//for each shared impossible
-			foreach( KeyValuePair<string, List<Tile>> pair in rulesToBreak.sharedImpossibleSubmissions )
-			{ 
-				impossibleOrder = rulesToBreak.sharedImpossibleSubmissions[ pair.Key ];
-				trialRules.PrintTileList( impossibleOrder );
-//				Debug.Log ("impossible key : " + impossibleOrder );
-				presetTiles = GetPresetTileOrder( impossibleOrder );
-				Debug.Log (presetTiles);
-				if(presetTiles != null )
-				{
-					break;
-				}
-			}
-			
-			submissionsRemaining = false;
+			Debug.Log (trialRules.ruleStack[ i ].verbal );
+			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
 		}
+		while( presetTiles == null && rulesToBreak.ruleStack.Count > 0 )
+		{
+			presetTiles = GetBestImpossiblePresetTileOrder( tilesToOrder, rulesToBreak, otherRules );
+			if( presetTiles == null )
+			{
+				otherRules.Add ( rulesToBreak.ruleStack[ rulesToBreak.ruleStack.Count - 1 ] );
+				Debug.Log ("REMOVED RULE ");
+				rulesToBreak.RemoveLastRuleAdded();
+			}
+		}
+
 		
 		if( presetTiles != null )
 		{
@@ -422,6 +420,82 @@ public class Logic : MonoBehaviour {
 		return presetTiles;
 	}
 
+	string GetBestImpossiblePresetTileOrder( List<Tile> tilesToOrder, RuleStack rulesToBreak, List<Rule> nonbreakingRules )
+	{
+		bool singleRuleBreak = rulesToBreak.ruleStack.Count == 1;
+		string bestPresetOrder = null;
+		//for each possible preset tile order of only 1 preset
+		for( int position = 0; position < tilesToOrder.Count; position ++ )
+		{
+			for( int preset = 0; preset < tilesToOrder.Count; preset ++ )
+			{
+				string presetOrder = "";
+				
+				for( int presetPosition = 0; presetPosition < tilesToOrder.Count; presetPosition ++ )
+				{
+					if( presetPosition == position )
+					{
+						presetOrder += tilesToOrder[ preset ].name[ 0 ];
+					}
+					else
+					{
+						presetOrder += "n";
+					}	
+				}
+
+				Debug.Log (presetOrder);
+				// test to see if preset order is in trial rules correct submission
+				if( !trialRules.WildCardKeyInDictionary( presetOrder, trialRules.correctSubmissions ))
+				{
+					Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
+					if( singleRuleBreak )
+					{
+						Debug.Log ( "SINGLE RULE BROKEN " );
+						return presetOrder;
+					}
+					//test to see if preset is a possible correct answer each concerned breakable rule
+					bool passBreakableRulesTest = true;
+					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+					{
+						if( !rulesToBreak.ruleStack[ i ].WildCardKeyInDictionary( presetOrder, rulesToBreak.ruleStack[ i ].correctSubmissions ))
+						{
+							Debug.Log ( rulesToBreak.ruleStack[ i ].verbal );
+							Debug.Log ( " PRESET BREAKS RULE TO BREAK " );
+							passBreakableRulesTest = false;
+							break;
+						}
+					}
+					
+					if( passBreakableRulesTest )
+					{
+						Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
+						bool passOtherRulesTest = true;
+						//test to see if preset is impossible for non-concerned rules in trial rules
+						for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
+						{
+							if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( presetOrder, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
+							{
+								Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
+								passOtherRulesTest = false;
+								break;
+							}
+						}
+						
+						if( passOtherRulesTest )
+						{
+							Debug.Log ( "SUCCESSFUL MULTI-RULE PRESET BREAK" );
+							return presetOrder;
+						}
+					}
+				}
+
+			}
+		}
+		
+		return bestPresetOrder;
+	}
+
+
 
 
 	RuleStack CreateRuleStackFromRandomRulesInCurrentTrial( int numberOfRulesToCombine )  //nothing here ensures that rules will share common impossibilities
@@ -432,7 +506,7 @@ public class Logic : MonoBehaviour {
 		{
 			//get random rule and add to stack
 			combinedRules.ConstructVerbal();
-			Debug.Log (combinedRules.verbal);
+//			Debug.Log (combinedRules.verbal);
 			int random = Random.Range( 0, trialRules.ruleStack.Count ); 
 			Debug.Log ("random rule index : " + random );
 			//whle this rule is already in stack
@@ -459,7 +533,7 @@ public class Logic : MonoBehaviour {
 	}
 	
 
-	string GetPresetTileOrder( List<Tile> impossibleOrder )
+	string GetImpossiblePresetTileOrder( List<Tile> impossibleOrder )
 	{
 		for( int tile = 0; tile < impossibleOrder.Count; tile ++ )
 		{
@@ -478,7 +552,7 @@ public class Logic : MonoBehaviour {
 				}
 			}
 
-			//if test key match not found in possible trial rule submissions
+			//if test key match not found in possible trial rule submissions, but is in each indivi
 			if(!trialRules.WildCardKeyInDictionary( testKey, trialRules.correctSubmissions ))
 			{
 				return testKey;
@@ -488,7 +562,8 @@ public class Logic : MonoBehaviour {
 
 		return null;
 	}
-	
+
+
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
@@ -504,6 +579,7 @@ public class Logic : MonoBehaviour {
 		{
 			maxRelativePosRules = 1;
 			tilesCount = 3;
+			maxRulesToSetNewProblem = 1;
 
 		}
 		else if( currentLevel == 1 )
@@ -523,7 +599,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 4;
 			chanceOfImpossible = 50;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
+			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 3 )
@@ -580,9 +656,14 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 		}
 
+		maxRelativePosRules = 1;
+		maxAdjacencyRules = 1;
+		tilesCount = 4;
 		chanceOfImpossible = 100;
 		maxImpossiblePerTrial = 1;
 		maxRulesToSetNewProblem = 2;
+		usingEitherOr = true;
+
 	}
 
 	void ResetStats()
