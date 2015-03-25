@@ -107,15 +107,20 @@ public class Model : MonoBehaviour {
 		if (selectedTile == newSelection) 
 		{
 			//deselect tile
+			selectedTile.Highlight( false );
+			selectedTile = null;
 		}
 		else if( selectedTile == null )
 		{
 			selectedTile = newSelection;
+			newSelection.Highlight( true );
 		}
 		else
 		{
 			//deselect current
+			selectedTile.Highlight( false );
 			selectedTile = newSelection;
+			newSelection.Highlight( true );
 		}
 	}
 

@@ -20,7 +20,11 @@ public class Staging : MonoBehaviour {
 
 		if (model.selectedTile != null ) 
 		{
-			model.StartMove( null );
+			if( !model.selectedTile.preset )
+			{
+				model.StartMove( null );
+			}
+
 		}
 		
 		UpdateSubmitButton ();

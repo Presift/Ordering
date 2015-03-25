@@ -353,6 +353,7 @@ public class AbsolutePositionRule : Rule
 		ruleType = newRuleType;
 		tile1 = newTile1;
 		tile2 = newTile2;
+		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
 		tilesUsedInRule.Add (tile1);

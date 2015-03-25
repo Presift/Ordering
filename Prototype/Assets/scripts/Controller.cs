@@ -25,7 +25,16 @@ public class Controller : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-
+		if(Input.GetKeyDown(KeyCode.UpArrow ))
+		{
+			model.UpdateLevel( true );
+			Debug.Log ("Trial : " + model.currentLevel );
+		}
+		else if( Input.GetKeyDown(KeyCode.DownArrow))
+		{
+			model.UpdateLevel( false );
+			Debug.Log ("Trial : " + model.currentLevel );
+		}
 	}
 
 	public void ActivateSubmissionButton( bool activate )
@@ -58,6 +67,7 @@ public class Controller : MonoBehaviour {
 				RespondToAnswer (false);
 
 			}
+			Debug.Log ( " submission : " + submissionKey );
 		}
 	
 
@@ -161,6 +171,11 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
+	public void Menu()
+	{
+		Application.LoadLevel ("Menu");
+	}
+
 	public void ResetBoard()
 	{
 		//for each tile in game
@@ -179,5 +194,10 @@ public class Controller : MonoBehaviour {
 			}
 
 		}
+	}
+
+	public void EmergencyReset()
+	{
+		NewTrial ();
 	}
 }

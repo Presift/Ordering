@@ -8,6 +8,10 @@ public class Tile : MonoBehaviour {
 	public TileHolder currentHolder;
 	public StagingArea currentStaging;
 	public bool preset;
+	Color originalColor;
+	Color highlightColor;
+	Renderer render;
+
 
 	// Use this for initialization
 	void Start () {
@@ -17,6 +21,15 @@ public class Tile : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 	
+	}
+
+	public void SetStartValues( Color firstColor, Color tileHighlight, StagingArea staging )
+	{
+		originalColor = firstColor;
+		render = GetComponent<Renderer> ();
+		render.material.color = originalColor;
+		highlightColor = new Color ((tileHighlight.r + originalColor.r ) / 2, (tileHighlight.g + originalColor.g ) / 2, (tileHighlight.b + originalColor.b ) / 2, (tileHighlight.a + originalColor.a ) / 2);
+		SetCurrentStaging( staging );
 	}
 
 	public void SetCurrentStaging( StagingArea staging )
@@ -52,8 +65,18 @@ public class Tile : MonoBehaviour {
 		{
 			model.ManageCurrentSelection (this);
 		}
+	}
 
-
+	public void Highlight( bool highlight )
+	{
+		if( highlight )
+		{
+			render.material.color = highlightColor;
+		}
+		else
+		{
+			render.material.color = originalColor;
+		}
 	}
 
 
@@ -84,10 +107,10 @@ public class Tile : MonoBehaviour {
 		{
 			//go to staging area
 			StagingArea area = model.GetUnoccupiedStagingArea();
-//			Debug.Log (area);
 			SetCurrentStaging( area ); 
-
 		}
+
+		model.ManageCurrentSelection (this);
 
 	}
 

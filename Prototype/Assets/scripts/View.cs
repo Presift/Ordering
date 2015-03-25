@@ -9,6 +9,7 @@ public class View : MonoBehaviour {
 
 	public List<Color> tileColors;
 	public List<string> colorNames;
+	public Color tileHighlight;
 
 	int maxTileCount;
 	float tileWidth;
@@ -141,6 +142,7 @@ public class View : MonoBehaviour {
 //						Tile tileScript = tilesToOrder[ tile ].GetComponent<Tile>();
 						tilesToOrder[ tile ].StartMove( holders[i]);
 						tilesToOrder[ tile ].preset = true;
+						tilesToOrder[ tile ].Highlight( false );
 						holders[ i ].preset = true;
 						holders[i].Highlight( true );
 						break;
@@ -179,10 +181,11 @@ public class View : MonoBehaviour {
 			StagingArea stagingArea = new StagingArea( stagingPosition, true );
 			GameObject tile = ( GameObject ) Instantiate( coloredTile, stagingPosition, Quaternion.identity );
 			tile.name = colorNames[ tileIndex ];
-			tile.GetComponent<Renderer>().material.color = tileColors[ tileIndex ];
-			Tile tileScript = tile.GetComponent<Tile>();
-			tileScript.SetCurrentStaging( stagingArea );
+
 			tile.transform.parent = transform;
+
+			Tile tileScript = tile.GetComponent<Tile>();
+			tileScript.SetStartValues( tileColors[ tileIndex ], tileHighlight, stagingArea );
 
 			tiles.Add (tileScript);
 			stagingAreas.Add ( stagingArea );

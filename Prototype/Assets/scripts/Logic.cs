@@ -11,8 +11,8 @@ public class Logic : MonoBehaviour {
 
 	public int problemsPerTrial;
 
-	public int maxRuleDifficulty;
-	public int maxProblemDifficulty;
+//	public int maxRuleDifficulty;
+//	public int maxProblemDifficulty;
 	public int maxRules;
 	public int tilesCount;
 	public int chanceOfImpossible;
@@ -27,11 +27,12 @@ public class Logic : MonoBehaviour {
 
 	//difficulty points
 	int absPosition = 6;
-	int negAbsPosition = 10;
+	int negAbsPosition = 7;
+	int adjacent = 8;
+	int notAdjacent = 9;
 	int beforeOrder = 10;
-	int afterOrder = 12;
-	int nextTo = 10;
-	int notNextTo = 12;
+	int afterOrder = 11;
+
 
 	int maxRulesToSetNewProblem;
 	bool usingEitherOr;
@@ -48,6 +49,7 @@ public class Logic : MonoBehaviour {
 
 	public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
 	{
+		model.SetImpossible (false);
 		int difficultyPointsSpend = 0;
 		int rulesCreated = 0;
 		impossiblesUsed = 0;
@@ -62,69 +64,89 @@ public class Logic : MonoBehaviour {
 			tileUsage.Add ( shuffledTiles[ i ], 0 );
 		}
 
-		int totalRules = maxAbsPosRules + maxRelativePosRules + maxAdjacencyRules + maxConditionals;
-		Debug.Log ("max rules : " + totalRules);
+		Debug.Log ("max rules : " + maxRules );
 
 		for( int conditional = 0; conditional < maxConditionals; conditional ++ )
 		{
-			Conditional newConditional = CreateConditionalRule( holders, tiles, tileUsage );
-			Debug.Log ( newConditional.ConstructVerbal());
-			Debug.Log (newConditional.verbal );
-			if( !trialRules.RuleConflictsWithRuleStack( newConditional ))
+			if( rulesCreated < maxRules )
 			{
-				trialRules.AddRule( newConditional );
-				rulesCreated ++;
+				Conditional newConditional = CreateConditionalRule( holders, tiles, tileUsage );
+				newConditional.ConstructVerbal();
+				if( !trialRules.RuleConflictsWithRuleStack( newConditional ))
+				{
+					trialRules.AddRule( newConditional );
+					rulesCreated ++;
+				}
+				else
+				{
+					RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
+				}
 			}
-			else
-			{
-				RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
 			}
-		}
-		for( int abs = 0; abs < maxAbsPosRules; abs ++ )
-		{
-			AbsolutePositionRule newAbs = CreateAbsoluteRule( holders, tiles, tileUsage );
-			if( !trialRules.RuleConflictsWithRuleStack( newAbs ))
-			{
-				trialRules.AddRule( newAbs );
-				rulesCreated ++;
-			}
-			else
-			{
-				RemoveTilesUsedInRuleFromDict( tileUsage, newAbs );
-			}
-		}
+
 
 		for( int relatives = 0; relatives < maxRelativePosRules; relatives ++ )
 		{
-			RelativePositionRule newRel = CreateRelativeRule( tiles, tileUsage );
-			if( !trialRules.RuleConflictsWithRuleStack(newRel))
+			if( rulesCreated < maxRules )
 			{
-				trialRules.AddRule( newRel );
-				rulesCreated ++;
+				RelativePositionRule newRel = CreateRelativeRule( tiles, tileUsage );
+				if( !trialRules.RuleConflictsWithRuleStack(newRel))
+				{
+					trialRules.AddRule( newRel );
+					rulesCreated ++;
+				}
+				else
+				{
+					RemoveTilesUsedInRuleFromDict( tileUsage, newRel );
+				}
 			}
-			else
+
+		}
+		
+		for( int adjacency = 0; adjacency < maxAdjacencyRules; adjacency ++ )
+		{
+			if( rulesCreated < maxRules )
 			{
-				RemoveTilesUsedInRuleFromDict( tileUsage, newRel );
+				AdjacencyRule newAdj = CreateAdjacencyRule( tiles, tileUsage );
+				if( !trialRules.RuleConflictsWithRuleStack( newAdj ))
+				{
+					trialRules.AddRule( newAdj );
+					rulesCreated ++;
+				}
+				else
+				{
+					RemoveTilesUsedInRuleFromDict( tileUsage, newAdj );
+				}
+			}
+
+		}
+		for( int abs = 0; abs < maxAbsPosRules; abs ++ )
+		{
+			if( rulesCreated < maxRules )
+			{
+				AbsolutePositionRule newAbs = CreateAbsoluteRule( holders, tiles, tileUsage );
+				if( !trialRules.RuleConflictsWithRuleStack( newAbs ))
+				{
+					trialRules.AddRule( newAbs );
+					rulesCreated ++;
+				}
+				else
+				{
+					RemoveTilesUsedInRuleFromDict( tileUsage, newAbs );
+				}
 			}
 		}
 
-		for( int adjacency = 0; adjacency < maxAdjacencyRules; adjacency ++ )
-		{
-			AdjacencyRule newAdj = CreateAdjacencyRule( tiles, tileUsage );
-			if( !trialRules.RuleConflictsWithRuleStack( newAdj ))
-			{
-				trialRules.AddRule( newAdj );
-				rulesCreated ++;
-			}
-			else
-			{
-				RemoveTilesUsedInRuleFromDict( tileUsage, newAdj );
-			}
-		}
+
 
 		trialRules.ConstructVerbal ();
 		Debug.Log ("rule count : " + trialRules.ruleStack.Count);
-		Debug.Log (" correct answers : " + trialRules.correctSubmissions.Count);
+		for( int i = 0; i < trialRules.ruleStack.Count; i++ )
+		{
+			Debug.Log ( trialRules.ruleStack[ i ].verbal );
+		}
+		Debug.Log (" ************CORRECT ANSWERS****************** : " );
+		trialRules.PrintEachDictionaryValue (trialRules.correctSubmissions);
 		return trialRules.verbal;
 	}
 
@@ -166,6 +188,28 @@ public class Logic : MonoBehaviour {
 			}
 		}
 
+//		Debug.Log ("adding more tiles ");
+//		foreach( KeyValuePair< Tile , int > pair in tileUsage )
+//		{
+//			Tile tile = pair.Key;
+//			//if tile has been used only once and reused tiles is less than max resused tiels
+//			if( pair.Value == 0 )
+//			{
+//				tilesToUse.Add ( tile );
+//			}
+//
+//			if( tilesToUse.Count == tilesNeeded )
+//			{
+//				for( int i = 0; i < tilesToUse.Count; i ++ )
+//				{
+//					tileUsage[tilesToUse[i]] ++;
+//					
+//				}
+//				
+//				return tilesToUse;
+//			}
+//		}
+
 		Debug.Log (" not enough tiles added ");
 		return tilesToUse;
 	}
@@ -174,7 +218,7 @@ public class Logic : MonoBehaviour {
 	{
 
 		//randomly determine before/after rule
-		int order = Random.Range (0, 1);
+		int order = Random.Range (0, 2);
 
 		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count );
 		
@@ -186,7 +230,7 @@ public class Logic : MonoBehaviour {
 
 	AdjacencyRule CreateAdjacencyRule( List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
-		int nextTo = Random.Range (0, 1);  //determins next to/not next to
+		int nextTo = Random.Range (0, 2);  //determins next to/not next to
 
 		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count);
 		
@@ -201,13 +245,14 @@ public class Logic : MonoBehaviour {
 
 		//create absolute position rule
 		int absolutePosition = Random.Range ( 0, holders.Count );
+//		Debug.Log ("ABSOLUTE POSITION : " + absolutePosition);
 
 		int absPosTile = Random.Range (0, tilesToOrder.Count);
 
 		//decide if using 1 or 2 tiles for rule
 		if (usingEitherOr) 
 		{
-			int random = Random.Range (0, 1);
+			int random = Random.Range (0, 2);
 			if( random == 0 ) //create rule with 2 tiles
 			{
 
@@ -348,7 +393,7 @@ public class Logic : MonoBehaviour {
 
 		Debug.Log (" new : " + newSubmission);
 		//create string with only 1 placed tile in newSubmission
-		int random = Random.Range (0, newSubmission.Length - 1);
+		int random = Random.Range (0, newSubmission.Length);
 
 		string presetTiles = "";
 		for( int tile = 0; tile < previousSubmission.Count; tile ++ )
@@ -371,27 +416,27 @@ public class Logic : MonoBehaviour {
 
 	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
 	{
-		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
-		{
-			Debug.Log (trialRules.ruleStack[ i ].verbal );
-			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
-		}
+//		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
+//		{
+//			Debug.Log (trialRules.ruleStack[ i ].verbal );
+//			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
+//		}
 
 		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
 		RuleStack rulesToBreak = CreateRuleStackFromRandomRulesInCurrentTrial( maxRulesToSetNewProblem );
 		List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
-		Debug.Log (" SHARED IMPOSSIBLE : " + rulesToBreak.sharedImpossibleSubmissions.Count);
-		Debug.Log ("combined rules : " + rulesToBreak.ruleStack.Count);
+//		Debug.Log (" SHARED IMPOSSIBLE : " + rulesToBreak.sharedImpossibleSubmissions.Count);
+		Debug.Log ("combined rules in impossible stack : " + rulesToBreak.ruleStack.Count);
 
 		string presetTiles = null;
 		List<Tile> impossibleOrder = null;
 
-		Debug.Log ("AFTER BREAK STACK");
-		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
-		{
-			Debug.Log (trialRules.ruleStack[ i ].verbal );
-			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
-		}
+//		Debug.Log ("AFTER BREAK STACK");
+//		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
+//		{
+//			Debug.Log (trialRules.ruleStack[ i ].verbal );
+//			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
+//		}
 		while( presetTiles == null && rulesToBreak.ruleStack.Count > 0 )
 		{
 			presetTiles = GetBestImpossiblePresetTileOrder( tilesToOrder, rulesToBreak, otherRules );
@@ -507,18 +552,18 @@ public class Logic : MonoBehaviour {
 		for(int i = 0; i < Mathf.Min ( numberOfRulesToCombine, trialRules.ruleStack.Count ); i ++ )
 		{
 			//get random rule and add to stack
-			combinedRules.ConstructVerbal();
-//			Debug.Log (combinedRules.verbal);
 			int random = Random.Range( 0, trialRules.ruleStack.Count ); 
-			Debug.Log ("random rule index : " + random );
+
 			//whle this rule is already in stack
-			while( combinedRules.RuleInStack( trialRules.ruleStack[ random ] ))
+			//TEMPORARY FIX FOR BREAKING CONDITIONAL RULES IS TO NOT INCLUDE THEM, CONDITIONAL RULES TAKE AT LEAST 2 TILES TO BREAK
+			while( combinedRules.RuleInStack( trialRules.ruleStack[ random ] ) && !(trialRules.ruleStack[ random ] is Conditional ))
 			{
 				//get a new rule
 				random = Random.Range( 0, trialRules.ruleStack.Count );
 			}
-			
+
 			combinedRules.AddRule ( trialRules.ruleStack[ random ] );
+
 		}
 		Debug.Log ("rules in rulestack : " + combinedRules.ruleStack.Count);
 		return combinedRules;
@@ -530,7 +575,7 @@ public class Logic : MonoBehaviour {
 	List<Tile> GetRandomValueFromDictionary( Dictionary<string, List<Tile>> submissionDict )  //move to Rule class
 	{
 		List<string> keys = new List < string > ( submissionDict.Keys );
-		List<Tile> randomValue = submissionDict[ keys[ Random.Range (0, keys.Count - 1 ) ] ];
+		List<Tile> randomValue = submissionDict[ keys[ Random.Range (0, keys.Count) ] ];
 		return randomValue;
 	}
 	
@@ -579,16 +624,31 @@ public class Logic : MonoBehaviour {
 
 		if (currentLevel == 0) 
 		{
+			maxRules = 2;
 			maxRelativePosRules = 1;
 			tilesCount = 3;
-			maxRulesToSetNewProblem = 1;
 
+			maxRulesToSetNewProblem = 1;
 		}
+//		if (currentLevel < 5) 
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAdjacencyRules = 1;
+//			tilesCount = 5;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetNewProblem = 2;
+//			usingEitherOr = true;	
+//		}
 		else if( currentLevel == 1 )
 		{
-//			maxRuleDifficulty = 10;
+			maxRules = 2;
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 1;
+
 			tilesCount = 3;
 			chanceOfImpossible = 75;
 			maxImpossiblePerTrial = 1;
@@ -596,28 +656,32 @@ public class Logic : MonoBehaviour {
 		}
 		else if( currentLevel == 2 )
 		{
+			maxRules = 2;
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
+
 			tilesCount = 4;
-			chanceOfImpossible = 50;
+			chanceOfImpossible = 40;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetNewProblem = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 3 )
 		{
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
+			maxRules = 2;
+			maxRelativePosRules = 2;
+
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetNewProblem = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 4 )
 		{
-			maxRelativePosRules = 1;
+			maxRules = 1;
 			maxConditionals = 1;
+
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
@@ -626,66 +690,129 @@ public class Logic : MonoBehaviour {
 		}
 		else if( currentLevel == 5 )
 		{
-			maxRelativePosRules = 1;
+			maxRules = 2;
+
 			maxConditionals = 1;
+			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetNewProblem = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 6 )
 		{
-			maxRelativePosRules = 1;
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-			tilesCount = 5;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
-			usingEitherOr = true;
-		}
-		else if( currentLevel == 6 )
-		{
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
+			maxRules = 2;
 			maxConditionals = 1;
+			maxRelativePosRules = 2;
+
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetNewProblem = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 7 )
 		{
+			maxRules = 2;
+
+			maxConditionals = 0;
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
+
+			tilesCount = 5;
+			chanceOfImpossible = 50;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 8 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 0;
+			maxRelativePosRules = 1;
+			maxAdjacencyRules = 1;
+			maxAbsPosRules = 1;
+			
+			tilesCount = 5;
+			chanceOfImpossible = 50;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 9 )
+		{
+			maxRules = 3;
+
 			maxConditionals = 1;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 1;
+			
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 3;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 10 )
+		{
+			maxRules = 3;
+
+			maxConditionals = 1;
+			maxRelativePosRules = 1;
+			maxAdjacencyRules = 1;
+			
+			tilesCount = 5;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 11 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 1;
+			
+			tilesCount = 5;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 12 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 2;
+			maxAbsPosRules = 0;
+			
+			tilesCount = 5;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 13 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 2;
+			
+			tilesCount = 5;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetNewProblem = 2;
 			usingEitherOr = true;
 		}
 
-//		maxRelativePosRules = 1;
-//		maxAdjacencyRules = 1;
-//		tilesCount = 4;
-//		chanceOfImpossible = 100;
-//		maxImpossiblePerTrial = 1;
-//		maxRulesToSetNewProblem = 2;
-//		usingEitherOr = true;
-
-		maxRelativePosRules = 1;
-		maxAdjacencyRules = 1;
-		maxConditionals = 1;
-		tilesCount = 5;
-		chanceOfImpossible = 30;
-		maxImpossiblePerTrial = 1;
-		maxRulesToSetNewProblem = 3;
-		usingEitherOr = true;
-		
 	}
 	
 	void ResetStats()
@@ -716,8 +843,8 @@ public class Logic : MonoBehaviour {
 
 	bool HappenedByChance( int chance ) //out of 100
 	{
-		int random = Random.Range (0, 100);
-
+		int random = Random.Range (0, 101);
+		Debug.Log (" ROLLED : " + random + " , CHANCE : " + chance);
 		if( random > chance )
 		{
 			return false;
