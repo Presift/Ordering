@@ -45,6 +45,9 @@ public class Controller : MonoBehaviour {
 
 	public void CheckSubmission()
 	{
+		//debug
+		string submissionKey = model.OrderedTileKey ();
+		Debug.Log ("Submission : " + submissionKey);
 		if(model.impossible)
 		{
 			Debug.Log ("INCORRECT");
@@ -53,7 +56,7 @@ public class Controller : MonoBehaviour {
 		}
 		else
 		{
-			string submissionKey = model.OrderedTileKey ();
+//			string submissionKey = model.OrderedTileKey ();
 
 			if( logic.trialRules.correctSubmissions.ContainsKey( submissionKey))
 			{
@@ -67,7 +70,7 @@ public class Controller : MonoBehaviour {
 				RespondToAnswer (false);
 
 			}
-			Debug.Log ( " submission : " + submissionKey );
+//			Debug.Log ( " submission : " + submissionKey );
 		}
 	
 

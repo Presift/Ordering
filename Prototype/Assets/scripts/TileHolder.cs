@@ -48,22 +48,40 @@ public class TileHolder : MonoBehaviour {
 		if (model.selectedTile != null && !preset && occupyingTile == null ) 
 		{
 			model.StartMove( this );
+//			model.UpdateSubmitButton ();
 		}
 
-		UpdateSubmitButton ();
+
 	}
 	
 
 	public void SetOccupied( Tile tile )
 	{
+//		if (tile != null) 
+//		{
+//
+//			Debug.Log (this.name + "set to " + tile.name);	
+//		}
+//		else
+//		{
+//			Debug.Log (this.name + "set to null ");
+//		}
+
+		if( occupyingTile != null )
+		{
+			occupyingTile.SetCurrentHolder( null );
+		}
+
 		occupyingTile = tile;
+		model.UpdateSubmitButton ();
+
 	}
 
-	void UpdateSubmitButton()
-	{
-		bool submissionReady = model.ReadyForSubmission();
-		model.controller.ActivateSubmissionButton( submissionReady );
-	}
+//	void UpdateSubmitButton()
+//	{
+//		bool submissionReady = model.ReadyForSubmission();
+//		model.controller.ActivateSubmissionButton( submissionReady );
+//	}
 
 
 

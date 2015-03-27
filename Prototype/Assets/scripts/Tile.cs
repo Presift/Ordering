@@ -38,25 +38,26 @@ public class Tile : MonoBehaviour {
 		transform.position = staging.position;
 	}
 
-	public void SetCurrentHolder( TileHolder newHolder )
-	{
-		currentHolder = newHolder;
-		if( currentHolder != null )
-		{
-			transform.position = newHolder.transform.position;
-			currentHolder.occupyingTile = this;
-		}
-		else
-		{
-			if( targetHolder != null )
-			{
-				targetHolder.Highlight( false );
-			}
-			targetHolder = null;
-
-		}
-
-	}
+//	public void SetCurrentHolder( TileHolder newHolder )
+//	{
+//		Debug.Log ("called");
+//		currentHolder = newHolder;
+//		if( currentHolder != null )
+//		{
+//			transform.position = newHolder.transform.position;
+//			currentHolder.occupyingTile = this;
+//		}
+//		else
+//		{
+//			if( targetHolder != null )
+//			{
+//				targetHolder.Highlight( false );
+//			}
+//			targetHolder = null;
+//
+//		}
+//
+//	}
 
 	//MOVEMENT
 	void OnMouseDown()
@@ -79,9 +80,23 @@ public class Tile : MonoBehaviour {
 		}
 	}
 
+	public void SetCurrentHolder( TileHolder holder )
+	{
+		currentHolder = holder;
+	}
 
 	public void StartMove( TileHolder newHolder )
 	{
+//		if( currentHolder != null )
+//		{
+//			Debug.Log (this.name + "'s current holder " + currentHolder.name);
+//		}
+//		if (newHolder != null) 
+//		{
+//			Debug.Log (this.name + "'s new holder " + newHolder.name);	
+//		}
+
+
 		//if currently in holder tile
 		if( currentHolder != null )
 		{
@@ -101,7 +116,7 @@ public class Tile : MonoBehaviour {
 		{
 			transform.position = newHolder.transform.position;
 			newHolder.SetOccupied( this );
-			currentHolder = newHolder;
+			SetCurrentHolder( newHolder );
 		}
 		else
 		{

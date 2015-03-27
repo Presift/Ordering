@@ -100,7 +100,31 @@ public class Model : MonoBehaviour {
 		}
 		return true;	
 	}
-	
+
+	public void UpdateSubmitButton()
+	{
+		bool submissionReady = ReadyForSubmission();
+		controller.ActivateSubmissionButton( submissionReady );
+	}
+
+//	public bool ReadyForSubmission()
+//	{
+//		bool readyForSubmission = true;
+//		int tilesOccupied = 0;
+//			for( int i = 0; i < holders.Count; i ++ )
+//		{
+//			if( holders[ i ].occupyingTile == null )
+//			{
+//				readyForSubmission = false;
+//			}
+//			else
+//			{
+//				tilesOccupied ++;
+//			}
+//		}
+//		Debug.Log ("holders occupied : " + tilesOccupied);
+//		return readyForSubmission;	
+//	}
 
 	public void ManageCurrentSelection( Tile newSelection )
 	{
@@ -122,11 +146,14 @@ public class Model : MonoBehaviour {
 			selectedTile = newSelection;
 			newSelection.Highlight( true );
 		}
+
+//		Debug.Log (" selected tile : " + newSelection.name);
 	}
 
-	public void StartMove( TileHolder newTile )
+	public void StartMove( TileHolder newHolder )
 	{
-		selectedTile.StartMove (newTile);
+//		Debug.Log ("start moving : " + selectedTile.name);
+		selectedTile.StartMove (newHolder);
 	}
 
 	public void ShowAvailableMoves()

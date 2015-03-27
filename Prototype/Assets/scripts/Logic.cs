@@ -39,9 +39,13 @@ public class Logic : MonoBehaviour {
 	int maxConditionalInImpossibleSet;
 
 	// difficulty for possible board
-	bool clause2False;
-	bool clause2TrueClause1False;
 
+	//CONDITIONALS
+	bool modusPonens; //if a then b
+	bool modusTollens; //if !b, then !a
+	bool showClauseBNotA;  // b and !a
+	bool showClauseBImplyNotA;  // b and make a impossible
+	
 	string previousPossiblePresetKey;
 	string previousImpossiblePresetKey;
 
@@ -90,7 +94,7 @@ public class Logic : MonoBehaviour {
 			tileUsage.Add ( shuffledTiles[ i ], 0 );
 		}
 
-		Debug.Log ("max rules : " + maxRules );
+//		Debug.Log ("max rules : " + maxRules );
 
 		for( int conditional = 0; conditional < maxConditionals; conditional ++ )
 		{
@@ -367,7 +371,7 @@ public class Logic : MonoBehaviour {
 			createImpossible = HappenedByChance( chanceOfImpossible );
 
 		}
-		Debug.Log ("create impossible : " + createImpossible );
+//		Debug.Log ("create impossible : " + createImpossible );
 		if( createImpossible )
 		{
 			presetTiles = AttemptToCreateImpossibleBoard( previousSubmission, model.tilesToOrder );
@@ -380,46 +384,55 @@ public class Logic : MonoBehaviour {
 		return presetTiles;
 	}
 
+//	string CreatePossibleBoard( List<Tile> previousSubmission )
+//	{
+//		Debug.Log ("CREATING POSSIBLE BOARD");
+//		//create  key string from previousSubmission
+//		string oldSubmission = "";
+//		for( int tile = 0; tile < previousSubmission.Count; tile ++ )
+//		{
+//			oldSubmission += previousSubmission[ tile ].name[ 0 ];
+//		}
+//
+//		//find a possible submission that does not match previous submission
+//		string newSubmission = trialRules.GetKeyWithNoMatchesToKey (oldSubmission, trialRules.correctSubmissions);
+//
+//		int random = Random.Range (0, newSubmission.Length);
+//
+//		string presetTiles = "";
+//
+//		for( int tile = 0; tile < previousSubmission.Count; tile ++ )
+//		{
+//			if( tile == random )
+//			{
+//				presetTiles += newSubmission[ tile ];
+//			}
+//			else
+//			{
+//				presetTiles += "n";
+//			}
+//
+//		}
+//
+//		model.SetImpossible( false );
+//
+//		previousPossiblePresetKey = presetTiles;
+//		return presetTiles;
+//	}
+
 	string CreatePossibleBoard( List<Tile> previousSubmission )
 	{
 		Debug.Log ("CREATING POSSIBLE BOARD");
 		//create  key string from previousSubmission
-		string oldSubmission = "";
-		for( int tile = 0; tile < previousSubmission.Count; tile ++ )
-		{
-			oldSubmission += previousSubmission[ tile ].name[ 0 ];
-		}
 
-//		Debug.Log (" previous : " + oldSubmission);
+		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
 
-		//find a possible submission that does not match previous submission
-		string newSubmission = trialRules.GetKeyWithNoMatchesToKey (oldSubmission, trialRules.correctSubmissions);
-
-//		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
-//		Debug.Log ("TILE BANK");
-//		ConcatenateAndPrintListOfStrings (tileBank);
-//		string presetTiles = GetBestPresetToCompleteBoard (1, tileBank);
-//		Debug.Log (presetTiles);
-//		create string with only 1 placed tile in newSubmission
-		int random = Random.Range (0, newSubmission.Length);
-
-		string presetTiles = "";
-
-		for( int tile = 0; tile < previousSubmission.Count; tile ++ )
-		{
-			if( tile == random )
-			{
-				presetTiles += newSubmission[ tile ];
-			}
-			else
-			{
-				presetTiles += "n";
-			}
-
-		}
-
+		string presetTiles = GetBestPresetToCompleteBoard (1, tileBank);
+		Debug.Log (presetTiles);
+		//		create string with only 1 placed tile in newSubmission
+		
 		model.SetImpossible( false );
-
+		
 		previousPossiblePresetKey = presetTiles;
 		return presetTiles;
 	}
@@ -565,48 +578,86 @@ public class Logic : MonoBehaviour {
 		}
 	}
 
-	string GetBestPresetToCompleteBoard ( int maxPresets, List< string > presetBank )
+	string GetBestPresetToCompleteBoard ( int presets, List< string > tileBank )
 	{
 		int fewestPossibleCompletions = 1000;
 		string bestKey = null;
 
-		for( int i = 1; i < maxPresets + 1; i ++ )
-		{
-			List< List<string> > presetTileCombos = new List< List<string> >();
-			int nullToAdd = model.tilesToOrder.Count - maxPresets;
-			List< string > newCombo = new List< string > ();
-//			GetAllBankCombinationsForPresets( presetBank, newCombo, i, presetTileCombos, nullToAdd );
-			Debug.Log ( " combos : " + presetTileCombos.Count );
-			//for each combo in allCombos
-			for( int comboIndex = 0; comboIndex < presetTileCombos.Count; comboIndex ++ )
-			{
-				List< string > presetOrderCombos = new List< string > ();
-//				GetAllPresetOrdersFromCombos( presetOrderCombos, presetTileCombos[ comboIndex ], presetOrderCombos );
-				Debug.Log ( " preset orders : " + presetOrderCombos.Count );
-				for( int presetOrderIndex = 0; presetOrderIndex < presetOrderCombos.Count; presetOrderIndex ++ )
-				{
-					if( PresetIsNew( presetOrderCombos[ presetOrderIndex ] ))
-					{
-						//test to see if preset has fewer possibilites than best
-						int instances = GetPresetInstances( presetOrderCombos[ presetOrderIndex ] );
-						if ( instances < fewestPossibleCompletions && fewestPossibleCompletions > 0)
-						{
-							bestKey = presetOrderCombos[ presetOrderIndex ];
-							fewestPossibleCompletions = instances;
-						}
-					}
+		List< List<string> > tileCombos = new List< List<string> >();
+		List< string > newCombo = new List< string > ();
+		GetAllCombinationsForPresets( tileBank, newCombo, presets, tileCombos);
 
-					if( fewestPossibleCompletions == 1 )
+		//for each combo in allCombos
+		for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
+		{
+			List<int> digitBank = CreateDigitBank( tileBank.Count );
+			
+			List< string > presetKeyCombos = new List< string > ();
+			
+			List<int> currPosOrder = new List<int> ();
+			
+			GetPresetOrdersFromCombos( currPosOrder, digitBank, digitBank.Count, tileCombos[ comboIndex ], presetKeyCombos );
+			
+			for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
+			{
+				string preset = presetKeyCombos[ presetOrderIndex ];
+				if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions))
+				{
+					//test to see if preset has fewer possibilites than best
+					int instances = GetPresetInstances( preset );
+					if ( instances < fewestPossibleCompletions && fewestPossibleCompletions > 0)
 					{
-						return bestKey;
+						bestKey = preset;
+						fewestPossibleCompletions = instances;
 					}
 				}
-			}
 
+				if( fewestPossibleCompletions == 1 )
+				{
+					return bestKey;
+				}
+			}
 		}
 
 		return bestKey;
 	}
+
+//	string AttemptToGetImpossibleKey( int presets, List<string> tileBank, RuleStack rulesToBreak, List< Rule> nonBreakingRules )
+//	{
+//		bool singleRuleBreak = rulesToBreak.ruleStack.Count == 1;
+//		
+//		Debug.Log ("RULES TO BREAK : ");
+//		for (int rule = 0; rule < rulesToBreak.ruleStack.Count; rule ++) {
+//			Debug.Log (rulesToBreak.ruleStack [ rule ].verbal );
+//		}
+//		
+//		List< List<string> > tileCombos = new List< List<string> >();
+//		List< string > newCombo = new List< string > ();
+//		GetAllCombinationsForPresets( tileBank, newCombo, presets, tileCombos);
+//		
+//		//for each combo in allCombos
+//		for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
+//		{
+//			List<int> digitBank = CreateDigitBank( tileBank.Count );
+//			
+//			List< string > presetKeyCombos = new List< string > ();
+//			
+//			List<int> currPosOrder = new List<int> ();
+//			
+//			GetPresetOrdersFromCombos( currPosOrder, digitBank, digitBank.Count, tileCombos[ comboIndex ], presetKeyCombos );
+//			
+//			for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
+//			{
+//				
+//				if( ImpossibleKey( presetKeyCombos[ presetOrderIndex ], rulesToBreak, nonBreakingRules, singleRuleBreak ))
+//				{
+//					return presetKeyCombos[ presetOrderIndex ];
+//				}
+//			}
+//		}
+//		
+//		return null;
+//	}
 	
 
 	RuleStack ReturnRuleStackFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
@@ -635,16 +686,16 @@ public class Logic : MonoBehaviour {
 		return false;
 	}
 
-	void UpdateMinPresets( int minPresetTiles, RuleStack rulesToBreak )
-	{
-		minPresetTiles = 1; 
-
-		if( RuleStackContainsConditional( rulesToBreak ))
-		{
-			Debug.Log ( "contains conditional ");
-			minPresetTiles = 2;
-		}
-	}
+//	void UpdateMinPresets( int minPresetTiles, RuleStack rulesToBreak )
+//	{
+//		minPresetTiles = 1; 
+//
+//		if( RuleStackContainsConditional( rulesToBreak ))
+//		{
+//			Debug.Log ( "contains conditional ");
+//			minPresetTiles = 2;
+//		}
+//	}
 
 	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
 	{
@@ -652,12 +703,11 @@ public class Logic : MonoBehaviour {
 		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
 		List< List<Rule> > allRuleCombos = new List< List<Rule> > ();
 		List< Rule > newCombo = new List<Rule > ();
-		List< Rule > ruleBank = trialRules.ruleStack;
+		List< Rule > ruleBank = new List<Rule>( trialRules.ruleStack );
+
 		GetAllCombinationsOfRules (ruleBank, newCombo, Mathf.Min ( maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count ), allRuleCombos);
-		Debug.Log (allRuleCombos.Count);
 
 		string presetTiles = null;
-		List<Tile> impossibleOrder = null;
 
 		Debug.Log (" combo list count : " + allRuleCombos.Count); 
 		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
@@ -671,7 +721,7 @@ public class Logic : MonoBehaviour {
 			{
 				RuleStack rulesToBreak = ReturnRuleStackFromComboList ( allRuleCombos, i );
 				
-				UpdateMinPresets (minPresetTiles, rulesToBreak);
+//				UpdateMinPresets (minPresetTiles, rulesToBreak);
 				
 				List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
 
@@ -701,6 +751,7 @@ public class Logic : MonoBehaviour {
 			model.SetImpossible( true );
 			impossiblesUsed ++;
 			Debug.Log ("found valid preset tile order ");
+			previousImpossiblePresetKey = presetTiles;
 			return presetTiles;
 		}
 		else
@@ -725,6 +776,7 @@ public class Logic : MonoBehaviour {
 
 		List< List<string> > tileCombos = new List< List<string> >();
 		List< string > newCombo = new List< string > ();
+
 		GetAllCombinationsForPresets( tileBank, newCombo, presets, tileCombos);
 
 		//for each combo in allCombos
@@ -740,10 +792,12 @@ public class Logic : MonoBehaviour {
 
 			for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
 			{
-
-				if( ImpossibleKey( presetKeyCombos[ presetOrderIndex ], rulesToBreak, nonBreakingRules, singleRuleBreak ))
+				if( presetKeyCombos[ presetOrderIndex ] != previousImpossiblePresetKey )
 				{
-					return presetKeyCombos[ presetOrderIndex ];
+					if( ImpossibleKey( presetKeyCombos[ presetOrderIndex ], rulesToBreak, nonBreakingRules, singleRuleBreak ))
+					{
+						return presetKeyCombos[ presetOrderIndex ];
+					}
 				}
 			}
 		}
@@ -869,43 +923,45 @@ public class Logic : MonoBehaviour {
 	}
 	
 
-	string GetImpossiblePresetTileOrder( List<Tile> impossibleOrder )
-	{
-		for( int tile = 0; tile < impossibleOrder.Count; tile ++ )
-		{
-			string testKey = "";
-
-			//create testy string with only one preset tile
-			for (int i = 0; i < impossibleOrder.Count; i ++ )
-			{
-				if( i == tile )
-				{
-					testKey += impossibleOrder[ tile ].name[ 0 ];
-				}
-				else
-				{
-					testKey += "n";
-				}
-			}
-
-			//if test key match not found in possible trial rule submissions, but is in each indivi
-//			if(!trialRules.WildCardKeyInDictionary( testKey, trialRules.correctSubmissions ))
-			if(!PresetIsPossibleCorrectSubmission( testKey ))
-			{
-				return testKey;
-			}
-
-		}
-
-		return null;
-	}
+//	string GetImpossiblePresetTileOrder( List<Tile> impossibleOrder )
+//	{
+//		for( int tile = 0; tile < impossibleOrder.Count; tile ++ )
+//		{
+//			string testKey = "";
+//
+//			//create testy string with only one preset tile
+//			for (int i = 0; i < impossibleOrder.Count; i ++ )
+//			{
+//				if( i == tile )
+//				{
+//					testKey += impossibleOrder[ tile ].name[ 0 ];
+//				}
+//				else
+//				{
+//					testKey += "n";
+//				}
+//			}
+//
+//			//if test key match not found in possible trial rule submissions, but is in each indivi
+////			if(!trialRules.WildCardKeyInDictionary( testKey, trialRules.correctSubmissions ))
+//			if(!PresetIsPossibleCorrectSubmission( testKey ))
+//			{
+//				return testKey;
+//			}
+//
+//		}
+//
+//		return null;
+//	}
 
 	void SetRuleCreationParameters( int maxCond, int maxRel, int maxAdj, int maxAbs )
 	{
-		maxCond = maxConditionals;
-		maxRel = maxRelativePosRules;
-		maxAdj = maxAdjacencyRules;
-		maxAbs = maxAbsPosRules;
+		maxConditionals = maxCond;
+		maxRelativePosRules = maxRel;
+		maxAdjacencyRules = maxAdj;
+		maxAbsPosRules = maxAbs;
+		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
+//		Debug.Log (" max Rules : " + maxRules);
 	
 	}
 
@@ -921,29 +977,33 @@ public class Logic : MonoBehaviour {
 		maxImpossiblePerTrial = maxImp;
 	}
 
-	void SetPossibleBoardParameters( )
+	void SetPossibleBoardParameters( bool AThenB, bool notBThenNotA, bool showBAndNotA, bool showBAndAImpossible )
 	{
-
+		AThenB = modusPonens;
+		notBThenNotA = modusTollens;
+		showClauseBNotA = showBAndNotA;
+		showClauseBImplyNotA = showBAndAImpossible;
 	}
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
 		ResetStats ();
 
+//		Debug.Log (currentLevel);
+
 		if (currentLevel == 0) 
 		{
 			SetRuleCreationParameters( 0, 1, 0, 0 );
 			SetTileCount ( 3 );
-			maxRules = 2;
 			SetImpossibleBoardParameters( 1, 30, 1 );
+			SetPossibleBoardParameters( false, false, false, false );
 		}
 
 		else if( currentLevel == 1 )
 		{
-			maxRules = 2;
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 1;
-
+			maxRules = 2;
 			tilesCount = 3;
 			chanceOfImpossible = 75;
 			maxImpossiblePerTrial = 1;
@@ -951,10 +1011,9 @@ public class Logic : MonoBehaviour {
 		}
 		else if( currentLevel == 2 )
 		{
-			maxRules = 2;
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
-
+			maxRules = 2;
 			tilesCount = 4;
 			chanceOfImpossible = 40;
 			maxImpossiblePerTrial = 1;
@@ -963,9 +1022,8 @@ public class Logic : MonoBehaviour {
 		}
 		else if( currentLevel == 3 )
 		{
-			maxRules = 2;
 			maxRelativePosRules = 2;
-
+			maxRules = 2;
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
@@ -974,12 +1032,10 @@ public class Logic : MonoBehaviour {
 		}
 		else if( currentLevel == 4 )
 		{
-			maxRules = 2;
-			
 			maxConditionals = 0;
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
-			
+			maxRules = 2;
 			tilesCount = 4;
 			chanceOfImpossible = 50;
 			maxImpossiblePerTrial = 1;
@@ -988,27 +1044,25 @@ public class Logic : MonoBehaviour {
 		}
 		else if( currentLevel == 5 )
 		{
-			maxRules = 1;
 			maxConditionals = 1;
-			
+			maxRules = 1;
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, false, false, false );
 		}
 		else if( currentLevel == 6 )
 		{
-			maxRules = 1;
 			maxConditionals = 1;
-			
+			maxRules = 1;
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
-			clause2False = true;
-			clause2TrueClause1False = false;
+			SetPossibleBoardParameters( true, true, false, false );
 		}
 		else if( currentLevel == 7 )
 		{
@@ -1020,8 +1074,8 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
-			clause2False = true;
-			clause2TrueClause1False = true;
+			SetPossibleBoardParameters( true, true, false, false );
+
 		}
 		else if( currentLevel == 8 )
 		{
@@ -1035,6 +1089,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, false, false );
 		}
 
 		else if( currentLevel == 9 )
@@ -1048,6 +1103,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, false );
 		}
 		else if( currentLevel == 8 )
 		{
@@ -1063,6 +1119,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, false );
 		}
 		else if( currentLevel == 9 )
 		{
@@ -1077,6 +1134,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, false );
 		}
 		else if( currentLevel == 10 )
 		{
@@ -1105,6 +1163,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
 		}
 		else if( currentLevel == 12 )
 		{
@@ -1119,6 +1178,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
 		}
 		else if( currentLevel == 13 )
 		{
@@ -1133,18 +1193,21 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
 		}
 
-		maxRules = 1;
-		maxConditionals = 1;
+		maxRules = 3;
 		
-		tilesCount = 4;
-		chanceOfImpossible = 30;
-		maxImpossiblePerTrial = 1;
-		maxRulesToSetImpossibleBoard = 1;
+		maxConditionals = 1;
+		maxRelativePosRules = 1;
+		maxAdjacencyRules = 1;
+		
+		tilesCount = 5;
+		chanceOfImpossible = 100;
+		maxImpossiblePerTrial = 2;
+		maxRulesToSetImpossibleBoard = 2;
 		usingEitherOr = true;
-		clause2False = true;
-		clause2TrueClause1False = false;
+	
 		
 	}
 	
@@ -1161,6 +1224,8 @@ public class Logic : MonoBehaviour {
 
 		previousPossiblePresetKey = null;
 		previousImpossiblePresetKey = null;
+
+		SetPossibleBoardParameters( false, false, false, false );
 
 	}
 
@@ -1180,7 +1245,7 @@ public class Logic : MonoBehaviour {
 	bool HappenedByChance( int chance ) //out of 100
 	{
 		int random = Random.Range (0, 101);
-		Debug.Log (" ROLLED : " + random + " , CHANCE : " + chance);
+//		Debug.Log (" ROLLED : " + random + " , CHANCE : " + chance);
 		if( random > chance )
 		{
 			return false;

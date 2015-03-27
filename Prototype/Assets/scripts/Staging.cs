@@ -20,21 +20,22 @@ public class Staging : MonoBehaviour {
 
 		if (model.selectedTile != null ) 
 		{
-			if( !model.selectedTile.preset )
-			{
+			Debug.Log (model.selectedTile.name);
+
+//			if( !model.selectedTile.preset )
+//			{
 				model.StartMove( null );
-			}
+//			}
+//			model.UpdateSubmitButton ();
 
 		}
-		
-		UpdateSubmitButton ();
 
 	}
 
 
-	void UpdateSubmitButton()
-	{
-		bool submissionReady = model.ReadyForSubmission();
-		model.controller.ActivateSubmissionButton( submissionReady );
-	}
+//	void UpdateSubmitButton()
+//	{
+//		bool submissionReady = model.ReadyForSubmission();
+//		model.controller.ActivateSubmissionButton( submissionReady );
+//	}
 }

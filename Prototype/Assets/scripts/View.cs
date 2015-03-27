@@ -173,6 +173,7 @@ public class View : MonoBehaviour {
 			TileHolder holderScript =  holder.GetComponent<TileHolder>();
 			holderScript.model = model;
 			holderScript.spotNumber = tileIndex + 1;
+			holder.name = ( tileIndex + 1 ).ToString();
 			holders.Add( holderScript );
 
 			//create a tile with a unique color and color name
