@@ -53,8 +53,6 @@ public class Rule
 
 	public string GetKeyWithNoMatchesToKey( string testKey, Dictionary<string, List<Tile>> dict )
 	{
-//		int fewestMatches = testKey.Length;
-//		string differentKey = testKey;
 
 		foreach( KeyValuePair<string, List<Tile>> pair in dict )
 		{
@@ -73,34 +71,9 @@ public class Rule
 		Debug.Log ("no key found with 0 matches ");
 		return testKey;
 	}
-
-//	public List<string> GetKeyWithFewestMatchesToKey( string testKey, Dictionary<string, List<Tile>> dict )
-//	{
-//		List<string> diffKeyAndAnyMatchingChars = new List< string > ();
-//
-//		int fewestMatches = testKey.Length;
-//		string mostDiffKey = testKey;
-//		
-//		foreach( KeyValuePair<string, List<Tile>> pair in dict )
-//		{
-//			for( int charIndex = 0; charIndex < testKey.Length; charIndex ++ )
-//			{
-//				if( testKey[ charIndex ] == pair.Key[ charIndex ] )
-//				{
-//					break;
-//				}
-//			}
-//			Debug.Log ("found a key with no matches ");
-//			Debug.Log (pair.Key);
-//			return pair.Key;
-//		}
-//		
-//		Debug.Log ("no key found with 0 matches ");
-//		return testKey;
-//	}
 	
 
-	
+
 
 	public bool WildCardKeyInDictionary( string testKey, Dictionary<string, List<Tile>> dict )
 	{
@@ -117,6 +90,23 @@ public class Rule
 		}
 
 		return keyFoundInDict;
+	}
+
+	public int CountWildCardInDictionary( string testKey, Dictionary<string, List<Tile>> dict )
+	{
+		int appearanceInDict = 0;
+
+
+		foreach( KeyValuePair<string, List<Tile>> pair in dict )
+		{ 
+			//if test key match found dict
+			if( WildCardSubmissionKeyNameMatch( pair.Key, testKey ))
+			{
+				appearanceInDict ++;
+			}
+		}
+
+		return appearanceInDict;
 	}
 
 	bool WildCardSubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
@@ -554,18 +544,7 @@ public class RuleStack: Rule
 			return false;
 		}
 	}
-
-//	public List<string> GetKeysToSatisfyRule( )
-//	{
-//
-//	}
-
-//	public List<string> GetKeysInCommon( List< string > keySet1, List< string > keySet2 )
-//	{
-//		List<string> stringsInCommon;
-//
-//		//for each key in keySet1
-//	}
+	
 
 	public bool RuleConflictsWithRuleStack( Rule newRule )
 	{
@@ -626,6 +605,37 @@ public class RuleStack: Rule
 		}
 		return verbal;
 	}
+
+	public string ConstructRandomOrderedVerbal() // 0 is in a spot, 1 is NOT in a spot
+	{
+		List< int> random = GetListOfShuffledIntegers (ruleStack.Count);
+		verbal = "";
+		for(int i = 0; i < random.Count; i ++ )
+		{
+			verbal += ruleStack[ random[ i ] ].verbal + "\n";
+		}
+		return verbal;
+	}
+
+	List<int> GetListOfShuffledIntegers ( int max, int min = 0 ){
+
+		List<int> unshuffled = new List<int>();
+		for( int i = min; i < max; i ++ )
+		{
+			unshuffled.Add ( i );
+		}
+
+		int size = unshuffled.Count;
+		
+		for (int i = 0; i < size; i++){
+			int indexToSwap = Random.Range(i, size);
+			int oldValue = unshuffled[i];
+			unshuffled[i] = unshuffled[indexToSwap];
+			unshuffled[indexToSwap] = oldValue;
+		}
+
+		return unshuffled;  //now shuffled
+	}
 }
 
 public class Conditional: Rule
@@ -664,6 +674,13 @@ public class Conditional: Rule
 		verbal = "If " + rule1.verbal + ", " + rule2.verbal;
 		return verbal;
 	}
+
+//	public bool SubmissionFollowsRule1( List< Tile > submission )
+//	{
+//
+//	}
+//
+//	public bool SubmissionFollowsRule2( List<Tile > submission )
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{

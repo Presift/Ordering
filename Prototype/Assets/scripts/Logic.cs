@@ -24,6 +24,7 @@ public class Logic : MonoBehaviour {
 	int maxRelativePosRules;
 	int maxAdjacencyRules;
 	int maxConditionals;
+	bool usingEitherOr;
 
 	//difficulty points
 	int absPosition = 6;
@@ -33,12 +34,37 @@ public class Logic : MonoBehaviour {
 	int beforeOrder = 10;
 	int afterOrder = 11;
 
+	//difficulty for impossible board
+	int maxRulesToSetImpossibleBoard;
+	int maxConditionalInImpossibleSet;
 
-	int maxRulesToSetNewProblem;
-	bool usingEitherOr;
+	// difficulty for possible board
+	bool clause2False;
+	bool clause2TrueClause1False;
+
+	string previousPossiblePresetKey;
+	string previousImpossiblePresetKey;
 
 	// Use this for initialization
 	void Start () {
+//
+//		int nullToAdd = 0;
+//		List< List< string>> allCombos = new List< List< string>> ();
+//		List< string > newCombo = new List< string > ();
+//		List<string> bank = new List<string>();
+//		bank.Add ("a");
+//		bank.Add ("b");
+//		bank.Add ("c");
+//		GetAllCombinationsForPresets (bank, newCombo, 2, allCombos );
+//	
+//		List<string> allKeyCombos = new List<string> ();
+//		List<int> currPosOrder = new List<int> ();
+//		List<int> digitBank = new List<int> ();
+//		digitBank.Add (0);
+//		digitBank.Add (1);
+//		digitBank.Add (2);
+//		digitBank.Add (3);
+//		GetPresetOrdersFromCombos (currPosOrder, digitBank, digitBank.Count, allCombos [0], allKeyCombos );
 
 	}
 
@@ -46,7 +72,7 @@ public class Logic : MonoBehaviour {
 	void Update () {
 	
 	}
-
+	
 	public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
 	{
 		model.SetImpossible (false);
@@ -82,7 +108,7 @@ public class Logic : MonoBehaviour {
 					RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
 				}
 			}
-			}
+		}
 
 
 		for( int relatives = 0; relatives < maxRelativePosRules; relatives ++ )
@@ -139,14 +165,14 @@ public class Logic : MonoBehaviour {
 
 
 
-		trialRules.ConstructVerbal ();
+		trialRules.ConstructRandomOrderedVerbal ();
 		Debug.Log ("rule count : " + trialRules.ruleStack.Count);
 		for( int i = 0; i < trialRules.ruleStack.Count; i++ )
 		{
 			Debug.Log ( trialRules.ruleStack[ i ].verbal );
 		}
-		Debug.Log (" ************CORRECT ANSWERS****************** : " );
-		trialRules.PrintEachDictionaryValue (trialRules.correctSubmissions);
+//		Debug.Log (" ************CORRECT ANSWERS****************** : " );
+//		trialRules.PrintEachDictionaryValue (trialRules.correctSubmissions);
 		return trialRules.verbal;
 	}
 
@@ -187,28 +213,6 @@ public class Logic : MonoBehaviour {
 				return tilesToUse;
 			}
 		}
-
-//		Debug.Log ("adding more tiles ");
-//		foreach( KeyValuePair< Tile , int > pair in tileUsage )
-//		{
-//			Tile tile = pair.Key;
-//			//if tile has been used only once and reused tiles is less than max resused tiels
-//			if( pair.Value == 0 )
-//			{
-//				tilesToUse.Add ( tile );
-//			}
-//
-//			if( tilesToUse.Count == tilesNeeded )
-//			{
-//				for( int i = 0; i < tilesToUse.Count; i ++ )
-//				{
-//					tileUsage[tilesToUse[i]] ++;
-//					
-//				}
-//				
-//				return tilesToUse;
-//			}
-//		}
 
 		Debug.Log (" not enough tiles added ");
 		return tilesToUse;
@@ -370,13 +374,13 @@ public class Logic : MonoBehaviour {
 		}
 		else
 		{
-			presetTiles = CreatePartiallyFilledBoard( previousSubmission );
+			presetTiles = CreatePossibleBoard( previousSubmission );
 		}
 		Debug.Log (presetTiles);
 		return presetTiles;
 	}
 
-	string CreatePartiallyFilledBoard( List<Tile> previousSubmission )
+	string CreatePossibleBoard( List<Tile> previousSubmission )
 	{
 		Debug.Log ("CREATING POSSIBLE BOARD");
 		//create  key string from previousSubmission
@@ -386,16 +390,21 @@ public class Logic : MonoBehaviour {
 			oldSubmission += previousSubmission[ tile ].name[ 0 ];
 		}
 
-		Debug.Log (" previous : " + oldSubmission);
+//		Debug.Log (" previous : " + oldSubmission);
 
 		//find a possible submission that does not match previous submission
 		string newSubmission = trialRules.GetKeyWithNoMatchesToKey (oldSubmission, trialRules.correctSubmissions);
 
-		Debug.Log (" new : " + newSubmission);
-		//create string with only 1 placed tile in newSubmission
+//		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
+//		Debug.Log ("TILE BANK");
+//		ConcatenateAndPrintListOfStrings (tileBank);
+//		string presetTiles = GetBestPresetToCompleteBoard (1, tileBank);
+//		Debug.Log (presetTiles);
+//		create string with only 1 placed tile in newSubmission
 		int random = Random.Range (0, newSubmission.Length);
 
 		string presetTiles = "";
+
 		for( int tile = 0; tile < previousSubmission.Count; tile ++ )
 		{
 			if( tile == random )
@@ -411,41 +420,278 @@ public class Logic : MonoBehaviour {
 
 		model.SetImpossible( false );
 
+		previousPossiblePresetKey = presetTiles;
 		return presetTiles;
+	}
+
+	void ConcatenateAndPrintListOfStrings( List< string > stringList )
+	{
+		string stringToPrint = "";
+
+		for( int i = 0; i < stringList.Count; i ++ )
+		{
+			stringToPrint += stringList[ i ];
+		}
+
+		Debug.Log (stringToPrint);
+	}
+
+	List< string > GetTilesAsListOfLetters( List< Tile > tiles )
+  	{
+		List< string > letters = new List< string > ();
+		for( int i = 0; i < tiles.Count; i ++ )
+		{
+			letters.Add ( tiles[ i ].name[ 0 ].ToString() );
+		}
+		return letters;
+	}
+
+	bool PresetIsNew( string possiblePreset )  //fewest number of preset tiles that completely fills in tiles
+	{
+
+		//if preset matches previouspossible submission
+		if (previousPossiblePresetKey != null) 
+		{
+			if( previousPossiblePresetKey == possiblePreset )
+			{
+				return false;
+			}
+		}
+
+		return true;
+
+	}
+
+	int GetPresetInstances( string possiblePreset )
+	{
+		int possiblePresetCount = trialRules.CountWildCardInDictionary (possiblePreset, trialRules.correctSubmissions);
+
+		return possiblePresetCount;
+	}
+
+	void GetAllCombinationsForPresets( List< string > presetBank, List< string > currentCombo, int maxPresetTiles, List< List<string> > allCombos  )
+	{
+		if( currentCombo.Count < maxPresetTiles )
+		{
+			//continue permutating
+			for( int i = 0; i < presetBank.Count; i ++ )
+			{
+				List< string > newCombo = new List< string > ( currentCombo );
+				newCombo.Add ( presetBank[ i ] );
+
+				List< string > newBank = new List<string> ( presetBank );
+				newBank.Remove( presetBank[ i ] );
+
+				GetAllCombinationsForPresets( newBank, newCombo, maxPresetTiles, allCombos );  //combine this list of tiles with newTilePermuation list?
+				
+			}
+		}
+		else
+		{
+//			ConcatenateAndPrintListOfStrings( currentCombo );
+
+			allCombos.Add ( currentCombo );
+		}
+	}
+
+	void GetPresetOrdersFromCombos( List< int > currPositionOrder, List< int > positionBank, int stringLength,  List< string > presetTileCombo, List< string > allPresetTileCombos, string filler = "n" ) 
+	{
+		if( currPositionOrder.Count < presetTileCombo.Count )
+		{
+			List < int > workingSet = new List < int > ( positionBank );
+			//continue permutating
+			for( int i = 0; i < workingSet.Count; i ++ )
+			{
+				List<int> newPositionOrder = new List<int> ( currPositionOrder );
+				newPositionOrder.Add ( workingSet[i] );
+
+				positionBank.Remove( workingSet[i] );
+				List<int> newPositionBank = new List<int>( positionBank );
+
+				GetPresetOrdersFromCombos( newPositionOrder, newPositionBank, stringLength, presetTileCombo, allPresetTileCombos  );  //combine this list of tiles with newTilePermuation list?
+				
+			}
+		}
+		else
+		{
+			List<string> stringBank = new List<string>( presetTileCombo );
+			string newKeyCombo = "";
+			for( int position = 0; position < stringLength; position ++ )
+			{
+				if( currPositionOrder.Count > 0 )
+				{
+					if( position == currPositionOrder[ 0 ] )
+					{
+						newKeyCombo += stringBank[ 0 ];
+						currPositionOrder.RemoveAt( 0 );
+						stringBank.RemoveAt( 0 );
+					}
+					else
+					{
+						newKeyCombo += filler;
+					}
+				}
+				else
+				{
+					newKeyCombo += filler;
+				}
+			}
+//			Debug.Log ( newKeyCombo );
+			allPresetTileCombos.Add ( newKeyCombo );
+
+		}
+	}
+
+	bool KeyBreaksClause2OfConditional( string key, Conditional condRule )  
+	{
+		Debug.Log (" possibles for rule 2 : " + condRule.rule2.correctSubmissions );
+		if( trialRules.WildCardKeyInDictionary( key, condRule.rule2.correctSubmissions ))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	bool PresetIsPossibleCorrectSubmission( string key )
+	{
+		if( trialRules.WildCardKeyInDictionary( key, trialRules.correctSubmissions ))
+		
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
+
+	string GetBestPresetToCompleteBoard ( int maxPresets, List< string > presetBank )
+	{
+		int fewestPossibleCompletions = 1000;
+		string bestKey = null;
+
+		for( int i = 1; i < maxPresets + 1; i ++ )
+		{
+			List< List<string> > presetTileCombos = new List< List<string> >();
+			int nullToAdd = model.tilesToOrder.Count - maxPresets;
+			List< string > newCombo = new List< string > ();
+//			GetAllBankCombinationsForPresets( presetBank, newCombo, i, presetTileCombos, nullToAdd );
+			Debug.Log ( " combos : " + presetTileCombos.Count );
+			//for each combo in allCombos
+			for( int comboIndex = 0; comboIndex < presetTileCombos.Count; comboIndex ++ )
+			{
+				List< string > presetOrderCombos = new List< string > ();
+//				GetAllPresetOrdersFromCombos( presetOrderCombos, presetTileCombos[ comboIndex ], presetOrderCombos );
+				Debug.Log ( " preset orders : " + presetOrderCombos.Count );
+				for( int presetOrderIndex = 0; presetOrderIndex < presetOrderCombos.Count; presetOrderIndex ++ )
+				{
+					if( PresetIsNew( presetOrderCombos[ presetOrderIndex ] ))
+					{
+						//test to see if preset has fewer possibilites than best
+						int instances = GetPresetInstances( presetOrderCombos[ presetOrderIndex ] );
+						if ( instances < fewestPossibleCompletions && fewestPossibleCompletions > 0)
+						{
+							bestKey = presetOrderCombos[ presetOrderIndex ];
+							fewestPossibleCompletions = instances;
+						}
+					}
+
+					if( fewestPossibleCompletions == 1 )
+					{
+						return bestKey;
+					}
+				}
+			}
+
+		}
+
+		return bestKey;
+	}
+	
+
+	RuleStack ReturnRuleStackFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
+	{
+		RuleStack rulesToBreak = new RuleStack ();
+		List<Rule> rules = allRuleCombos [ comboListIndex ];
+
+		for( int i = 0; i < rules.Count; i ++ )
+		{
+			rulesToBreak.AddRule ( rules [ i ] );
+		}
+
+		return rulesToBreak;
+	}
+
+	bool RuleStackContainsConditional( RuleStack rules )
+	{
+		for( int i = 0; i < rules.ruleStack.Count; i ++ )
+		{
+			if( rules.ruleStack[ i ] is Conditional )
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	void UpdateMinPresets( int minPresetTiles, RuleStack rulesToBreak )
+	{
+		minPresetTiles = 1; 
+
+		if( RuleStackContainsConditional( rulesToBreak ))
+		{
+			Debug.Log ( "contains conditional ");
+			minPresetTiles = 2;
+		}
 	}
 
 	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
 	{
-//		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
-//		{
-//			Debug.Log (trialRules.ruleStack[ i ].verbal );
-//			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
-//		}
 
 		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
-		RuleStack rulesToBreak = CreateRuleStackFromRandomRulesInCurrentTrial( maxRulesToSetNewProblem );
-		List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
-//		Debug.Log (" SHARED IMPOSSIBLE : " + rulesToBreak.sharedImpossibleSubmissions.Count);
-		Debug.Log ("combined rules in impossible stack : " + rulesToBreak.ruleStack.Count);
+		List< List<Rule> > allRuleCombos = new List< List<Rule> > ();
+		List< Rule > newCombo = new List<Rule > ();
+		List< Rule > ruleBank = trialRules.ruleStack;
+		GetAllCombinationsOfRules (ruleBank, newCombo, Mathf.Min ( maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count ), allRuleCombos);
+		Debug.Log (allRuleCombos.Count);
 
 		string presetTiles = null;
 		List<Tile> impossibleOrder = null;
 
-//		Debug.Log ("AFTER BREAK STACK");
-//		for( int i = 0; i < trialRules.ruleStack.Count; i ++ )
-//		{
-//			Debug.Log (trialRules.ruleStack[ i ].verbal );
-//			Debug.Log (trialRules.ruleStack[ i ].correctSubmissions.Count );
-//		}
-		while( presetTiles == null && rulesToBreak.ruleStack.Count > 0 )
+		Debug.Log (" combo list count : " + allRuleCombos.Count); 
+		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
+
+		int maxPresetTiles = 3;
+		int minPresetTiles = 1;
+		
+		while( presetTiles == null || minPresetTiles > maxPresetTiles )
 		{
-			presetTiles = GetBestImpossiblePresetTileOrder( tilesToOrder, rulesToBreak, otherRules );
-			if( presetTiles == null )
+			for( int i = 0; i < allRuleCombos.Count; i ++ )
 			{
-				otherRules.Add ( rulesToBreak.ruleStack[ rulesToBreak.ruleStack.Count - 1 ] );
-				Debug.Log ("REMOVED RULE ");
-				rulesToBreak.RemoveLastRuleAdded();
+				RuleStack rulesToBreak = ReturnRuleStackFromComboList ( allRuleCombos, i );
+				
+				UpdateMinPresets (minPresetTiles, rulesToBreak);
+				
+				List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
+
+				presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
+
+				if( presetTiles != null )
+				{
+					previousImpossiblePresetKey = presetTiles;
+					break;
+				}
 			}
+
+			//if this is read then preset is null
+			//increase min preset tiles
+			minPresetTiles ++;
+
+			//FOR LATER
+			//if minPresets > maxPresets and rules in trial > 1
+				//try with fewer rules to combine
+				//reset min/max preset counts
 		}
 
 		
@@ -460,114 +706,157 @@ public class Logic : MonoBehaviour {
 		else
 		{
 			model.SetImpossible( false );
-			presetTiles = CreatePartiallyFilledBoard( previousSubmission );
+			presetTiles = CreatePossibleBoard( previousSubmission );
 			Debug.Log ("impossible preset NOT found, creating possible board ");
 		}
 
 		return presetTiles;
 	}
 
-	string GetBestImpossiblePresetTileOrder( List<Tile> tilesToOrder, RuleStack rulesToBreak, List<Rule> nonbreakingRules )
+
+	string AttemptToGetImpossibleKey( int presets, List<string> tileBank, RuleStack rulesToBreak, List< Rule> nonBreakingRules )
 	{
 		bool singleRuleBreak = rulesToBreak.ruleStack.Count == 1;
-		string bestPresetOrder = null;
-		//for each possible preset tile order of only 1 preset
-		for( int position = 0; position < tilesToOrder.Count; position ++ )
+
+		Debug.Log ("RULES TO BREAK : ");
+		for (int rule = 0; rule < rulesToBreak.ruleStack.Count; rule ++) {
+			Debug.Log (rulesToBreak.ruleStack [ rule ].verbal );
+		}
+
+		List< List<string> > tileCombos = new List< List<string> >();
+		List< string > newCombo = new List< string > ();
+		GetAllCombinationsForPresets( tileBank, newCombo, presets, tileCombos);
+
+		//for each combo in allCombos
+		for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
 		{
-			for( int preset = 0; preset < tilesToOrder.Count; preset ++ )
+			List<int> digitBank = CreateDigitBank( tileBank.Count );
+
+			List< string > presetKeyCombos = new List< string > ();
+
+			List<int> currPosOrder = new List<int> ();
+
+			GetPresetOrdersFromCombos( currPosOrder, digitBank, digitBank.Count, tileCombos[ comboIndex ], presetKeyCombos );
+
+			for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
 			{
-				string presetOrder = "";
-				
-				for( int presetPosition = 0; presetPosition < tilesToOrder.Count; presetPosition ++ )
-				{
-					if( presetPosition == position )
-					{
-						presetOrder += tilesToOrder[ preset ].name[ 0 ];
-					}
-					else
-					{
-						presetOrder += "n";
-					}	
-				}
 
-				Debug.Log (presetOrder);
-				// test to see if preset order is in trial rules correct submission
-				if( !trialRules.WildCardKeyInDictionary( presetOrder, trialRules.correctSubmissions ))
+				if( ImpossibleKey( presetKeyCombos[ presetOrderIndex ], rulesToBreak, nonBreakingRules, singleRuleBreak ))
 				{
-					Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
-					if( singleRuleBreak )
-					{
-						Debug.Log ( "SINGLE RULE BROKEN " );
-						return presetOrder;
-					}
-					//test to see if preset is a possible correct answer each concerned breakable rule
-					bool passBreakableRulesTest = true;
-					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
-					{
-						if( !rulesToBreak.ruleStack[ i ].WildCardKeyInDictionary( presetOrder, rulesToBreak.ruleStack[ i ].correctSubmissions ))
-						{
-							Debug.Log ( rulesToBreak.ruleStack[ i ].verbal );
-							Debug.Log ( " PRESET BREAKS RULE TO BREAK " );
-							passBreakableRulesTest = false;
-							break;
-						}
-					}
-					
-					if( passBreakableRulesTest )
-					{
-						Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
-						bool passOtherRulesTest = true;
-						//test to see if preset is impossible for non-concerned rules in trial rules
-						for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
-						{
-							if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( presetOrder, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
-							{
-								Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
-								passOtherRulesTest = false;
-								break;
-							}
-						}
-						
-						if( passOtherRulesTest )
-						{
-							Debug.Log ( "SUCCESSFUL MULTI-RULE PRESET BREAK" );
-							return presetOrder;
-						}
-					}
+					return presetKeyCombos[ presetOrderIndex ];
 				}
-
 			}
 		}
-		
-		return bestPresetOrder;
+			
+		return null;
+	}
+
+	List<int> CreateDigitBank( int length )
+	{
+		List<int> digitBank = new List<int> ();
+		for( int i = 0; i < length; i ++ )
+		{
+			digitBank.Add ( i );
+		}
+
+		return digitBank;
+	}
+
+	bool ImpossibleKey( string possibleKey, RuleStack rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
+	{
+//		if( !trialRules.WildCardKeyInDictionary( possibleKey, trialRules.correctSubmissions ))
+		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
+		{
+			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
+
+			//test to see if preset is a possible correct answer each concerned breakable rule
+			bool passBreakableRulesTest = true;
+
+
+			for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+			{
+				//if key is not in rule to break's correct submissions
+				if( !rulesToBreak.ruleStack[ i ].WildCardKeyInDictionary( possibleKey, rulesToBreak.ruleStack[ i ].correctSubmissions ))
+				{
+					if ( !singleRuleBreak )
+					{
+						Debug.Log ( " PRESET BREAKS RULE TO BREAK " );
+						passBreakableRulesTest = false;
+						break;
+					}
+
+				}
+			}
+			
+			if( passBreakableRulesTest )
+			{
+				Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
+				bool passOtherRulesTest = true;
+				//test to see if preset is impossible for non-concerned rules in trial rules
+				for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
+				{
+					if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
+					{
+						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
+						passOtherRulesTest = false;
+						break;
+					}
+				}
+				
+				if( passOtherRulesTest )
+				{
+					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
+					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+					{
+						Debug.Log (rulesToBreak.ruleStack[ i ].verbal);
+					}
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 
 
+	void GetAllCombinationsOfRules ( List<Rule> ruleBank, List<Rule> currRuleCombo, int maxRulesInStack, List< List<Rule> > allCombos )
+	{
+		if( currRuleCombo.Count < maxRulesInStack )
+		{
+			List < Rule > workingSet = new List < Rule > ( ruleBank );
 
-	RuleStack CreateRuleStackFromRandomRulesInCurrentTrial( int numberOfRulesToCombine )  //nothing here ensures that rules will share common impossibilities
+			for( int i = 0; i < workingSet.Count; i ++ )
+			{
+				List< Rule > newCombo = new List< Rule > ( currRuleCombo );
+				newCombo.Add ( workingSet[ i ] );
+
+				ruleBank.Remove( workingSet[ i ] );
+				List< Rule > newBank = new List<Rule> ( ruleBank );
+
+				GetAllCombinationsOfRules( newBank, newCombo, maxRulesInStack, allCombos );  //combine this list of tiles with newTilePermuation list?
+				
+			}
+		}
+		else
+		{
+			allCombos.Add ( currRuleCombo );
+		}
+	}
+
+	
+	RuleStack CreateRuleStackFromRuleList( List< Rule > rulesList )  //nothing here ensures that rules will share common impossibilities
 	{
 		RuleStack combinedRules = new RuleStack ();
-		Debug.Log ("rules to combine : " + numberOfRulesToCombine + ", trial rules : " + trialRules.ruleStack.Count);
-		for(int i = 0; i < Mathf.Min ( numberOfRulesToCombine, trialRules.ruleStack.Count ); i ++ )
+	
+		for(int i = 0; i < rulesList.Count; i ++ )
 		{
-			//get random rule and add to stack
-			int random = Random.Range( 0, trialRules.ruleStack.Count ); 
-
-			//whle this rule is already in stack
-			//TEMPORARY FIX FOR BREAKING CONDITIONAL RULES IS TO NOT INCLUDE THEM, CONDITIONAL RULES TAKE AT LEAST 2 TILES TO BREAK
-			while( combinedRules.RuleInStack( trialRules.ruleStack[ random ] ) && !(trialRules.ruleStack[ random ] is Conditional ))
-			{
-				//get a new rule
-				random = Random.Range( 0, trialRules.ruleStack.Count );
-			}
-
-			combinedRules.AddRule ( trialRules.ruleStack[ random ] );
-
+			combinedRules.AddRule ( rulesList[ i ] );
+			
 		}
 		Debug.Log ("rules in rulestack : " + combinedRules.ruleStack.Count);
 		return combinedRules;
-
+		
 	}
 
 
@@ -600,7 +889,8 @@ public class Logic : MonoBehaviour {
 			}
 
 			//if test key match not found in possible trial rule submissions, but is in each indivi
-			if(!trialRules.WildCardKeyInDictionary( testKey, trialRules.correctSubmissions ))
+//			if(!trialRules.WildCardKeyInDictionary( testKey, trialRules.correctSubmissions ))
+			if(!PresetIsPossibleCorrectSubmission( testKey ))
 			{
 				return testKey;
 			}
@@ -610,39 +900,44 @@ public class Logic : MonoBehaviour {
 		return null;
 	}
 
+	void SetRuleCreationParameters( int maxCond, int maxRel, int maxAdj, int maxAbs )
+	{
+		maxCond = maxConditionals;
+		maxRel = maxRelativePosRules;
+		maxAdj = maxAdjacencyRules;
+		maxAbs = maxAbsPosRules;
+	
+	}
 
+	void SetTileCount( int tilesInTrial )
+	{
+		tilesCount = tilesInTrial;
+	}
+
+	void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
+	{
+		maxRulesToSetImpossibleBoard = rulesToSetBoard;
+		chanceOfImpossible = impChance;
+		maxImpossiblePerTrial = maxImp;
+	}
+
+	void SetPossibleBoardParameters( )
+	{
+
+	}
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
 		ResetStats ();
 
-//		maxRelativePosRules = 1;
-//		tilesCount = 3;
-//		maxAbsPosRules = 1;
-//		usingEitherOr = true;
-//		maxAdjacencyRules = 1;
-
 		if (currentLevel == 0) 
 		{
+			SetRuleCreationParameters( 0, 1, 0, 0 );
+			SetTileCount ( 3 );
 			maxRules = 2;
-			maxRelativePosRules = 1;
-			tilesCount = 3;
-
-			maxRulesToSetNewProblem = 1;
+			SetImpossibleBoardParameters( 1, 30, 1 );
 		}
-//		if (currentLevel < 5) 
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAdjacencyRules = 1;
-//			tilesCount = 5;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetNewProblem = 2;
-//			usingEitherOr = true;	
-//		}
+
 		else if( currentLevel == 1 )
 		{
 			maxRules = 2;
@@ -652,7 +947,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 3;
 			chanceOfImpossible = 75;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
+			maxRulesToSetImpossibleBoard = 1;
 		}
 		else if( currentLevel == 2 )
 		{
@@ -663,7 +958,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 4;
 			chanceOfImpossible = 40;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
+			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 3 )
@@ -674,57 +969,84 @@ public class Logic : MonoBehaviour {
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
+			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 4 )
 		{
-			maxRules = 1;
-			maxConditionals = 1;
-
+			maxRules = 2;
+			
+			maxConditionals = 0;
+			maxRelativePosRules = 1;
+			maxAdjacencyRules = 1;
+			
 			tilesCount = 4;
-			chanceOfImpossible = 30;
+			chanceOfImpossible = 50;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 5 )
 		{
+			maxRules = 1;
+			maxConditionals = 1;
+			
+			tilesCount = 4;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 1;
+			usingEitherOr = true;
+		}
+		else if( currentLevel == 6 )
+		{
+			maxRules = 1;
+			maxConditionals = 1;
+			
+			tilesCount = 4;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 1;
+			usingEitherOr = true;
+			clause2False = true;
+			clause2TrueClause1False = false;
+		}
+		else if( currentLevel == 7 )
+		{
+			maxRules = 1;
+			maxConditionals = 1;
+			
+			tilesCount = 4;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 1;
+			usingEitherOr = true;
+			clause2False = true;
+			clause2TrueClause1False = true;
+		}
+		else if( currentLevel == 8 )
+		{
 			maxRules = 2;
-
+			
 			maxConditionals = 1;
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
+			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 		}
-		else if( currentLevel == 6 )
+
+		else if( currentLevel == 9 )
 		{
 			maxRules = 2;
 			maxConditionals = 1;
 			maxRelativePosRules = 2;
-
+			
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 1;
-			usingEitherOr = true;
-		}
-		else if( currentLevel == 7 )
-		{
-			maxRules = 2;
-
-			maxConditionals = 0;
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-
-			tilesCount = 5;
-			chanceOfImpossible = 50;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 8 )
@@ -739,7 +1061,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 5;
 			chanceOfImpossible = 50;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 9 )
@@ -753,7 +1075,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 10 )
@@ -767,7 +1089,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 11 )
@@ -781,7 +1103,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 12 )
@@ -795,7 +1117,7 @@ public class Logic : MonoBehaviour {
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 		else if( currentLevel == 13 )
@@ -809,10 +1131,21 @@ public class Logic : MonoBehaviour {
 			tilesCount = 5;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetNewProblem = 2;
+			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
 
+		maxRules = 1;
+		maxConditionals = 1;
+		
+		tilesCount = 4;
+		chanceOfImpossible = 30;
+		maxImpossiblePerTrial = 1;
+		maxRulesToSetImpossibleBoard = 1;
+		usingEitherOr = true;
+		clause2False = true;
+		clause2TrueClause1False = false;
+		
 	}
 	
 	void ResetStats()
@@ -823,8 +1156,11 @@ public class Logic : MonoBehaviour {
 		maxConditionals = 0;
 		chanceOfImpossible = 0;
 		maxImpossiblePerTrial = 0;
-		maxRulesToSetNewProblem = 0;
+		maxRulesToSetImpossibleBoard = 0;
 		usingEitherOr = false;
+
+		previousPossiblePresetKey = null;
+		previousImpossiblePresetKey = null;
 
 	}
 
