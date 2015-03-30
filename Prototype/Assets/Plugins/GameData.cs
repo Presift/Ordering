@@ -14,8 +14,8 @@ public class GameData : MonoBehaviour {
 	//	private string levelingStats = "/levelingStats.dat";
 	private string dataFile = "/playerInfo.txt";
 	
-	private string levelingStats = "/levelingStats";
-	public int currentStatsFile = 0;
+//	private string levelingStats = "/levelingStats";
+//	public int currentStatsFile = 0;
 	
 	public int previousFinalLevel;
 	
@@ -45,7 +45,7 @@ public class GameData : MonoBehaviour {
 		
 		PlayerData data = new PlayerData();
 		data.previousFinalLevel = previousFinalLevel;
-		data.currentStatsFile = currentStatsFile;
+//		data.currentStatsFile = currentStatsFile;
 		
 		//serlialize data and close file
 		bf.Serialize(file, data);
@@ -53,12 +53,12 @@ public class GameData : MonoBehaviour {
 		
 	}
 	
-	public void SavePerformanceStats( string stats )
-	{
-		//		string filePath = GetFullPath (levelingStats + currentStatsFile.ToString() + ".csv");
-		string filePath = GetFullPath (levelingStats + ".txt");
-		System.IO.File.AppendAllText(filePath, "\n" + stats );
-	}
+//	public void SavePerformanceStats( string stats )
+//	{
+//		//		string filePath = GetFullPath (levelingStats + currentStatsFile.ToString() + ".csv");
+//		string filePath = GetFullPath (levelingStats + ".txt");
+//		System.IO.File.AppendAllText(filePath, "\n" + stats );
+//	}
 	
 	public void Load()
 	{
@@ -71,14 +71,14 @@ public class GameData : MonoBehaviour {
 			PlayerData data = (PlayerData)bf.Deserialize(file);
 			
 			previousFinalLevel = data.previousFinalLevel;
-			currentStatsFile = data.currentStatsFile;
+//			currentStatsFile = data.currentStatsFile;
 			
 			bf.Serialize(file, data);
 			
 			file.Close ();
 		}
 		
-		currentStatsFile ++;
+//		currentStatsFile ++;
 	}
 	
 	public string GetFullPath( string saveFile ){

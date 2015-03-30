@@ -15,6 +15,9 @@ public class Menu : MonoBehaviour {
 
 	public void NewGame()
 	{
+		GameData.dataControl.previousFinalLevel = 2;
+		GameData.dataControl.Save ();
+
 		Application.LoadLevel ("Main Game");
 	}
 }
