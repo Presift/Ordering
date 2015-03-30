@@ -140,8 +140,9 @@ public class View : MonoBehaviour {
 					if( tilesToOrder[ tile ].name[ 0 ] == presets[ i ] )
 					{
 //						Tile tileScript = tilesToOrder[ tile ].GetComponent<Tile>();
-						tilesToOrder[ tile ].StartMove( holders[i]);
 						tilesToOrder[ tile ].preset = true;
+						tilesToOrder[ tile ].StartMove( holders[i], true );
+
 						tilesToOrder[ tile ].Highlight( false );
 						holders[ i ].preset = true;
 						holders[i].Highlight( true );
@@ -221,7 +222,7 @@ public class View : MonoBehaviour {
 			tiles[i].preset = false;
 			tileHolders[i].Highlight( false );
 			tiles[i].targetHolder = null;
-			tiles[i].StartMove( null );
+			tiles[i].StartMove( null, true );
 		}
 	}
 

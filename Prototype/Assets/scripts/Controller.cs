@@ -7,12 +7,20 @@ public class Controller : MonoBehaviour {
 
 	public View view;
 	public Model model;
+
 	public Button submitButton;
+	public Button impossibleButton;
+	public Button continueButton;
+	public Button playAgainButton;
+
 	public Text rules;
 	public Logic logic;
-	public Text scoreDisplay;
-	public Text levelDisplay;
-	public Text problemDisplay;
+//	public Text scoreDisplay;
+//	public Text levelDisplay;
+//	public Text problemDisplay;
+	public Text statsDisplay;
+	public GameObject gamesDisplay;
+	public GameObject trialsEndDisplay;
 
 
 	// Use this for initialization
@@ -95,6 +103,7 @@ public class Controller : MonoBehaviour {
 		view.DisplayFeedback ( true, correctAnswer );
 	
 	}
+	
 
 	public void NextStep( bool correctAnswer )
 	{
@@ -114,28 +123,68 @@ public class Controller : MonoBehaviour {
 			{
 				//update level
 				model.UpdateLevel( correctAnswer );
-				NewTrial();
+//				EndOfTrial();
+				ShowOnlyNextTrialButton();
+//				NewTrial();
 			}
 		} 
 		else 
 		{
 			model.UpdateLevel( correctAnswer );
-			NewTrial();
+//			EndOfTrial();
+			ShowOnlyNextTrialButton();
 		}
 		
 		UpdateDisplay ();
 	}
 
+	void EndOfTrial()
+	{
+		GameData.dataControl.previousFinalLevel = model.currentLevel;
+		GameData.dataControl.Save ();
+
+		if( ( model.currentTrial ) == model.trialsPerPlaySession )
+		{
+			Debug.Log ( "trial over ");
+			//show end display
+			trialsEndDisplay.SetActive( true );
+
+			//stop showing other game info
+			gamesDisplay.SetActive ( false );
+		}
+		else
+		{
+			NewTrial();
+		}
+	}
+
 	void UpdateDisplay()
 	{
-		scoreDisplay.text = "Score : " + model.score;
-		problemDisplay.text = "Problem : " + (model.currentProblemInTrial + 1);
-		levelDisplay.text = "Level : " + ( model.currentLevel + 1 );
+		statsDisplay.text = "Score : " + model.score + "\n" + "Trial : " + ( model.currentTrial ) + "\n" + "Problem : " + (model.currentProblemInTrial + 1) + "\n" + "Level : " + (model.currentLevel + 1);
 	}
+
+	public void ContinueGame()
+	{
+		//stop showing end display
+		trialsEndDisplay.SetActive( false );
+		
+		//show other game info
+		gamesDisplay.SetActive ( true );
+
+		model.currentTrial = 0;
+
+		Debug.Log (" current trial : " + model.currentTrial);
+
+		NewTrial ();
+	}
+
 
 	void NewTrial()
 	{
 //		Debug.Log ("starting new trial ");
+		model.currentTrial ++;
+		UpdateDisplay ();
+
 		logic.UpdateLevelingStats (model.currentLevel);
 		model.currentProblemInTrial = 0; 
 		//destroy children of view
@@ -179,25 +228,44 @@ public class Controller : MonoBehaviour {
 		Application.LoadLevel ("Menu");
 	}
 
-	public void ResetBoard()
+	public void ShowOnlyNextTrialButton()
 	{
-		//for each tile in game
-		for( int tile = 0; tile < model.tilesToOrder.Count; tile ++ )
-		{
-			if( !model.holders[ tile ].preset )
-			{
-				model.holders[ tile ].SetOccupied( null );
-			}
+		continueButton.gameObject.SetActive (true);
 
-			if( !model.tilesToOrder[ tile ].preset )
-			{
-				model.tilesToOrder[tile].currentHolder = null;
-				model.tilesToOrder[tile].targetHolder = null;
-				model.tilesToOrder[tile].StartMove( null );
-			}
-
-		}
+		impossibleButton.gameObject.SetActive (false);
+		submitButton.gameObject.SetActive (false);
 	}
+
+	public void OnContinue()
+	{
+		continueButton.gameObject.SetActive (false);
+		
+		impossibleButton.gameObject.SetActive (true);
+		submitButton.gameObject.SetActive (true);
+
+		EndOfTrial ();
+	}
+	
+
+//	public void ResetBoard()
+//	{
+//		//for each tile in game
+//		for( int tile = 0; tile < model.tilesToOrder.Count; tile ++ )
+//		{
+//			if( !model.holders[ tile ].preset )
+//			{
+//				model.holders[ tile ].SetOccupied( null );
+//			}
+//
+//			if( !model.tilesToOrder[ tile ].preset )
+//			{
+//				model.tilesToOrder[tile].currentHolder = null;
+//				model.tilesToOrder[tile].targetHolder = null;
+//				model.tilesToOrder[tile].StartMove( null );
+//			}
+//
+//		}
+//	}
 
 	public void EmergencyReset()
 	{

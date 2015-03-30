@@ -1,17 +1,15 @@
 ﻿<Properties>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/scripts/Logic.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Plugins/GameData.cs">
     <Files>
       <File FileName="Assets/scripts/Rule.cs" Line="55" Column="3" />
       <File FileName="Assets/scripts/TileHolder.cs" Line="1" Column="1" />
       <File FileName="Assets/scripts/Tile.cs" Line="1" Column="1" />
-      <File FileName="Assets/scripts/View.cs" Line="52" Column="21" />
-      <File FileName="Assets/scripts/Controller.cs" Line="1" Column="1" />
-      <File FileName="Assets/scripts/Model.cs" Line="1" Column="1" />
-      <File FileName="Assets/scripts/Logic.cs" Line="1172" Column="59" />
-      <File FileName="../../../Desktop/combat/Assets/Scripts/Legacy/StoreManager.cs" Line="1" Column="1" />
-      <File FileName="Assets/scripts/Menu.cs" Line="1" Column="1" />
-      <File FileName="Assets/scripts/Staging.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/View.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/Controller.cs" Line="129" Column="30" />
+      <File FileName="Assets/scripts/Model.cs" Line="27" Column="57" />
+      <File FileName="Assets/scripts/Logic.cs" Line="1" Column="1" />
+      <File FileName="Assets/Plugins/GameData.cs" Line="95" Column="2" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

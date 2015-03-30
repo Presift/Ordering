@@ -10,7 +10,7 @@ public class Model : MonoBehaviour {
 	public int currentProblemInTrial;
 	public int trial;
 
-	public int currentTotalTileCount;
+//	public int currentTotalTileCount;
 	int occupiedTiles;
 	public List<StagingArea> stagingAreas;
 	public List<TileHolder> holders;
@@ -20,17 +20,22 @@ public class Model : MonoBehaviour {
 	public Tile selectedTile;
 	public bool impossible;
 
+	public int currentTrial;
+	public int trialsPerPlaySession = 3;
+
 
 
 	// Use this for initialization
 	void Awake () {
-		currentLevel = 0; 
-		currentTotalTileCount = 4;
+		currentTrial = 0;
+
+		GameData.dataControl.Load ();
+		currentLevel = GameData.dataControl.previousFinalLevel;
+//		currentTotalTileCount = 4;
 	}
 	
 	// Update is called once per frame
 	void Update () {
-	
 	}
 
 	public void SetImpossible( bool notPossible )
@@ -128,6 +133,7 @@ public class Model : MonoBehaviour {
 
 	public void ManageCurrentSelection( Tile newSelection )
 	{
+//		Debug.Log (newSelection.name);
 		if (selectedTile == newSelection) 
 		{
 			//deselect tile
@@ -153,7 +159,7 @@ public class Model : MonoBehaviour {
 	public void StartMove( TileHolder newHolder )
 	{
 //		Debug.Log ("start moving : " + selectedTile.name);
-		selectedTile.StartMove (newHolder);
+		selectedTile.StartMove (newHolder, false);
 	}
 
 	public void ShowAvailableMoves()

@@ -25,6 +25,7 @@ public class Tile : MonoBehaviour {
 
 	public void SetStartValues( Color firstColor, Color tileHighlight, StagingArea staging )
 	{
+//		Debug.Log ("start colors set");
 		originalColor = firstColor;
 		render = GetComponent<Renderer> ();
 		render.material.color = originalColor;
@@ -70,6 +71,7 @@ public class Tile : MonoBehaviour {
 
 	public void Highlight( bool highlight )
 	{
+
 		if( highlight )
 		{
 			render.material.color = highlightColor;
@@ -85,7 +87,7 @@ public class Tile : MonoBehaviour {
 		currentHolder = holder;
 	}
 
-	public void StartMove( TileHolder newHolder )
+	public void StartMove( TileHolder newHolder, bool initialSetup )
 	{
 //		if( currentHolder != null )
 //		{
@@ -125,7 +127,10 @@ public class Tile : MonoBehaviour {
 			SetCurrentStaging( area ); 
 		}
 
-		model.ManageCurrentSelection (this);
+		if (!initialSetup)
+		{
+			model.ManageCurrentSelection (this);
+		}
 
 	}
 

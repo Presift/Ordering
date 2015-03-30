@@ -949,7 +949,7 @@ public class Logic : MonoBehaviour {
 //				return testKey;
 //			}
 //
-//		}
+	//		}GetAllCombin
 //
 //		return null;
 //	}
@@ -1105,7 +1105,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 		}
-		else if( currentLevel == 8 )
+		else if( currentLevel == 10 )
 		{
 			maxRules = 3;
 			
@@ -1121,7 +1121,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 		}
-		else if( currentLevel == 9 )
+		else if( currentLevel == 11 )
 		{
 			maxRules = 3;
 
@@ -1136,7 +1136,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 		}
-		else if( currentLevel == 10 )
+		else if( currentLevel == 12 )
 		{
 			maxRules = 3;
 
@@ -1150,7 +1150,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 		}
-		else if( currentLevel == 11 )
+		else if( currentLevel == 13 )
 		{
 			maxRules = 3;
 			
@@ -1165,7 +1165,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 		}
-		else if( currentLevel == 12 )
+		else if( currentLevel == 14 )
 		{
 			maxRules = 3;
 			
@@ -1180,7 +1180,37 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 		}
-		else if( currentLevel == 13 )
+		else if( currentLevel == 15 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 2;
+//			maxAbsPosRules = 2;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 2;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
+		}
+		else if( currentLevel == 16 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 2;
+			maxAbsPosRules = 1;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 2;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
+		}
+		else if( currentLevel == 17 )
 		{
 			maxRules = 3;
 			
@@ -1188,25 +1218,57 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 2;
 			
-			tilesCount = 5;
+			tilesCount = 6;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
+			maxRulesToSetImpossibleBoard = 3;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 		}
+		else if( currentLevel == 18 )
+		{
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 2;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 3;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
+		}
+		else
+		{
+	
+			maxRules = 3;
+			
+			maxConditionals = 1;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 2;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 30;
+			maxImpossiblePerTrial = 1;
+			maxRulesToSetImpossibleBoard = 3;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
 
-		maxRules = 3;
-		
-		maxConditionals = 1;
-		maxRelativePosRules = 1;
-		maxAdjacencyRules = 1;
-		
-		tilesCount = 5;
-		chanceOfImpossible = 100;
-		maxImpossiblePerTrial = 2;
-		maxRulesToSetImpossibleBoard = 2;
-		usingEitherOr = true;
+		}
+
+//		maxRules = 3;
+//		
+//		maxConditionals = 1;
+//		maxRelativePosRules = 1;
+//		maxAdjacencyRules = 1;
+//		
+//		tilesCount = 5;
+//		chanceOfImpossible = 100;
+//		maxImpossiblePerTrial = 2;
+//		maxRulesToSetImpossibleBoard = 2;
+//		usingEitherOr = true;
 	
 		
 	}
