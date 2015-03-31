@@ -7,6 +7,7 @@ public class Controller : MonoBehaviour {
 
 	public View view;
 	public Model model;
+	public MetaData metaData;
 
 	public Button submitButton;
 	public Button impossibleButton;
@@ -19,9 +20,10 @@ public class Controller : MonoBehaviour {
 //	public Text levelDisplay;
 //	public Text problemDisplay;
 	public Text statsDisplay;
-	public GameObject gamesDisplay;
+	public GameObject statPanel;
+	public GameObject rulePanel;
+	public GameObject buttonPanel;
 	public GameObject trialsEndDisplay;
-
 
 	// Use this for initialization
 	void Start () {
@@ -100,6 +102,8 @@ public class Controller : MonoBehaviour {
 
 	public void RespondToAnswer( bool correctAnswer )
 	{
+		metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
+		metaData.SaveStats ();
 		view.DisplayFeedback ( true, correctAnswer );
 	
 	}
@@ -150,7 +154,9 @@ public class Controller : MonoBehaviour {
 			trialsEndDisplay.SetActive( true );
 
 			//stop showing other game info
-			gamesDisplay.SetActive ( false );
+			statPanel.SetActive( false );
+			rulePanel.SetActive( false );
+			buttonPanel.SetActive( false );
 		}
 		else
 		{
@@ -169,8 +175,11 @@ public class Controller : MonoBehaviour {
 		trialsEndDisplay.SetActive( false );
 		
 		//show other game info
-		gamesDisplay.SetActive ( true );
-
+//		gamesDisplay.SetActive ( true );
+		statPanel.SetActive( true );
+		rulePanel.SetActive( true );
+		buttonPanel.SetActive( true );
+		
 		model.currentTrial = 0;
 
 		Debug.Log (" current trial : " + model.currentTrial);
@@ -182,6 +191,7 @@ public class Controller : MonoBehaviour {
 	void NewTrial()
 	{
 //		Debug.Log ("starting new trial ");
+		metaData.ResetStats ();
 		model.currentTrial ++;
 		UpdateDisplay ();
 
@@ -246,26 +256,7 @@ public class Controller : MonoBehaviour {
 		EndOfTrial ();
 	}
 	
-
-//	public void ResetBoard()
-//	{
-//		//for each tile in game
-//		for( int tile = 0; tile < model.tilesToOrder.Count; tile ++ )
-//		{
-//			if( !model.holders[ tile ].preset )
-//			{
-//				model.holders[ tile ].SetOccupied( null );
-//			}
-//
-//			if( !model.tilesToOrder[ tile ].preset )
-//			{
-//				model.tilesToOrder[tile].currentHolder = null;
-//				model.tilesToOrder[tile].targetHolder = null;
-//				model.tilesToOrder[tile].StartMove( null );
-//			}
-//
-//		}
-//	}
+	
 
 	public void EmergencyReset()
 	{

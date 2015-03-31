@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public class Logic : MonoBehaviour {
 
 	public Model model;
+	public MetaData metaData;
 //	public View view;
 
 	public RuleStack trialRules;
@@ -26,13 +27,15 @@ public class Logic : MonoBehaviour {
 	int maxConditionals;
 	bool usingEitherOr;
 
-	//difficulty points
-	int absPosition = 6;
-	int negAbsPosition = 7;
-	int adjacent = 8;
-	int notAdjacent = 9;
-	int beforeOrder = 10;
-	int afterOrder = 11;
+	//integers for rule types
+	int absPosition = 1;
+	int eitherOrAbsPosition = 2;
+	int negAbsPosition = 3;
+
+	int adjacent = 4;
+	int notAdjacent = 5;
+
+	int relativeOrder = 6;
 
 	//difficulty for impossible board
 	int maxRulesToSetImpossibleBoard;
@@ -79,6 +82,8 @@ public class Logic : MonoBehaviour {
 	
 	public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
 	{
+		List< float > ruleIndentifiers = new List< float > ();
+
 		model.SetImpossible (false);
 		int difficultyPointsSpend = 0;
 		int rulesCreated = 0;
@@ -105,6 +110,7 @@ public class Logic : MonoBehaviour {
 				if( !trialRules.RuleConflictsWithRuleStack( newConditional ))
 				{
 					trialRules.AddRule( newConditional );
+					ruleIndentifiers.Add ( newConditional.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
@@ -123,6 +129,7 @@ public class Logic : MonoBehaviour {
 				if( !trialRules.RuleConflictsWithRuleStack(newRel))
 				{
 					trialRules.AddRule( newRel );
+					ruleIndentifiers.Add ( newRel.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
@@ -141,6 +148,7 @@ public class Logic : MonoBehaviour {
 				if( !trialRules.RuleConflictsWithRuleStack( newAdj ))
 				{
 					trialRules.AddRule( newAdj );
+					ruleIndentifiers.Add ( newAdj.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
@@ -158,6 +166,7 @@ public class Logic : MonoBehaviour {
 				if( !trialRules.RuleConflictsWithRuleStack( newAbs ))
 				{
 					trialRules.AddRule( newAbs );
+					ruleIndentifiers.Add ( newAbs.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
@@ -167,7 +176,8 @@ public class Logic : MonoBehaviour {
 			}
 		}
 
-
+		metaData.SetStatsForTrial (model.currentLevel, model.currentProblemInTrial, model.currentTrial, trialRules.ruleStack.Count, ruleIndentifiers, tiles.Count);
+		metaData.SetTimeSinceProblemStart (Time.time);
 
 		trialRules.ConstructRandomOrderedVerbal ();
 		Debug.Log ("rule count : " + trialRules.ruleStack.Count);

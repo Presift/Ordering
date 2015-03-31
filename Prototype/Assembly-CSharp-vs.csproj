@@ -49,6 +49,7 @@
      <Compile Include="Assets\scripts\Controller.cs" />
      <Compile Include="Assets\scripts\Logic.cs" />
      <Compile Include="Assets\scripts\Menu.cs" />
+     <Compile Include="Assets\scripts\MetaData.cs" />
      <Compile Include="Assets\scripts\Model.cs" />
      <Compile Include="Assets\scripts\Rule.cs" />
      <Compile Include="Assets\scripts\Staging.cs" />

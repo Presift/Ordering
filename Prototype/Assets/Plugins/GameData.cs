@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
+//using System.IO.StreamWriter;
 using System.Collections.Generic;
 
 
@@ -11,8 +12,8 @@ public class GameData : MonoBehaviour {
 	public static GameData dataControl;
 	
 	//	private string dataFile = "/playerInfo.dat";
-	//	private string levelingStats = "/levelingStats.dat";
-	private string dataFile = "/playerInfo.txt";
+	private string levelingStats = "/levelingStats.csv";
+	private string dataFile = "/playerInfo.csv";
 	
 //	private string levelingStats = "/levelingStats";
 //	public int currentStatsFile = 0;
@@ -35,50 +36,49 @@ public class GameData : MonoBehaviour {
 	
 	void Start()
 	{
-		Environment.SetEnvironmentVariable("MONO_REFLECTION_SERIALIZER", "yes");
+//		Environment.SetEnvironmentVariable("MONO_REFLECTION_SERIALIZER", "yes");
 	}
+
+
+
 	public void Save()
 	{
-		BinaryFormatter bf = new BinaryFormatter();
-		
-		FileStream file = File.Create(GetFullPath( dataFile ));
+
+		StreamWriter file = new StreamWriter (GetFullPath (dataFile));
 		
 		PlayerData data = new PlayerData();
 		data.previousFinalLevel = previousFinalLevel;
-//		data.currentStatsFile = currentStatsFile;
-		
-		//serlialize data and close file
-		bf.Serialize(file, data);
+
+		file.WriteLine ( data.previousFinalLevel );
+
 		file.Close ();
 		
 	}
 	
-//	public void SavePerformanceStats( string stats )
-//	{
-//		//		string filePath = GetFullPath (levelingStats + currentStatsFile.ToString() + ".csv");
-//		string filePath = GetFullPath (levelingStats + ".txt");
-//		System.IO.File.AppendAllText(filePath, "\n" + stats );
-//	}
+	public void SavePerformanceStats( string stats )
+	{
+//		string filePath = GetFullPath (levelingStats + currentStatsFile.ToString() + ".csv");
+		string filePath = GetFullPath (levelingStats);
+		System.IO.File.AppendAllText(filePath, "\n" + stats );
+	}
 	
+
+
 	public void Load()
 	{
 		if(File.Exists (GetFullPath( dataFile )))
 		{
-			BinaryFormatter bf = new BinaryFormatter();
-			FileStream file = File.Open(GetFullPath( dataFile ), FileMode.Open);
-			Debug.Log (Application.persistentDataPath);
-			Debug.Log (file.Name);
-			PlayerData data = (PlayerData)bf.Deserialize(file);
-			
-			previousFinalLevel = data.previousFinalLevel;
-//			currentStatsFile = data.currentStatsFile;
-			
-			bf.Serialize(file, data);
-			
-			file.Close ();
-		}
+			string filePath = GetFullPath( dataFile );
+//			Debug.Log (Application.persistentDataPath);
+
+			StreamReader data = new StreamReader( filePath );
+
+			previousFinalLevel = Convert.ToInt32( data.ReadLine() );
 		
-//		currentStatsFile ++;
+
+			data.Close ();
+		}
+
 	}
 	
 	public string GetFullPath( string saveFile ){
@@ -87,9 +87,9 @@ public class GameData : MonoBehaviour {
 	}
 }
 
-[Serializable]
+//[Serializable]
 class PlayerData
 {
 	public int previousFinalLevel;
-	public int currentStatsFile;
+//	public int currentStatsFile;
 }

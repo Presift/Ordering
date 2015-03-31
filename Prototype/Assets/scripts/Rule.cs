@@ -14,9 +14,16 @@ public class Rule
 	public Dictionary<string, List<Tile>> correctSubmissions = new Dictionary<string, List<Tile>>();
 	public Dictionary<string, List<Tile>> incorrectSubmissions = new Dictionary<string, List<Tile>>();
 	public List<Tile> tilesUsedInRule = new List<Tile>();
+
+	public float ruleIdentifier;
 	
 	protected Rule ()
 	{
+	}
+
+	public virtual void SetRuleIndentifier()
+	{
+
 	}
 
 	public void PrintEachDictionaryValue( Dictionary<string, List<Tile>> dict )
@@ -207,6 +214,12 @@ public class RelativePositionRule : Rule
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 		tilesUsedInRule.Add (tile1);
 		tilesUsedInRule.Add (tile2);
+		SetRuleIndentifier ();
+	}
+
+	public override void SetRuleIndentifier()
+	{
+		ruleIdentifier = 6;
 	}
 
 	public override string ConstructVerbal()  // rule type of 0 is before, rule type of 1 is after
@@ -270,7 +283,21 @@ public class AdjacencyRule : Rule
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 		tilesUsedInRule.Add (tile1);
 		tilesUsedInRule.Add (tile2);
+		SetRuleIndentifier ();
 	}
+
+	public override void SetRuleIndentifier()
+	{
+		if( ruleType == 0 )
+		{
+			ruleIdentifier = 4;
+		}
+		else
+		{
+			ruleIdentifier = 5;
+		}
+	}
+
 	public override string ConstructVerbal() // 0 is adjacent, 1 is NOT adjacent
 	{
 
@@ -331,6 +358,7 @@ public class AbsolutePositionRule : Rule
 	public AbsolutePositionRule( int newRuleType, Tile newTile1, int positionIndex, List<Tile> tilesInBank )
 	{
 		ruleType = newRuleType;
+
 		tile1 = newTile1;
 		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
@@ -348,6 +376,24 @@ public class AbsolutePositionRule : Rule
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
 		tilesUsedInRule.Add (tile1);
 		tilesUsedInRule.Add (tile2);
+		SetRuleIndentifier();
+	}
+
+	public override void SetRuleIndentifier()
+	{
+		if( tile2 != null )
+		{
+			ruleIdentifier = 3;
+		}
+		
+		if( ruleType == 0 )
+		{
+			ruleIdentifier = 1;
+		}
+		else
+		{
+			ruleIdentifier = 2;
+		}
 	}
 
 	public override string ConstructVerbal() // 0 is in a spot, 1 is NOT in a spot
@@ -651,12 +697,19 @@ public class Conditional: Rule
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 
 		tilesUsedInRule = rule1.tilesUsedInRule;
+		SetRuleIndentifier ();
 
 		for( int i = 0; i < newRule2.tilesUsedInRule.Count; i++ )
 		{
 			tilesUsedInRule.Add ( newRule2.tilesUsedInRule[ i ] );
 		}
 
+	}
+
+	public override void SetRuleIndentifier()
+	{
+		Debug.Log ("rule 1 identifier : " + rule1.ruleIdentifier + ", rule 2 identifer : " + rule2.ruleIdentifier);
+		ruleIdentifier = rule1.ruleIdentifier + (rule2.ruleIdentifier / 10);
 	}
 
 	public bool IsValidRule()
@@ -671,7 +724,9 @@ public class Conditional: Rule
 	
 	public override string ConstructVerbal()
 	{
-		verbal = "If " + rule1.verbal + ", " + rule2.verbal;
+		verbal = "If " + rule1.verbal;
+		verbal.Remove (verbal.Length - 1);
+		verbal +=  ", " + rule2.verbal;
 		return verbal;
 	}
 
