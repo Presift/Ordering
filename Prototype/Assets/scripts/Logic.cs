@@ -41,9 +41,16 @@ public class Logic : MonoBehaviour {
 	int maxRulesToSetImpossibleBoard;
 	int maxConditionalInImpossibleSet;
 
-	// difficulty for possible board
+
 
 	//CONDITIONALS
+
+	//construction
+	int maxAbsInConditional;
+	int maxAdjInConditional;
+	int maxRelInConditional;
+
+	// difficulty for possible board
 	bool modusPonens; //if a then b
 	bool modusTollens; //if !b, then !a
 	bool showClauseBNotA;  // b and !a
@@ -83,7 +90,8 @@ public class Logic : MonoBehaviour {
 	
 	}
 	
-	public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
+	public string CreateRules( List<Tile> tiles )
+//		public string CreateRules( List<Tile> tiles, List<TileHolder> holders )
 	{
 		List< float > ruleIndentifiers = new List< float > ();
 
@@ -92,6 +100,12 @@ public class Logic : MonoBehaviour {
 		int rulesCreated = 0;
 		impossiblesUsed = 0;
 		trialRules = new RuleStack ();
+
+		List< int > positionsToUse = new List< int > ();
+		for( int i = 0; i < tiles.Count; i ++ )
+		{
+			positionsToUse.Add ( i );
+		}
 
 		List<Tile> shuffledTiles = ShuffleThis (tiles);
 
@@ -108,17 +122,20 @@ public class Logic : MonoBehaviour {
 		{
 			if( rulesCreated < maxRules )
 			{
-				Conditional newConditional = CreateConditionalRule( holders, tiles, tileUsage );
-				newConditional.ConstructVerbal();
+				Conditional newConditional = CreateConditionalRule( positionsToUse, tiles, tileUsage );
+//				newConditional.ConstructVerbal();
 				if( !trialRules.RuleConflictsWithRuleStack( newConditional, problemsPerTrial ))
 				{
+					Debug.Log ( "successful rule : " + newConditional.verbal );
 					trialRules.AddRule( newConditional );
 					ruleIndentifiers.Add ( newConditional.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
 				{
+					Debug.Log ( "UNsuccessful rule : " + newConditional.verbal );
 					RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
+					ReAddHolderPositionsFromRescindedRule( positionsToUse, newConditional );
 				}
 			}
 		}
@@ -131,12 +148,14 @@ public class Logic : MonoBehaviour {
 				RelativePositionRule newRel = CreateRelativeRule( tiles, tileUsage );
 				if( !trialRules.RuleConflictsWithRuleStack(newRel, problemsPerTrial ))
 				{
+					Debug.Log ( "successful rule : " + newRel.verbal );
 					trialRules.AddRule( newRel );
 					ruleIndentifiers.Add ( newRel.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
 				{
+					Debug.Log ( "UNsuccessful rule : " + newRel.verbal);
 					RemoveTilesUsedInRuleFromDict( tileUsage, newRel );
 				}
 			}
@@ -150,12 +169,14 @@ public class Logic : MonoBehaviour {
 				AdjacencyRule newAdj = CreateAdjacencyRule( tiles, tileUsage );
 				if( !trialRules.RuleConflictsWithRuleStack( newAdj, problemsPerTrial ))
 				{
+					Debug.Log ( "successful rule : " + newAdj.verbal );
 					trialRules.AddRule( newAdj );
 					ruleIndentifiers.Add ( newAdj.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
 				{
+					Debug.Log ( "Unsuccessful rule : " + newAdj.verbal );
 					RemoveTilesUsedInRuleFromDict( tileUsage, newAdj );
 				}
 			}
@@ -165,16 +186,19 @@ public class Logic : MonoBehaviour {
 		{
 			if( rulesCreated < maxRules )
 			{
-				AbsolutePositionRule newAbs = CreateAbsoluteRule( holders, tiles, tileUsage );
+				AbsolutePositionRule newAbs = CreateAbsoluteRule( positionsToUse, tiles, tileUsage );
 				if( !trialRules.RuleConflictsWithRuleStack( newAbs, problemsPerTrial ))
 				{
+					Debug.Log ( "successful rule : " + newAbs.verbal );
 					trialRules.AddRule( newAbs );
 					ruleIndentifiers.Add ( newAbs.ruleIdentifier );
 					rulesCreated ++;
 				}
 				else
 				{
+					Debug.Log ( "Unsuccessful rule : " + newAbs.verbal );
 					RemoveTilesUsedInRuleFromDict( tileUsage, newAbs );
+					ReAddHolderPositionsFromRescindedRule( positionsToUse, newAbs );
 				}
 			}
 		}
@@ -193,15 +217,59 @@ public class Logic : MonoBehaviour {
 		return trialRules.verbal;
 	}
 
-	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded, int rulesCreated )
+	void ReAddHolderPositionsFromRescindedRule( List< int > absolutePositions, Rule rule )
 	{
-		int minReusedTiles = 0;
-		if( rulesCreated >= 1 )
+		if( rule is AbsolutePositionRule )
 		{
-			minReusedTiles = 1;
+			AbsolutePositionRule absRule = rule as AbsolutePositionRule;
+			absolutePositions.Add ( rule.absolutePositionIndex );
+		}
+		else if( rule is Conditional )
+		{
+			Conditional condRule = rule as Conditional;
+
+			if( condRule.rule1 is AbsolutePositionRule )
+			{
+				AbsolutePositionRule absRule = condRule.rule1 as AbsolutePositionRule;
+				absolutePositions.Add ( condRule.rule1.absolutePositionIndex );
+			}
+			if( condRule.rule2 is AbsolutePositionRule )
+			{
+				AbsolutePositionRule absRule = condRule.rule2 as AbsolutePositionRule;
+				absolutePositions.Add ( condRule.rule2.absolutePositionIndex );
+			} 
+		}
+	}
+
+	bool ReusedTilesAvailable( Dictionary < Tile, int > tileUsage )
+	{
+		foreach( KeyValuePair< Tile , int > pair in tileUsage )
+		{
+			Tile tile = pair.Key;
+
+			if( pair.Value == 1 )
+			{
+				return true;
+			}
 		}
 
-		int maxReusedTiles = 1;
+		return false;
+	}
+
+	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded, List< Tile > unavailableTiles = null )
+	{
+		bool availableReusedTiles = ReusedTilesAvailable (tileUsage);
+		int minReusedTiles = 0;
+		int maxReusedTiles = 0;
+		
+		if( availableReusedTiles && unavailableTiles == null )
+		{
+			minReusedTiles = 1;
+			maxReusedTiles = 1;
+		}
+
+		Debug.Log (" min reused : " + minReusedTiles + ", maxReused : " + maxReusedTiles);
+
 		int reusedTiles = 0;
 
 		List<Tile> tilesToUse = new List<Tile> ();
@@ -210,11 +278,19 @@ public class Logic : MonoBehaviour {
 		foreach( KeyValuePair< Tile , int > pair in tileUsage )
 		{
 			Tile tile = pair.Key;
-			//if tile has been used only once and reused tiles is less than max resused tiels
+			//if tile has been used only once and reused tiles is less than max reused tiles
 			if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
 			{
-				tilesToUse.Add ( tile );
-				reusedTiles ++;
+				if( unavailableTiles == null )
+				{
+					tilesToUse.Add ( tile );
+					reusedTiles ++;
+				}
+				else if( !unavailableTiles.Contains( pair.Key ))
+				{
+					tilesToUse.Add ( tile );
+					reusedTiles ++;
+				}
 			}
 			else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
 			{
@@ -225,12 +301,38 @@ public class Logic : MonoBehaviour {
 				for( int i = 0; i < tilesToUse.Count; i ++ )
 				{
 					tileUsage[tilesToUse[i]] ++;
+					Debug.Log ( "USED : " + tilesToUse[i]);
 				}
 
 				return tilesToUse;
 			}
 		}
 
+//		Debug.Log (" adding more tiles ");
+
+//		foreach( KeyValuePair< Tile , int > pair in tileUsage )
+//		{
+//			Tile tile = pair.Key;
+//			//if tile has been used only once and reused tiles is less than max resused tiels
+//			if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
+//			{
+//				tilesToUse.Add ( tile );
+//				reusedTiles ++;
+//			}
+//			else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
+//			{
+//				tilesToUse.Add ( tile );
+//			}
+//			if( tilesToUse.Count == tilesNeeded )
+//			{
+//				for( int i = 0; i < tilesToUse.Count; i ++ )
+//				{
+//					tileUsage[tilesToUse[i]] ++;
+//				}
+//				
+//				return tilesToUse;
+//			}
+//		}
 		Debug.Log (" not enough tiles added ");
 		return tilesToUse;
 	}
@@ -241,7 +343,7 @@ public class Logic : MonoBehaviour {
 		//randomly determine before/after rule
 		int order = Random.Range (0, 2);
 
-		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count );
+		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2 );
 		
 		RelativePositionRule relPositionRule = new RelativePositionRule( order, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		relPositionRule.ConstructVerbal();
@@ -253,19 +355,21 @@ public class Logic : MonoBehaviour {
 	{
 		int nextTo = Random.Range (0, 2);  //determins next to/not next to
 
-		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count);
-		
+		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2 );
+
 		AdjacencyRule adjRule = new AdjacencyRule( nextTo, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		adjRule.ConstructVerbal();
 		
 		return adjRule;
 	}
 
-	AbsolutePositionRule CreateAbsoluteRule( List<TileHolder> holders, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage)
+	AbsolutePositionRule CreateAbsoluteRule( List<int> holderPositions, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage, List< Tile > unusableTiles = null )
 	{
 
 		//create absolute position rule
-		int absolutePosition = Random.Range ( 0, holders.Count );
+		int absolutePosition = Random.Range ( 0, holderPositions.Count );
+		Debug.Log (" absolutePosition : " + absolutePosition); 
+		holderPositions.Remove (absolutePosition);
 //		Debug.Log ("ABSOLUTE POSITION : " + absolutePosition);
 
 		int absPosTile = Random.Range (0, tilesToOrder.Count);
@@ -277,8 +381,7 @@ public class Logic : MonoBehaviour {
 			if( random == 0 ) //create rule with 2 tiles
 			{
 
-
-				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, trialRules.ruleStack.Count);
+				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2, unusableTiles );
 				
 				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], tilesToUse[1], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
@@ -286,7 +389,7 @@ public class Logic : MonoBehaviour {
 				return absPositionRule;
 			}
 			{
-				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, trialRules.ruleStack.Count);
+				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, unusableTiles);
 				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
 				
@@ -296,7 +399,7 @@ public class Logic : MonoBehaviour {
 		}
 		else
 		{
-			List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, trialRules.ruleStack.Count);
+			List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, unusableTiles );
 			AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
 			absPositionRule.ConstructVerbal();
 			
@@ -304,48 +407,105 @@ public class Logic : MonoBehaviour {
 		}
 	
 	}
+//
+//	Conditional CreateConditionalRule( List<TileHolder> holders, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
+//	{
+//		List<Tile> tilesUsedInRules = new List<Tile> ();
+//		
+//		//choose 2 types of rules randomly ( not of same type )
+//		int random = Random.Range (0, 2);
+//		int random2 = Random.Range (0, 2);
+//		
+//		while( random == random2 )
+//		{
+//			random2 = Random.Range( 0, 2 );
+//		}
+//		
+//		Rule rule1;
+//		Rule rule2;
+//		
+//		if( random == 0 )
+//		{
+//			rule1 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
+//		}
+//		else if( random == 1 )
+//		{
+//			rule1 = CreateAdjacencyRule( tilesToOrder, tileUsage );
+//		}
+//		else
+//		{
+//			rule1 = CreateRelativeRule( tilesToOrder, tileUsage );
+//		}
+//		
+//		if( random2 == 0 )
+//		{
+//			rule2 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
+//		}
+//		else if( random2 == 1 )
+//		{
+//			rule2 = CreateAdjacencyRule( tilesToOrder, tileUsage );
+//		}
+//		else
+//		{
+//			rule2 = CreateRelativeRule( tilesToOrder, tileUsage );
+//		}
+//		
+//		Conditional newConditional = new Conditional (rule1, rule2, tilesToOrder );
+//		bool validRule = newConditional.IsValidRule ();
+//		
+//		while( !validRule )
+//		{
+//			//remove a point for each used tile in tileUsage dict
+//			RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
+//			newConditional = CreateConditionalRule( holders, tilesToOrder, tileUsage );
+//			validRule = newConditional.IsValidRule();
+//		}
+//		
+//		return newConditional;
+//	}
 
-	Conditional CreateConditionalRule( List<TileHolder> holders, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
+	Conditional CreateConditionalRule( List<int> holderPositions, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
-		List<Tile> tilesUsedInRules = new List<Tile> ();
 
-		//choose 2 types of rules randomly ( not of same type )
-		int random = Random.Range (0, 2);
-		int random2 = Random.Range (0, 2);
+//		if( ( maxRelInConditional + maxAdjInConditional + maxAbsInConditional ) < 2 )
+//		{
+//			Debug.Log (" not enough rules to make conditional");
+//			Debug.Log (" tile count : " + tilesToOrder.Count );
+//			Debug.Log (" level : " + model.currentLevel );
+//		}
 
-		while( random == random2 )
+		List<Tile> unusableTiles = new List<Tile> ();
+
+		List< Rule > rulesPoolForConditional = new List< Rule > ();
+
+		for( int i = 0; i < maxRelInConditional; i ++ )
 		{
-			random2 = Random.Range( 0, 2 );
+			RelativePositionRule relRule = CreateRelativeRule( tilesToOrder, tileUsage );
+			rulesPoolForConditional.Add ( relRule as Rule );
 		}
 
-		Rule rule1;
-		Rule rule2;
+		for( int i = 0; i < maxAdjInConditional; i ++ )
+		{
+			AdjacencyRule adjRule = CreateAdjacencyRule( tilesToOrder, tileUsage );
+			rulesPoolForConditional.Add ( adjRule as Rule );
+		}
 
-		if( random == 0 )
+		for( int i = 0; i < maxAbsInConditional; i ++ )
 		{
-			rule1 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
+			Debug.Log ( holderPositions.Count );
+			AbsolutePositionRule absRule = CreateAbsoluteRule( holderPositions, tilesToOrder, tileUsage, unusableTiles );
+			unusableTiles.Add ( absRule.tile1 );
+
+			if ( absRule.tile2 != null )
+			{
+				unusableTiles.Add ( absRule.tile2 );
+			}
+			rulesPoolForConditional.Add ( absRule as Rule );
 		}
-		else if( random == 1 )
-		{
-			rule1 = CreateAdjacencyRule( tilesToOrder, tileUsage );
-		}
-		else
-		{
-			rule1 = CreateRelativeRule( tilesToOrder, tileUsage );
-		}
-		
-		if( random2 == 0 )
-		{
-			rule2 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
-		}
-		else if( random2 == 1 )
-		{
-			rule2 = CreateAdjacencyRule( tilesToOrder, tileUsage );
-		}
-		else
-		{
-			rule2 = CreateRelativeRule( tilesToOrder, tileUsage );
-		}
+
+		Rule rule1 = rulesPoolForConditional [Random.Range (0, rulesPoolForConditional.Count)];
+		rulesPoolForConditional.Remove (rule1);
+		Rule rule2 = rulesPoolForConditional [Random.Range (0, rulesPoolForConditional.Count)];
 
 		Conditional newConditional = new Conditional (rule1, rule2, tilesToOrder );
 		bool validRule = newConditional.IsValidRule ();
@@ -353,8 +513,10 @@ public class Logic : MonoBehaviour {
 		while( !validRule )
 		{
 			//remove a point for each used tile in tileUsage dict
+			Debug.Log ( " FAIL : " + newConditional.verbal );
 			RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
-			newConditional = CreateConditionalRule( holders, tilesToOrder, tileUsage );
+			ReAddHolderPositionsFromRescindedRule( holderPositions, newConditional );
+			newConditional = CreateConditionalRule( holderPositions, tilesToOrder, tileUsage );
 			validRule = newConditional.IsValidRule();
 		}
 
@@ -1095,8 +1257,14 @@ public class Logic : MonoBehaviour {
 		maxAdjacencyRules = maxAdj;
 		maxAbsPosRules = maxAbs;
 		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
-//		Debug.Log (" max Rules : " + maxRules);
-	
+
+	}
+
+	void SetConditionalParameters( int maxRel, int maxAdj, int maxAbs )
+	{
+		maxAbsInConditional = maxAbs;
+		maxAdjInConditional = maxAdj;
+		maxRelInConditional = maxRel;
 	}
 
 	void SetTileCount( int tilesInTrial )
@@ -1186,17 +1354,19 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, false, false, false );
+			SetConditionalParameters( 0, 1, 1 );
 		}
 		else if( currentLevel == 6 )
 		{
 			maxConditionals = 1;
 			maxRules = 1;
-			tilesCount = 4;
+			tilesCount = 3;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
+			usingEitherOr = false;
 			SetPossibleBoardParameters( true, true, false, false );
+			SetConditionalParameters( 0, 0, 2 );
 		}
 		else if( currentLevel == 7 )
 		{
@@ -1209,7 +1379,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, false, false );
-
+			SetConditionalParameters( 0, 1, 1 );
 		}
 		else if( currentLevel == 8 )
 		{
@@ -1224,6 +1394,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, false, false );
+			SetConditionalParameters( 1, 0, 1 );
 		}
 
 		else if( currentLevel == 9 )
@@ -1238,6 +1409,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
+			SetConditionalParameters( 0, 2, 0 );
 		}
 		else if( currentLevel == 10 )
 		{
@@ -1254,6 +1426,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 11 )
 		{
@@ -1269,6 +1442,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 12 )
 		{
@@ -1284,6 +1458,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 13 )
 		{
@@ -1299,6 +1474,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 14 )
 		{
@@ -1314,6 +1490,7 @@ public class Logic : MonoBehaviour {
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 15 )
 		{
@@ -1323,12 +1500,13 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 2;
 //			maxAbsPosRules = 2;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 16 )
 		{
@@ -1338,12 +1516,13 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 2;
 			maxAbsPosRules = 1;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 17 )
 		{
@@ -1353,12 +1532,13 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 2;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 3;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 18 )
 		{
@@ -1368,12 +1548,13 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 2;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 3;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 19 )
 		{
@@ -1383,12 +1564,13 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 2;
 			maxAbsPosRules = 1;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 3;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else if( currentLevel == 20 )
 		{
@@ -1398,12 +1580,13 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 1;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 3;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 		}
 		else
 		{
@@ -1413,26 +1596,28 @@ public class Logic : MonoBehaviour {
 			maxRelativePosRules = 1;
 			maxAbsPosRules = 1;
 			
-			tilesCount = 6;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
+			tilesCount = 5;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
 			maxRulesToSetImpossibleBoard = 3;
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
 
 		}
 
-//		maxRules = 3;
+//		maxRules = 4;
 //		
 //		maxConditionals = 1;
-//		maxRelativePosRules = 1;
-//		maxAdjacencyRules = 1;
+//		maxRelativePosRules = 2;
+//		maxAbsPosRules = 1;
 //		
 //		tilesCount = 5;
-//		chanceOfImpossible = 100;
+//		chanceOfImpossible = 25;
 //		maxImpossiblePerTrial = 2;
-//		maxRulesToSetImpossibleBoard = 2;
+//		maxRulesToSetImpossibleBoard = 3;
 //		usingEitherOr = true;
+//		SetPossibleBoardParameters( true, true, true, true );
 	
 		
 	}
@@ -1450,6 +1635,10 @@ public class Logic : MonoBehaviour {
 
 		previousPossiblePresetKey = null;
 		previousImpossiblePresetKey = null;
+
+		maxAbsInConditional = 0;
+		maxAdjInConditional = 0;
+		maxRelInConditional = 0;
 
 		SetPossibleBoardParameters( false, false, false, false );
 

@@ -243,7 +243,7 @@ public class Controller : MonoBehaviour {
 		bool submissionReady = model.ReadyForSubmission();
 		ActivateSubmissionButton( submissionReady );
 
-		string ruleList = logic.CreateRules ( model.tilesToOrder, model.holders );
+		string ruleList = logic.CreateRules ( model.tilesToOrder );
 		rules.text = ruleList;
 
 	}

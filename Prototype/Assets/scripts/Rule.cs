@@ -9,7 +9,11 @@ public class Rule
 	public Tile tile1;
 	public Tile tile2;
 	public int absolutePositionIndex;
+
 	public string verbal;
+	public string clause2OfConditional;
+	public string clause1OfConditional;
+
 	public int difficulty;
 	public Dictionary<string, List<Tile>> correctSubmissions = new Dictionary<string, List<Tile>>();
 	public Dictionary<string, List<Tile>> incorrectSubmissions = new Dictionary<string, List<Tile>>();
@@ -171,7 +175,7 @@ public class Rule
 		}
 		else
 		{
-//			PrintTileList ( tilesInOrder );
+			PrintTileList ( tilesInOrder );
 			TriagePossibleSubmission( tilesInOrder );
 		}
 
@@ -205,6 +209,7 @@ public class Rule
 
 public class RelativePositionRule : Rule 
 {
+
 	public RelativePositionRule( int newRuleType, Tile newTile1, Tile newTile2, List<Tile> tilesInBank)
 	{
 		ruleType = newRuleType;
@@ -228,10 +233,15 @@ public class RelativePositionRule : Rule
 		if (ruleType == 0) 
 		{
 			verbal =  tile1.name + " is before " + tile2.name + ".";
+			clause2OfConditional = "then " + tile1.name + " must be before " + tile2.name + ".";
+			clause1OfConditional = "If " + tile1.name  + " is before " + tile2.name + ", ";
+
 			return verbal;	
 		}
 			
 		verbal =  tile1.name + " is after " + tile2.name + ".";
+		clause2OfConditional = "then " + tile1.name + " must be after " + tile2.name + ".";
+		clause1OfConditional = "If " + tile1.name +  " is after " + tile2.name + ", ";
 		return verbal;
 	}
 	
@@ -274,6 +284,7 @@ public class RelativePositionRule : Rule
 
 public class AdjacencyRule : Rule 
 {
+
 	public AdjacencyRule( int newRuleType, Tile newTile1, Tile newTile2, List<Tile> tilesInBank  )
 	{
 		ruleType = newRuleType;
@@ -304,11 +315,15 @@ public class AdjacencyRule : Rule
 		if( ruleType == 0 )
 		{
 			verbal =  tile1.name + " is next to " + tile2.name + ".";
+			clause2OfConditional = "then " + tile1.name + " must be next to " + tile2.name + ".";
+			clause1OfConditional = "If " + tile1.name +  " is next to " + tile2.name + ", ";
 			return verbal;
 		}
 		else
 		{
 			verbal =  tile1.name + " is NOT next to " + tile2.name + ".";
+			clause2OfConditional = "then " + tile1.name + " CANNOT be next to " + tile2.name + ".";
+			clause1OfConditional = "If " + tile1.name +  " is NOT next to " + tile2.name + ", ";
 			return verbal;
 		}
 	}
@@ -362,8 +377,10 @@ public class AbsolutePositionRule : Rule
 		tile1 = newTile1;
 		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
+		Debug.Log ("tilesInBank 1 tile: " + tilesInBank.Count);
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
 		tilesUsedInRule.Add (tile1);
+		SetRuleIndentifier();
 	}
 
 	public AbsolutePositionRule( int newRuleType, Tile newTile1, Tile newTile2, int positionIndex, List<Tile> tilesInBank )
@@ -373,6 +390,7 @@ public class AbsolutePositionRule : Rule
 		tile2 = newTile2;
 		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
+		Debug.Log ("tilesInBank 2 tiles : " + tilesInBank.Count);
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
 		tilesUsedInRule.Add (tile1);
 		tilesUsedInRule.Add (tile2);
@@ -401,17 +419,23 @@ public class AbsolutePositionRule : Rule
 		if( tile2 != null )
 		{
 			verbal = tile1.name + " or " + tile2.name + " is in position " + (absolutePositionIndex + 1 ) + ".";
+			clause2OfConditional = "then " + tile1.name + " or " + tile2.name + " must be in position " + (absolutePositionIndex + 1 ) + ".";
+			clause1OfConditional = "If " + tile1.name + " or " + tile2.name + " is in position " + (absolutePositionIndex + 1 ) + ", ";
 			return verbal;
 		}
 
 		if( ruleType == 0 )
 		{
 			verbal =  tile1.name + " is in position " + (absolutePositionIndex + 1 ) + ".";
+			clause2OfConditional = "then " + tile1.name +  " must be in position " + (absolutePositionIndex + 1 ) + ".";
+			clause1OfConditional = "If " + tile1.name +  " is in position " + (absolutePositionIndex + 1 ) + ", ";
 			return verbal;
 		}
 		else
 		{
 			verbal =  tile1.name + " is not in position " + (absolutePositionIndex + 1 ) + ".";
+			clause2OfConditional = "then " + tile1.name +  " must NOT be in position " + (absolutePositionIndex + 1 ) + ".";
+			clause1OfConditional = "If " + tile1.name +  " is NOT in position " + (absolutePositionIndex + 1 ) + ", ";
 			return verbal;
 		}
 	}
@@ -710,6 +734,7 @@ public class Conditional: Rule
 			tilesUsedInRule.Add ( newRule2.tilesUsedInRule[ i ] );
 		}
 
+		ConstructVerbal ();
 	}
 
 	public override void SetRuleIndentifier()
@@ -720,28 +745,27 @@ public class Conditional: Rule
 
 	public bool IsValidRule()
 	{
-		if( correctSubmissions.Count > 0 && rule1 != rule2 )
+		if( rule1 is AbsolutePositionRule && rule2 is AbsolutePositionRule )
+		{
+			if( rule1.tile1 == rule2.tile1 )
+			{
+				return false;
+			}
+		}
+		if( correctSubmissions.Count > 1 && rule1 != rule2 )
 		{
 
 			return true;
 		}
+
 		return false;
 	}
 	
 	public override string ConstructVerbal()
 	{
-		verbal = "If " + rule1.verbal;
-		verbal.Remove (verbal.Length - 1);
-		verbal +=  ", " + rule2.verbal;
+		verbal = rule1.clause1OfConditional + rule2.clause2OfConditional;
 		return verbal;
 	}
-
-//	public bool SubmissionFollowsRule1( List< Tile > submission )
-//	{
-//
-//	}
-//
-//	public bool SubmissionFollowsRule2( List<Tile > submission )
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{
