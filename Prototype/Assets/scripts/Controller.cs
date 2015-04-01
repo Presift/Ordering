@@ -25,26 +25,64 @@ public class Controller : MonoBehaviour {
 	public GameObject buttonPanel;
 	public GameObject trialsEndDisplay;
 
+	public Button upLevel;
+	public Button downLevel;
+
 	// Use this for initialization
 	void Start () {
 
 		UpdateDisplay ();
 
 		NewTrial ();
+
+		if( GameData.dataControl.debugOn )
+		{
+			ShowDebug();
+		}
+		else
+		{
+			HideDebug();
+		}
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		if(Input.GetKeyDown(KeyCode.UpArrow ))
-		{
-			model.UpdateLevel( true );
-			Debug.Log ("Trial : " + model.currentLevel );
-		}
-		else if( Input.GetKeyDown(KeyCode.DownArrow))
-		{
-			model.UpdateLevel( false );
-			Debug.Log ("Trial : " + model.currentLevel );
-		}
+//		if(Input.GetKeyDown(KeyCode.UpArrow ))
+//		{
+//			model.UpdateLevel( true );
+//			Debug.Log ("Trial : " + model.currentLevel );
+//		}
+//		else if( Input.GetKeyDown(KeyCode.DownArrow))
+//		{
+//			model.UpdateLevel( false );
+//			Debug.Log ("Trial : " + model.currentLevel );
+//		}
+	}
+
+	public void DecreaseLevel()
+	{
+		model.UpdateLevel( false );
+		Debug.Log ("Trial : " + model.currentLevel );
+	}
+
+	public void IncreaseLevel()
+	{
+		model.UpdateLevel( true );
+		Debug.Log ("Trial : " + model.currentLevel );
+	}
+
+	void ShowDebug()
+	{
+		upLevel.gameObject.SetActive (true);
+		downLevel.gameObject.SetActive (true);
+		Debug.Log ("show debug");
+	}
+
+	void HideDebug()
+	{
+		upLevel.gameObject.SetActive (false);
+		downLevel.gameObject.SetActive (false);
+		Debug.Log("hide debug");
 	}
 
 	public void ActivateSubmissionButton( bool activate )

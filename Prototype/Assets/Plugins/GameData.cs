@@ -19,7 +19,7 @@ public class GameData : MonoBehaviour {
 //	public int currentStatsFile = 0;
 	
 	public int previousFinalLevel;
-	
+	public bool debugOn;
 	
 	void Awake(){
 		if(dataControl == null)
@@ -48,8 +48,10 @@ public class GameData : MonoBehaviour {
 		
 		PlayerData data = new PlayerData();
 		data.previousFinalLevel = previousFinalLevel;
+		data.debugOn = debugOn;
 
 		file.WriteLine ( data.previousFinalLevel );
+		file.WriteLine (data.debugOn);
 
 		file.Close ();
 		
@@ -69,12 +71,13 @@ public class GameData : MonoBehaviour {
 		if(File.Exists (GetFullPath( dataFile )))
 		{
 			string filePath = GetFullPath( dataFile );
-//			Debug.Log (Application.persistentDataPath);
+			Debug.Log (Application.persistentDataPath);
 
 			StreamReader data = new StreamReader( filePath );
 
 			previousFinalLevel = Convert.ToInt32( data.ReadLine() );
-		
+
+			debugOn = Convert.ToBoolean( data.ReadLine ());
 
 			data.Close ();
 		}
@@ -91,5 +94,6 @@ public class GameData : MonoBehaviour {
 class PlayerData
 {
 	public int previousFinalLevel;
+	public bool debugOn;
 //	public int currentStatsFile;
 }

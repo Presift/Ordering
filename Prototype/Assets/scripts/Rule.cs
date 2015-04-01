@@ -592,7 +592,7 @@ public class RuleStack: Rule
 	}
 	
 
-	public bool RuleConflictsWithRuleStack( Rule newRule )
+	public bool RuleConflictsWithRuleStack( Rule newRule, int requiredSharedPossibleSubmissions )
 	{
 		if( ruleStack.Count == 0 )
 		{
@@ -628,12 +628,18 @@ public class RuleStack: Rule
 			}
 		}
 
+		int sharedSubmissions = 0;
 
-		foreach( KeyValuePair<string, List<Tile>> pair in newRule.correctSubmissions )
+		foreach( KeyValuePair<string, List<Tile>> pair in correctSubmissions )
 		{ 
 			string submission1 = pair.Key;
 
-			if( correctSubmissions.ContainsKey( submission1))
+			if( newRule.correctSubmissions.ContainsKey( submission1))
+			{
+				sharedSubmissions ++;
+			}
+
+			if( sharedSubmissions == requiredSharedPossibleSubmissions )
 			{
 				return false;
 			}

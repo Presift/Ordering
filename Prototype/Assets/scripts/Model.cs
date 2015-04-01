@@ -24,13 +24,13 @@ public class Model : MonoBehaviour {
 	public int trialsPerPlaySession = 3;
 
 
-
 	// Use this for initialization
 	void Awake () {
 		currentTrial = 0;
 
 		GameData.dataControl.Load ();
 		currentLevel = GameData.dataControl.previousFinalLevel;
+
 //		currentTotalTileCount = 4;
 	}
 	
