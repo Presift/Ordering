@@ -241,7 +241,7 @@ public class Logic : MonoBehaviour {
 		}
 	}
 
-	bool ReusedTilesAvailable( Dictionary < Tile, int > tileUsage )
+	bool ReusedTilesAvailable( Dictionary < Tile, int > tileUsage, List< Tile > unavailableTiles )
 	{
 		foreach( KeyValuePair< Tile , int > pair in tileUsage )
 		{
@@ -249,7 +249,18 @@ public class Logic : MonoBehaviour {
 
 			if( pair.Value == 1 )
 			{
-				return true;
+				if( unavailableTiles != null )
+				{
+					if( !unavailableTiles.Contains( pair.Key ))
+					{
+						return true;
+					}
+				}
+				else
+				{
+					return true;
+				}
+
 			}
 		}
 
@@ -258,11 +269,12 @@ public class Logic : MonoBehaviour {
 
 	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded, List< Tile > unavailableTiles = null )
 	{
-		bool availableReusedTiles = ReusedTilesAvailable (tileUsage);
+		bool availableReusedTiles = ReusedTilesAvailable ( tileUsage, unavailableTiles );
 		int minReusedTiles = 0;
 		int maxReusedTiles = 0;
-		
-		if( availableReusedTiles && unavailableTiles == null )
+
+		Debug.Log ("available reused : " + availableReusedTiles);
+		if( availableReusedTiles )
 		{
 			minReusedTiles = 1;
 			maxReusedTiles = 1;
@@ -1143,31 +1155,137 @@ public class Logic : MonoBehaviour {
 		return digitBank;
 	}
 
+	List< string > GetCorrectSubmissionsForWildKey( string key, Rule rule )
+	{
+		List< string > correctSubmissions = new List< string > ();
+		
+		foreach( KeyValuePair<string, List<Tile>> pair in rule.correctSubmissions )
+		{ 
+			if( rule.WildCardSubmissionKeyNameMatch( key, pair.Key ))
+			{
+				correctSubmissions.Add ( pair.Key );
+			}
+		}
+		
+		return correctSubmissions;
+		
+	}
+
+	bool FoundASubmissionNotInExcludedListButSharedByAllLists( List< string > excluded, List<List<string>> included )
+	{
+		for( int sub = 0; sub < included[ 0 ].Count; sub ++ )
+		{
+			string submission = included[ 0 ][ sub ];
+
+			if( excluded.Contains( submission ) )
+			{
+				return false;
+			}
+			else
+			{
+				for( int shared = 1; shared < included.Count; shared ++ )
+				{
+					if( !included[ shared ].Contains( submission ))
+					{
+						break;
+					}
+					else
+					{
+						//if submission is shared by all of the included rules' correct submissions
+						if( shared == ( included.Count - 1 ))
+						{
+							return true;
+						}
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	bool ImpossibleKey( string possibleKey, RuleStack rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
 	{
-//		if( !trialRules.WildCardKeyInDictionary( possibleKey, trialRules.correctSubmissions ))
+		
 		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
 		{
 			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
-
+			
 			//test to see if preset is a possible correct answer each concerned breakable rule
-			bool passBreakableRulesTest = true;
+			bool passBreakableRulesTest = false;
 
-
-			for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+			
+			if( singleRuleBreak )
 			{
-				//if key is not in rule to break's correct submissions
-				if( !rulesToBreak.ruleStack[ i ].WildCardKeyInDictionary( possibleKey, rulesToBreak.ruleStack[ i ].correctSubmissions ))
+				List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak.ruleStack[ 0 ] );
+
+				if( correctSubmissions.Count == 0 )
 				{
-					if ( !singleRuleBreak )
+					passBreakableRulesTest = true;
+				}
+
+			}
+			else
+			{
+//				bool eachRulesSharesCorrectWithOtherBreakableRules = true;
+				bool eachRuleHasAPossibleCorrect = true;
+
+				List< List< string > > correctSubmissionsForKeyByRule = new List< List< string > >();
+
+				for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.ruleStack.Count; ruleToBreak ++ )
+				{
+					List< string > correctSubsForRule = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak.ruleStack[ ruleToBreak ] );
+					if( correctSubsForRule.Count == 0 )
 					{
-						Debug.Log ( " PRESET BREAKS RULE TO BREAK " );
-						passBreakableRulesTest = false;
+						eachRuleHasAPossibleCorrect = false;
 						break;
 					}
-
+					else
+					{
+						correctSubmissionsForKeyByRule.Add ( correctSubsForRule );
+					}
 				}
+
+
+
+				if( eachRuleHasAPossibleCorrect )
+				{
+					bool eachRuleUniquelyContributesToBreak = true;
+					//check that each rule does not share a correct submission that is shared by the other breakable rules
+					for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.ruleStack.Count; ruleToExclude ++ )
+					{
+						List< string > subsToExclude = new List<string>();
+						List< List< string >> listOfSubsToFindShared = new List<List<string>> ();
+
+						for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.ruleStack.Count; ruleToBreak ++ )
+						{
+							if( ruleToBreak == ruleToExclude )
+							{
+								subsToExclude = correctSubmissionsForKeyByRule[ ruleToBreak ];
+							}
+							else
+							{
+								listOfSubsToFindShared.Add ( correctSubmissionsForKeyByRule[ ruleToBreak ] );
+							}
+						}
+
+						bool foundASharedSubmissionExcludedFrom1RuleAndIncludedByOthers = FoundASubmissionNotInExcludedListButSharedByAllLists( subsToExclude, listOfSubsToFindShared );
+
+						if( !foundASharedSubmissionExcludedFrom1RuleAndIncludedByOthers )
+						{
+							eachRuleUniquelyContributesToBreak = false;
+							break;
+						}
+					}
+
+					if( eachRuleUniquelyContributesToBreak )
+					{
+						passBreakableRulesTest = true;
+					}
+				}
+				
 			}
+
 			
 			if( passBreakableRulesTest )
 			{
@@ -1195,9 +1313,65 @@ public class Logic : MonoBehaviour {
 				}
 			}
 		}
-
+		
 		return false;
 	}
+
+//	bool ImpossibleKey( string possibleKey, RuleStack rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
+//	{
+////		if( !trialRules.WildCardKeyInDictionary( possibleKey, trialRules.correctSubmissions ))
+//		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
+//		{
+//			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
+//
+//			//test to see if preset is a possible correct answer each concerned breakable rule
+//			bool passBreakableRulesTest = true;
+//
+//
+//			for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+//			{
+//				//if key is not in rule to break's correct submissions
+//				if( !rulesToBreak.ruleStack[ i ].WildCardKeyInDictionary( possibleKey, rulesToBreak.ruleStack[ i ].correctSubmissions ))
+//				{
+//					if ( !singleRuleBreak )
+//					{
+//						Debug.Log ( " PRESET BREAKS RULE TO BREAK " );
+//						passBreakableRulesTest = false;
+//						break;
+//					}
+//
+//				}
+//			}
+//			
+//			if( passBreakableRulesTest )
+//			{
+//				Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
+//				bool passOtherRulesTest = true;
+//				//test to see if preset is impossible for non-concerned rules in trial rules
+//				for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
+//				{
+//					if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
+//					{
+//						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
+//						passOtherRulesTest = false;
+//						break;
+//					}
+//				}
+//				
+//				if( passOtherRulesTest )
+//				{
+//					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
+//					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+//					{
+//						Debug.Log (rulesToBreak.ruleStack[ i ].verbal);
+//					}
+//					return true;
+//				}
+//			}
+//		}
+//
+//		return false;
+//	}
 
 
 
@@ -1388,6 +1562,7 @@ public class Logic : MonoBehaviour {
 			maxConditionals = 1;
 			maxRelativePosRules = 1;
 			maxAdjacencyRules = 1;
+
 			tilesCount = 4;
 			chanceOfImpossible = 30;
 			maxImpossiblePerTrial = 1;
@@ -1606,18 +1781,20 @@ public class Logic : MonoBehaviour {
 
 		}
 
-//		maxRules = 4;
-//		
-//		maxConditionals = 1;
-//		maxRelativePosRules = 2;
-//		maxAbsPosRules = 1;
-//		
-//		tilesCount = 5;
-//		chanceOfImpossible = 25;
-//		maxImpossiblePerTrial = 2;
-//		maxRulesToSetImpossibleBoard = 3;
-//		usingEitherOr = true;
-//		SetPossibleBoardParameters( true, true, true, true );
+		maxRules = 4;
+		
+		maxConditionals = 1;
+		maxRelativePosRules = 2;
+		maxAdjacencyRules = 1;
+		maxAbsPosRules = 1;
+		
+		tilesCount = 6;
+		chanceOfImpossible = 100;
+		maxImpossiblePerTrial = 2;
+		maxRulesToSetImpossibleBoard = 3;
+		usingEitherOr = true;
+		SetPossibleBoardParameters( true, true, true, true );
+		SetConditionalParameters( 1, 1, 0 );
 	
 		
 	}

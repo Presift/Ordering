@@ -47,7 +47,7 @@ public class Rule
 		{
 			listReadOut += tileList[ i ].name + " , ";
 		}
-		Debug.Log ( listReadOut );
+//		Debug.Log ( listReadOut );
 	}
 
 	public virtual string ConstructVerbal()
@@ -120,7 +120,7 @@ public class Rule
 		return appearanceInDict;
 	}
 
-	bool WildCardSubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
+	public bool WildCardSubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
 	{
 		List<char> usedChars = new List<char> ();
 		for( int charIndex = 0; charIndex < key1.Length; charIndex ++ )
@@ -377,8 +377,10 @@ public class AbsolutePositionRule : Rule
 		tile1 = newTile1;
 		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
-		Debug.Log ("tilesInBank 1 tile: " + tilesInBank.Count);
+//		Debug.Log ("tilesInBank 1 tile: " + tilesInBank.Count);
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
+		Debug.Log ("correctSubmissions : " + correctSubmissions.Count);
+		Debug.Log ("incorrect subs : " + incorrectSubmissions.Count);
 		tilesUsedInRule.Add (tile1);
 		SetRuleIndentifier();
 	}
@@ -390,8 +392,10 @@ public class AbsolutePositionRule : Rule
 		tile2 = newTile2;
 		absolutePositionIndex = positionIndex;
 		List<Tile> tilesInOrder = new List<Tile> ();
-		Debug.Log ("tilesInBank 2 tiles : " + tilesInBank.Count);
+//		Debug.Log ("tilesInBank 2 tiles : " + tilesInBank.Count);
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
+		Debug.Log ("correctSubmissions : " + correctSubmissions.Count);
+		Debug.Log ("incorrect subs : " + incorrectSubmissions.Count);
 		tilesUsedInRule.Add (tile1);
 		tilesUsedInRule.Add (tile2);
 		SetRuleIndentifier();
