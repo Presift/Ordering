@@ -26,6 +26,7 @@ public class Logic : MonoBehaviour {
 	int maxAdjacencyRules;
 	int maxConditionals;
 	bool usingEitherOr;
+	bool usingPositiveOfAbsolute;
 
 	//integers for rule types
 	int absPosition = 1;
@@ -283,42 +284,87 @@ public class Logic : MonoBehaviour {
 
 		Debug.Log (" min reused : " + minReusedTiles + ", maxReused : " + maxReusedTiles);
 
+		bool findTilesWithFewestReuses = false;
+		int fewestReuses = 100;
+		Tile tileWithFewestReuses = null;
+
 		int reusedTiles = 0;
 
 		List<Tile> tilesToUse = new List<Tile> ();
 
 
-		foreach( KeyValuePair< Tile , int > pair in tileUsage )
+		while( tilesToUse.Count < tilesNeeded )
 		{
-			Tile tile = pair.Key;
-			//if tile has been used only once and reused tiles is less than max reused tiles
-			if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
+			foreach( KeyValuePair< Tile , int > pair in tileUsage )
 			{
-				if( unavailableTiles == null )
+				Tile tile = pair.Key;
+				//if tile has been used only once and reused tiles is less than max reused tiles
+				if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
 				{
-					tilesToUse.Add ( tile );
-					reusedTiles ++;
-				}
-				else if( !unavailableTiles.Contains( pair.Key ))
-				{
-					tilesToUse.Add ( tile );
-					reusedTiles ++;
-				}
-			}
-			else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
-			{
-				tilesToUse.Add ( tile );
-			}
-			if( tilesToUse.Count == tilesNeeded )
-			{
-				for( int i = 0; i < tilesToUse.Count; i ++ )
-				{
-					tileUsage[tilesToUse[i]] ++;
-					Debug.Log ( "USED : " + tilesToUse[i]);
+					if( unavailableTiles == null )
+					{
+						tilesToUse.Add ( tile );
+						reusedTiles ++;
+					}
+					else if( !unavailableTiles.Contains( pair.Key ))
+					{
+						tilesToUse.Add ( tile );
+						reusedTiles ++;
+					}
 				}
 
-				return tilesToUse;
+				else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
+				{
+					tilesToUse.Add ( tile );
+				}
+
+				else if( findTilesWithFewestReuses )
+				{
+					if( pair.Value < fewestReuses )
+					{
+						if( unavailableTiles == null )
+						{
+							fewestReuses = pair.Value;
+							tileWithFewestReuses = pair.Key;
+						}
+						else if( !unavailableTiles.Contains( pair.Key ))
+						{
+							fewestReuses = pair.Value;
+							tileWithFewestReuses = pair.Key;
+						}
+					}
+				}
+
+				if( tilesToUse.Count == tilesNeeded )
+				{
+					for( int i = 0; i < tilesToUse.Count; i ++ )
+					{
+						tileUsage[tilesToUse[i]] ++;
+						Debug.Log ( "USED : " + tilesToUse[i]);
+					}
+					
+					return tilesToUse;
+				}
 			}
+
+			findTilesWithFewestReuses = true;
+			if( tileWithFewestReuses != null )
+			{
+				tilesToUse.Add ( tileWithFewestReuses );
+				Debug.Log ("ADDED TILE WITH FEWEST REUSES");
+
+				if( tilesToUse.Count == tilesNeeded )
+				{
+					for( int i = 0; i < tilesToUse.Count; i ++ )
+					{
+						tileUsage[tilesToUse[i]] ++;
+						Debug.Log ( "USED : " + tilesToUse[i]);
+					}
+					
+					return tilesToUse;
+				}
+			}
+
 		}
 
 //		Debug.Log (" adding more tiles ");
@@ -357,7 +403,12 @@ public class Logic : MonoBehaviour {
 		int order = Random.Range (0, 2);
 
 		List<Tile> tilesToUse = GetTilesToUse (tileUsage, 2 );
-		
+
+		if( tilesToUse == null )
+		{
+			return null;
+		}
+
 		RelativePositionRule relPositionRule = new RelativePositionRule( order, tilesToUse[0], tilesToUse[1], tilesToOrder  ); 
 		relPositionRule.ConstructVerbal();
 		
@@ -376,11 +427,12 @@ public class Logic : MonoBehaviour {
 		return adjRule;
 	}
 
-	AbsolutePositionRule CreateAbsoluteRule( List<int> holderPositions, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage, List< Tile > unusableTiles = null )
+	AbsolutePositionRule CreateAbsoluteRule( List<int> holderPositions, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage, List< Tile > unusableTiles = null, bool isPartOfConditional = false )
 	{
 
 		//create absolute position rule
-		int absolutePosition = Random.Range ( 0, holderPositions.Count );
+		int absolutePosition = Random.Range ( 0, holderPositions.Count );	
+
 		Debug.Log (" absolutePosition : " + absolutePosition); 
 		holderPositions.Remove (absolutePosition);
 //		Debug.Log ("ABSOLUTE POSITION : " + absolutePosition);
@@ -401,9 +453,21 @@ public class Logic : MonoBehaviour {
 				
 				return absPositionRule;
 			}
+		
+			else
 			{
+				int negatedAbsolute;  //0 is positive, 1 is negative ( i know this is counter intuitive )
+				if( !isPartOfConditional && !usingPositiveOfAbsolute )
+				{
+					negatedAbsolute = 1;
+				}
+				else
+				{
+					negatedAbsolute = 0;
+				}
+
 				List<Tile> tilesToUse = GetTilesToUse (tileUsage, 1, unusableTiles);
-				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( 0, tilesToUse[0], absolutePosition, tilesToOrder ); 
+				AbsolutePositionRule absPositionRule = new AbsolutePositionRule( negatedAbsolute, tilesToUse[0], absolutePosition, tilesToOrder ); 
 				absPositionRule.ConstructVerbal();
 				
 				return absPositionRule;
@@ -506,7 +570,7 @@ public class Logic : MonoBehaviour {
 		for( int i = 0; i < maxAbsInConditional; i ++ )
 		{
 			Debug.Log ( holderPositions.Count );
-			AbsolutePositionRule absRule = CreateAbsoluteRule( holderPositions, tilesToOrder, tileUsage, unusableTiles );
+			AbsolutePositionRule absRule = CreateAbsoluteRule( holderPositions, tilesToOrder, tileUsage, unusableTiles, true );
 			unusableTiles.Add ( absRule.tile1 );
 
 			if ( absRule.tile2 != null )
@@ -1491,6 +1555,7 @@ public class Logic : MonoBehaviour {
 			SetTileCount ( 3 );
 			SetImpossibleBoardParameters( 1, 30, 1 );
 			SetPossibleBoardParameters( false, false, false, false );
+			usingPositiveOfAbsolute = true;
 		}
 
 		else if( currentLevel == 1 )
@@ -1502,6 +1567,7 @@ public class Logic : MonoBehaviour {
 			chanceOfImpossible = 75;
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 2 )
 		{
@@ -1513,6 +1579,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 3 )
 		{
@@ -1523,6 +1590,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 1;
 			usingEitherOr = true;
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 4 )
 		{
@@ -1535,6 +1603,7 @@ public class Logic : MonoBehaviour {
 			maxImpossiblePerTrial = 1;
 			maxRulesToSetImpossibleBoard = 2;
 			usingEitherOr = true;
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 5 )
 		{
@@ -1547,6 +1616,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, false, false, false );
 			SetConditionalParameters( 0, 1, 1 );
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 6 )
 		{
@@ -1559,6 +1629,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = false;
 			SetPossibleBoardParameters( true, true, false, false );
 			SetConditionalParameters( 0, 0, 2 );
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 7 )
 		{
@@ -1572,6 +1643,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, false, false );
 			SetConditionalParameters( 0, 1, 1 );
+			usingPositiveOfAbsolute = true;
 		}
 		else if( currentLevel == 8 )
 		{
@@ -1588,6 +1660,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, false, false );
 			SetConditionalParameters( 1, 0, 1 );
+			usingPositiveOfAbsolute = true;
 		}
 
 		else if( currentLevel == 9 )
@@ -1603,6 +1676,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 			SetConditionalParameters( 0, 2, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 10 )
 		{
@@ -1620,6 +1694,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 11 )
 		{
@@ -1636,6 +1711,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 12 )
 		{
@@ -1652,6 +1728,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, false );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 13 )
 		{
@@ -1668,6 +1745,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 14 )
 		{
@@ -1684,6 +1762,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 15 )
 		{
@@ -1700,6 +1779,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 16 )
 		{
@@ -1716,6 +1796,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 17 )
 		{
@@ -1732,6 +1813,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 18 )
 		{
@@ -1748,6 +1830,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 19 )
 		{
@@ -1764,6 +1847,7 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
 		else if( currentLevel == 20 )
 		{
@@ -1780,8 +1864,9 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 		}
-		else
+		else if( currentLevel == 21 )
 		{
 			maxRules = 3;
 			
@@ -1796,6 +1881,58 @@ public class Logic : MonoBehaviour {
 			usingEitherOr = true;
 			SetPossibleBoardParameters( true, true, true, true );
 			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
+		}
+		else if( currentLevel == 22 )
+		{
+			maxRules = 4;
+			
+			maxConditionals = 2;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 1;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
+			maxRulesToSetImpossibleBoard = 3;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
+		}
+		else if( currentLevel == 23 )
+		{
+			maxRules = 4;
+			
+			maxConditionals = 2;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 1;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
+			maxRulesToSetImpossibleBoard = 4;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
+		}
+		else
+		{
+			maxRules = 4;
+			
+			maxConditionals = 2;
+			maxRelativePosRules = 1;
+			maxAbsPosRules = 1;
+			
+			tilesCount = 6;
+			chanceOfImpossible = 25;
+			maxImpossiblePerTrial = 2;
+			maxRulesToSetImpossibleBoard = 4;
+			usingEitherOr = true;
+			SetPossibleBoardParameters( true, true, true, true );
+			SetConditionalParameters( 1, 1, 0 );
+			usingPositiveOfAbsolute = false;
 
 		}
 
@@ -1835,6 +1972,7 @@ public class Logic : MonoBehaviour {
 		SetPossibleBoardParameters( false, false, false, false );
 
 	}
+	
 
 	List<Tile> ShuffleThis(List<Tile> listToShuffle ){
 		List<Tile> data = new List<Tile> (listToShuffle);

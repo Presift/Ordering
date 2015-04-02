@@ -9,7 +9,8 @@ public class Model : MonoBehaviour {
 	public int score;
 	public int currentProblemInTrial;
 	public int trial;
-
+	public int scoreIncreaseForCorrectAnswer;
+//	public int maxPointsFrom
 //	public int currentTotalTileCount;
 	int occupiedTiles;
 	public List<StagingArea> stagingAreas;
@@ -23,6 +24,8 @@ public class Model : MonoBehaviour {
 	public int currentTrial;
 	public int trialsPerPlaySession = 3;
 
+	public int maxSecondsForTimeBonus = 60;
+	public int pointsPerSecondUnderBonusTime;
 
 	// Use this for initialization
 	void Awake () {

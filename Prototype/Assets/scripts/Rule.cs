@@ -437,7 +437,7 @@ public class AbsolutePositionRule : Rule
 		}
 		else
 		{
-			verbal =  tile1.name + " is not in position " + (absolutePositionIndex + 1 ) + ".";
+			verbal =  tile1.name + " is NOT in position " + (absolutePositionIndex + 1 ) + ".";
 			clause2OfConditional = "then " + tile1.name +  " must NOT be in position " + (absolutePositionIndex + 1 ) + ".";
 			clause1OfConditional = "If " + tile1.name +  " is NOT in position " + (absolutePositionIndex + 1 ) + ", ";
 			return verbal;

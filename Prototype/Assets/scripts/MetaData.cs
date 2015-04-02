@@ -42,9 +42,10 @@ public class MetaData : MonoBehaviour {
 		timeAtStartOfProblem = time;
 	}
 
-	public void CalculateResonseTime( float timeResponded )
+	void CalculateResonseTime( float timeResponded )
 	{
 		responseTime = timeResponded - timeAtStartOfProblem;
+
 	}
 
 	public void SetStatsForTrial( int newLevel, int problem, int trial, int ruleCnt, List<float> newRuleTypes, int newTileCount )
@@ -80,10 +81,12 @@ public class MetaData : MonoBehaviour {
 		timeAtStartOfProblem = timeAtStart;
 	}
 
-	public void SetStatsOnAnswer( bool correct, float timeResponded )
+	public int SetStatsOnAnswer( bool correct, float timeResponded )
 	{
 		correctAnswer = correct;
 		CalculateResonseTime (timeResponded);
+
+		return ( int )responseTime;
 	}
 
 	public void ResetStats()

@@ -63,12 +63,14 @@ public class Controller : MonoBehaviour {
 	{
 		model.UpdateLevel( false );
 		Debug.Log ("Trial : " + model.currentLevel );
+		UpdateDisplay ();
 	}
 
 	public void IncreaseLevel()
 	{
 		model.UpdateLevel( true );
 		Debug.Log ("Trial : " + model.currentLevel );
+		UpdateDisplay ();
 	}
 
 	void ShowDebug()
@@ -140,18 +142,49 @@ public class Controller : MonoBehaviour {
 
 	public void RespondToAnswer( bool correctAnswer )
 	{
-		metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
+		int responseTime = metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
+		int timeBonus = CalculateTimeBonusEarned (correctAnswer, responseTime);
+		Debug.Log ("BONUS POINTS : " + timeBonus);
 		metaData.SaveStats ();
 		view.DisplayFeedback ( true, correctAnswer );
 	
 	}
+
+	int CalculateTimeBonusEarned( bool correctAnswer, int responseTime )
+	{
+		if( !correctAnswer )
+		{
+			return 0;
+		}
+		else
+		{
+			int secondsToSpare = model.maxSecondsForTimeBonus - responseTime;
+
+			int timeBonus = secondsToSpare * model.pointsPerSecondUnderBonusTime;
+
+			return timeBonus;
+		}
+	}
 	
+	int CalculatePointsForCorrectAnswer()
+	{
+		int scoreIncrease = ( model.currentLevel + 1 ) * model.pointsForCorrect;
+
+		return scoreIncrease;
+	}
+
+	int CalculateTimeBonusPointsPerSecond()
+	{
+		int maxPointsFromTimeBonus = model.scoreIncreaseForCorrectAnswer / 2;
+
+		return maxPointsFromTimeBonus / model.maxSecondsForTimeBonus;
+	}
 
 	public void NextStep( bool correctAnswer )
 	{
 		if (correctAnswer) {
 			int scoreIncrease = ( model.currentLevel + 1 ) * model.pointsForCorrect;
-			model.score += scoreIncrease;
+			model.score += model.scoreIncreaseForCorrectAnswer;
 			
 			//if trial is not yet completed
 			if( model.currentProblemInTrial < ( logic.problemsPerTrial - 1 ))
@@ -229,6 +262,9 @@ public class Controller : MonoBehaviour {
 	void NewTrial()
 	{
 //		Debug.Log ("starting new trial ");
+		model.scoreIncreaseForCorrectAnswer = CalculatePointsForCorrectAnswer ();
+		model.pointsPerSecondUnderBonusTime = CalculateTimeBonusPointsPerSecond ();
+
 		metaData.ResetStats ();
 		model.currentTrial ++;
 		UpdateDisplay ();
