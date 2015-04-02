@@ -64,24 +64,25 @@ public class Logic : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-//
-//		int nullToAdd = 0;
-//		List< List< string>> allCombos = new List< List< string>> ();
-//		List< string > newCombo = new List< string > ();
-//		List<string> bank = new List<string>();
-//		bank.Add ("a");
-//		bank.Add ("b");
-//		bank.Add ("c");
-//		GetAllCombinationsForPresets (bank, newCombo, 2, allCombos );
-//	
-//		List<string> allKeyCombos = new List<string> ();
-//		List<int> currPosOrder = new List<int> ();
-//		List<int> digitBank = new List<int> ();
-//		digitBank.Add (0);
-//		digitBank.Add (1);
-//		digitBank.Add (2);
-//		digitBank.Add (3);
-//		GetPresetOrdersFromCombos (currPosOrder, digitBank, digitBank.Count, allCombos [0], allKeyCombos );
+
+		List< string > excluded = new List<string > ();
+		excluded.Add ("abc");
+		excluded.Add ("acb");
+
+		List< string > include1 = new List<string > ();
+		include1.Add ("bca");
+		include1.Add ("bac");
+
+		List<string> include2 = new List<string > ();
+//		include2.Add ("bca");
+		include2.Add ("abc");
+
+		List<List<string>> included = new List<List<string>> ();
+		included.Add (include1);
+		included.Add (include2);
+
+		bool found = FoundASubmissionNotInExcludedListButSharedByAllLists (excluded, included);
+		Debug.Log (found);
 
 	}
 
@@ -346,7 +347,7 @@ public class Logic : MonoBehaviour {
 //			}
 //		}
 		Debug.Log (" not enough tiles added ");
-		return tilesToUse;
+		return null;
 	}
 
 	RelativePositionRule CreateRelativeRule( List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
@@ -797,9 +798,9 @@ public class Logic : MonoBehaviour {
 			List< string > newCombo = new List< string > ();
 			GetAllCombinationsForPresets( tileBank, newCombo, currentPresets, tileCombos);
 
-			Debug.Log ( " modus tollens : " + modusTollens );
-			Debug.Log (" modus ponens : " + modusPonens );
-			Debug.Log (" bAnd Not A : " + showClauseBNotA );
+//			Debug.Log ( " modus tollens : " + modusTollens );
+//			Debug.Log (" modus ponens : " + modusPonens );
+//			Debug.Log (" bAnd Not A : " + showClauseBNotA );
 			//for each combo in allCombos
 			for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
 			{
@@ -841,7 +842,7 @@ public class Logic : MonoBehaviour {
 									if( KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 ))
 									{
 										testKeyUsesBAndNotA = true;
-										Debug.Log ( "bAndNotA : " + preset );
+//										Debug.Log ( "bAndNotA : " + preset );
 									}
 								}
 								if( modusTollens )
@@ -849,7 +850,7 @@ public class Logic : MonoBehaviour {
 									if( KeyIsContraPositiveOfConditional( alwaysBreaksRule2 ))
 									{
 										testKeyUsesModusTollens = true;
-										Debug.Log ("tollens : " + preset );
+//										Debug.Log ("tollens : " + preset );
 									}
 								}
 								if( modusPonens )
@@ -857,7 +858,7 @@ public class Logic : MonoBehaviour {
 									if( KeyIsPositiveOfConditional( neverBreaksRule1 ))
 									{
 										testKeyUsesModusPonens = true;
-										Debug.Log ( "ponens : " +preset );
+//										Debug.Log ( "ponens : " +preset );
 									}
 									
 								}
@@ -872,7 +873,7 @@ public class Logic : MonoBehaviour {
 							else if ( bestKeyUsesBAndNotA && testKeyUsesBAndNotA && instances == fewestPossibleCompletions && currentPresets == bestPresetCount  )
 							{
 								bestKeys.Add ( preset );
-								Debug.Log ( " added : " + preset );
+//								Debug.Log ( " added : " + preset );
 							}
 							else if( !bestKeyUsesModusTollens && testKeyUsesModusTollens && !bestKeyUsesBAndNotA )
 							{
@@ -883,7 +884,7 @@ public class Logic : MonoBehaviour {
 							else if( bestKeyUsesModusTollens && testKeyUsesModusTollens && !bestKeyUsesBAndNotA && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
-								Debug.Log ( " added : " + preset );
+//								Debug.Log ( " added : " + preset );
 							}
 							else if( !bestKeyUsesModusPonens && testKeyUsesModusPonens && !bestKeyUsesModusTollens )
 							{
@@ -894,7 +895,7 @@ public class Logic : MonoBehaviour {
 							else if( bestKeyUsesModusPonens && testKeyUsesModusPonens && !bestKeyUsesModusTollens && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
-								Debug.Log ( " added : " + preset );
+//								Debug.Log ( " added : " + preset );
 							}
 						}
 						// if no conditionals in stack
@@ -908,7 +909,7 @@ public class Logic : MonoBehaviour {
 							else if ( instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
-								Debug.Log ( " added : " + preset );
+//								Debug.Log ( " added : " + preset );
 							}
 						}
 
@@ -916,12 +917,12 @@ public class Logic : MonoBehaviour {
 						{
 							bestKeys = new List< string >();
 							bestKeys.Add ( preset );
-							Debug.Log ( " added : " + preset );
+//							Debug.Log ( " added : " + preset );
 							fewestPossibleCompletions = instances;
 //							fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
 							bestPresetCount = currentPresets;
 
-							Debug.Log ("***keys count : " + bestKeys.Count);
+//							Debug.Log ("***keys count : " + bestKeys.Count);
 						}
 					}
 
@@ -931,6 +932,7 @@ public class Logic : MonoBehaviour {
 			currentPresets ++;
 			Debug.Log ( "increase presets to : " + currentPresets );
 		}
+		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
 		Debug.Log ("best keys count : " + bestKeys.Count);
 		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
 		return bestKeys;
@@ -1044,17 +1046,18 @@ public class Logic : MonoBehaviour {
 		List< Rule > newCombo = new List<Rule > ();
 		List< Rule > ruleBank = new List<Rule>( trialRules.ruleStack );
 
-		GetAllCombinationsOfRules (ruleBank, newCombo, Mathf.Min ( maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count ), allRuleCombos);
+		int rulesToSetImpossible = Mathf.Min (maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count);
+		GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
 
 		string presetTiles = null;
 
 		Debug.Log (" combo list count : " + allRuleCombos.Count); 
 		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
 
-		int maxPresetTiles = 3;
+		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
 		int minPresetTiles = 1;
 		
-		while( presetTiles == null || minPresetTiles > maxPresetTiles )
+		while( presetTiles == null && minPresetTiles <= maxPresetTiles )
 		{
 			for( int i = 0; i < allRuleCombos.Count; i ++ )
 			{
@@ -1077,13 +1080,25 @@ public class Logic : MonoBehaviour {
 			//increase min preset tiles
 			minPresetTiles ++;
 
-			//FOR LATER
-			//if minPresets > maxPresets and rules in trial > 1
-				//try with fewer rules to combine
-				//reset min/max preset counts
+			// if presets are maxed and rules can still be dropped from rule combinations
+			if( minPresetTiles > maxPresetTiles && rulesToSetImpossible > 1 )
+			{
+				//make more rule combos with fewer rules
+				allRuleCombos = new List< List<Rule> > ();
+				newCombo = new List<Rule > ();
+				ruleBank = new List<Rule>( trialRules.ruleStack );
+
+				rulesToSetImpossible --;
+
+				GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
+
+				tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
+				
+				maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
+				minPresetTiles = 1;
+			}
 		}
 
-		
 		if( presetTiles != null )
 		{
 			Debug.Log ("CREATING IMPOSSIBLE BOARD");
@@ -1173,16 +1188,19 @@ public class Logic : MonoBehaviour {
 
 	bool FoundASubmissionNotInExcludedListButSharedByAllLists( List< string > excluded, List<List<string>> included )
 	{
+		// for each submission in first included rule submissions
 		for( int sub = 0; sub < included[ 0 ].Count; sub ++ )
 		{
 			string submission = included[ 0 ][ sub ];
 
-			if( excluded.Contains( submission ) )
+			// if submission is not in excluded rule
+			if( !excluded.Contains( submission ) )
 			{
-				return false;
-			}
-			else
-			{
+				//check to see if submission is in other included rules
+				if( included.Count == 1 )
+				{
+					return true;
+				}
 				for( int shared = 1; shared < included.Count; shared ++ )
 				{
 					if( !included[ shared ].Contains( submission ))
@@ -1209,7 +1227,7 @@ public class Logic : MonoBehaviour {
 		
 		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
 		{
-			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
+			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS : " + possibleKey);
 			
 			//test to see if preset is a possible correct answer each concerned breakable rule
 			bool passBreakableRulesTest = false;
@@ -1218,7 +1236,7 @@ public class Logic : MonoBehaviour {
 			if( singleRuleBreak )
 			{
 				List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak.ruleStack[ 0 ] );
-
+				Debug.Log ( "correct submissions : " + correctSubmissions.Count );
 				if( correctSubmissions.Count == 0 )
 				{
 					passBreakableRulesTest = true;
@@ -1227,7 +1245,6 @@ public class Logic : MonoBehaviour {
 			}
 			else
 			{
-//				bool eachRulesSharesCorrectWithOtherBreakableRules = true;
 				bool eachRuleHasAPossibleCorrect = true;
 
 				List< List< string > > correctSubmissionsForKeyByRule = new List< List< string > >();
@@ -1247,10 +1264,10 @@ public class Logic : MonoBehaviour {
 				}
 
 
-
 				if( eachRuleHasAPossibleCorrect )
 				{
-					bool eachRuleUniquelyContributesToBreak = true;
+					Debug.Log (" each rule has possible corrects : " + eachRuleHasAPossibleCorrect );
+
 					//check that each rule does not share a correct submission that is shared by the other breakable rules
 					for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.ruleStack.Count; ruleToExclude ++ )
 					{
@@ -1269,19 +1286,20 @@ public class Logic : MonoBehaviour {
 							}
 						}
 
-						bool foundASharedSubmissionExcludedFrom1RuleAndIncludedByOthers = FoundASubmissionNotInExcludedListButSharedByAllLists( subsToExclude, listOfSubsToFindShared );
+						bool ruleNeededToCreateImpossible = FoundASubmissionNotInExcludedListButSharedByAllLists( subsToExclude, listOfSubsToFindShared );
 
-						if( !foundASharedSubmissionExcludedFrom1RuleAndIncludedByOthers )
+						if( !ruleNeededToCreateImpossible )
 						{
-							eachRuleUniquelyContributesToBreak = false;
 							break;
+						}
+
+						else if( ruleToExclude == ( rulesToBreak.ruleStack.Count - 1 ))
+						{
+							Debug.Log ( "EACH RULE NEEDED TO CREATE IMPOSSIBLE ");
+							passBreakableRulesTest = true; 
 						}
 					}
 
-					if( eachRuleUniquelyContributesToBreak )
-					{
-						passBreakableRulesTest = true;
-					}
 				}
 				
 			}
@@ -1781,21 +1799,18 @@ public class Logic : MonoBehaviour {
 
 		}
 
-		maxRules = 4;
+//		maxRules = 4;
+//		maxConditionals = 0;
+//		maxAbsPosRules = 1;
+//		maxRelativePosRules = 1;
+//		maxAdjacencyRules = 2;
+//
+//		tilesCount = 6;
+//		chanceOfImpossible = 100;
+//		maxImpossiblePerTrial = 2;
+//		maxRulesToSetImpossibleBoard = 3;
+//		usingEitherOr = true;
 		
-		maxConditionals = 1;
-		maxRelativePosRules = 2;
-		maxAdjacencyRules = 1;
-		maxAbsPosRules = 1;
-		
-		tilesCount = 6;
-		chanceOfImpossible = 100;
-		maxImpossiblePerTrial = 2;
-		maxRulesToSetImpossibleBoard = 3;
-		usingEitherOr = true;
-		SetPossibleBoardParameters( true, true, true, true );
-		SetConditionalParameters( 1, 1, 0 );
-	
 		
 	}
 	
