@@ -15,6 +15,11 @@ public class Controller : MonoBehaviour {
 	public Button playAgainButton;
 
 	public Text rules;
+	public Text score;
+	public Text round;
+	public Text trial;
+	public Text level;
+
 	public Logic logic;
 
 	public Text statsDisplay;
@@ -31,7 +36,7 @@ public class Controller : MonoBehaviour {
 
 		UpdateDisplay ();
 
-		NewTrial ();
+		NewRound ();
 
 		if( GameData.dataControl.debugOn )
 		{
@@ -62,7 +67,7 @@ public class Controller : MonoBehaviour {
 		model.UpdateLevel( false );
 		Debug.Log ("Trial : " + model.currentLevel );
 		UpdateDisplay ();
-		NewTrial ();
+		NewRound ();
 	}
 
 	public void IncreaseLevel()
@@ -70,7 +75,7 @@ public class Controller : MonoBehaviour {
 		model.UpdateLevel( true );
 		Debug.Log ("Trial : " + model.currentLevel );
 		UpdateDisplay ();
-		NewTrial ();
+		NewRound ();
 	}
 
 	void ShowDebug()
@@ -185,14 +190,15 @@ public class Controller : MonoBehaviour {
 		if (correctAnswer) {
 			int scoreIncrease = ( model.currentLevel + 1 ) * model.pointsForCorrect;
 			model.score += model.scoreIncreaseForCorrectAnswer;
-			
+			UpdateScoreDisplay();
+
 			//if trial is not yet completed
 			if( model.currentTrialInRound < ( logic.problemsPerTrial - 1 ))
 			{
 				//increase problem count
 				model.currentTrialInRound++;
 				//create new problem
-				NewProblem();
+				NewTrial();
 			}
 			else
 			{
@@ -200,17 +206,17 @@ public class Controller : MonoBehaviour {
 				model.UpdateLevel( correctAnswer );
 				EndOfTrial();
 //				ShowOnlyNextTrialButton();
-//				NewTrial();
+//				NewRound();
 			}
 		} 
 		else 
 		{
 			model.UpdateLevel( correctAnswer );
 //			EndOfTrial();
-			ShowOnlyNextTrialButton();
+			ShowOnlyContinueButton();
 		}
 		
-		UpdateDisplay ();
+//		UpdateDisplay ();
 	}
 
 	void EndOfTrial()
@@ -231,13 +237,39 @@ public class Controller : MonoBehaviour {
 		}
 		else
 		{
-			NewTrial();
+			NewRound();
 		}
+
+//		UpdateDisplay ();
 	}
 
 	void UpdateDisplay()
 	{
-		statsDisplay.text = "Score : " + model.score + "\n" + "Round : " + ( model.currentRound ) + "\n" + "Trial : " + (model.currentTrialInRound + 1) + "\n" + "Level : " + (model.currentLevel + 1);
+//		statsDisplay.text = "Score : " + model.score + "\n" + "Round : " + ( model.currentRound ) + "\n" + "Trial : " + (model.currentTrialInRound + 1) + "\n" + "Level : " + (model.currentLevel + 1);
+		UpdateScoreDisplay ();
+		UpdateLevelDisplay ();
+		UpdateRoundDisplay ();
+		UpdateTrialDisplay ();
+	}
+
+	void UpdateScoreDisplay()
+	{
+		score.text = "Score : " + model.score;
+	}
+
+	void UpdateLevelDisplay()
+	{
+		level.text = "Level : " + ( model.currentLevel + 1 );
+	}
+
+	void UpdateRoundDisplay()
+	{
+		round.text = "Round : " + (model.currentRound);
+	}
+
+	void UpdateTrialDisplay()
+	{
+		trial.text = "Trial : " + (model.currentTrialInRound + 1);
 	}
 
 	public void ContinueGame()
@@ -255,22 +287,27 @@ public class Controller : MonoBehaviour {
 
 		Debug.Log (" current trial : " + model.currentRound);
 
-		NewTrial ();
+		NewRound ();
 	}
 
 
-	void NewTrial()
+	void NewRound()
 	{
 //		Debug.Log ("starting new trial ");
+//		UpdateDisplay ();
+
 		model.scoreIncreaseForCorrectAnswer = CalculatePointsForCorrectAnswer ();
 		model.pointsPerSecondUnderBonusTime = CalculateTimeBonusPointsPerSecond ();
 
 		metaData.ResetStats ();
 		model.currentRound ++;
-		UpdateDisplay ();
+//		UpdateDisplay ();
 
 		logic.UpdateLevelingStats (model.currentLevel);
 		model.currentTrialInRound = 0; 
+
+		UpdateDisplay ();
+
 		//destroy children of view
 		DestroyChildren (view.gameObject.transform);
 		//create new board
@@ -284,13 +321,16 @@ public class Controller : MonoBehaviour {
 
 	}
 	
-	public void NewProblem()
+	public void NewTrial()
 	{
+//		UpdateDisplay ();
+		UpdateTrialDisplay ();
+
 		view.WipePreviousProblem (model.tilesToOrder, model.holders, model.stagingAreas);
 
 		Debug.Log ("creating new problem");
 		//determine logic for new problem and set board for new problem
-		string presetBoard = logic.NewProblemSetUp (model.tilesToOrder);
+		string presetBoard = logic.NewTrialSetUp (model.tilesToOrder);
 
 		view.PresetTilesWithHolders (presetBoard, model.tilesToOrder, model.holders);
 
@@ -312,7 +352,7 @@ public class Controller : MonoBehaviour {
 		Application.LoadLevel ("Menu");
 	}
 
-	public void ShowOnlyNextTrialButton()
+	public void ShowOnlyContinueButton()
 	{
 		continueButton.gameObject.SetActive (true);
 
@@ -327,13 +367,27 @@ public class Controller : MonoBehaviour {
 		impossibleButton.gameObject.SetActive (true);
 		submitButton.gameObject.SetActive (true);
 
-		EndOfTrial ();
+//		EndOfTrial ();
+//		NewTrial();
+
+		if( model.currentTrialInRound < ( logic.problemsPerTrial - 1 ))
+		{
+			//increase problem count
+			model.currentTrialInRound++;
+			//create new problem
+			NewTrial();
+		}
+		else
+		{
+			EndOfTrial();
+		}
+
 	}
 	
 	
 
 	public void EmergencyReset()
 	{
-		NewTrial ();
+		NewRound ();
 	}
 }

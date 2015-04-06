@@ -534,7 +534,7 @@ public class Logic : MonoBehaviour {
 	}
 	
 
-	public string NewProblemSetUp( List<Tile> previousSubmission )
+	public string NewTrialSetUp( List<Tile> previousSubmission )
 	{
 		//refresh tile positions
 		bool createImpossible = false;
@@ -762,6 +762,35 @@ public class Logic : MonoBehaviour {
 		}
 	}
 
+	bool CompletionCountIsWorthPresetCount( int newKeyPresetCount, int bestPresetCount, int newKeyInstances, int fewestPossibleCompletions )
+	{
+		if( newKeyPresetCount > bestPresetCount && fewestPossibleCompletions > 0 )
+		{
+			//ensure that instances for new preset are fewer than fewest instances - additional presets
+			if( newKeyInstances < ( fewestPossibleCompletions - ( newKeyPresetCount - bestPresetCount )))
+			{
+				return true;
+			}
+
+			return false;
+		}
+
+		else if ( newKeyPresetCount == bestPresetCount && fewestPossibleCompletions > 0 )
+		{
+			if( newKeyInstances < fewestPossibleCompletions )
+			{
+				return true;
+			}
+		}
+		// presets less than bestPreset Count ( would indicated that no best key has been added yet )
+		else if ( newKeyInstances < fewestPossibleCompletions && fewestPossibleCompletions > 0 )
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	List< string > GetBestPresetToCompleteBoard ( int maxPresets, List< string > tileBank )
 	{
 		int fewestPossibleCompletions = 1000;
@@ -887,7 +916,7 @@ public class Logic : MonoBehaviour {
 						// if no conditionals in stack
 						else
 						{
-							if ( instances < fewestPossibleCompletions && fewestPossibleCompletions > 0)
+							if ( CompletionCountIsWorthPresetCount(currentPresets, bestPresetCount, instances, fewestPossibleCompletions) )
 							{
 //								fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
 								presetReplacesBest = true;
