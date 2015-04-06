@@ -7,11 +7,12 @@ public class Model : MonoBehaviour {
 	public int currentLevel;
 	public int pointsForCorrect = 100;
 	public int score;
-	public int currentProblemInTrial;
-	public int trial;
+	public int currentTrialInRound;
+//	public int trial;
 	public int scoreIncreaseForCorrectAnswer;
-//	public int maxPointsFrom
-//	public int currentTotalTileCount;
+
+	public bool impossibleIsEnabled;
+
 	int occupiedTiles;
 	public List<StagingArea> stagingAreas;
 	public List<TileHolder> holders;
@@ -21,15 +22,15 @@ public class Model : MonoBehaviour {
 	public Tile selectedTile;
 	public bool impossible;
 
-	public int currentTrial;
-	public int trialsPerPlaySession = 3;
+	public int currentRound;
+	public int roundsPerPlaySession = 5;
 
 	public int maxSecondsForTimeBonus = 60;
 	public int pointsPerSecondUnderBonusTime;
 
 	// Use this for initialization
 	void Awake () {
-		currentTrial = 0;
+		currentRound = 0;
 
 		GameData.dataControl.Load ();
 		currentLevel = GameData.dataControl.previousFinalLevel;

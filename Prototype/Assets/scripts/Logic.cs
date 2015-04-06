@@ -66,24 +66,24 @@ public class Logic : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-		List< string > excluded = new List<string > ();
-		excluded.Add ("abc");
-		excluded.Add ("acb");
-
-		List< string > include1 = new List<string > ();
-		include1.Add ("bca");
-		include1.Add ("bac");
-
-		List<string> include2 = new List<string > ();
-//		include2.Add ("bca");
-		include2.Add ("abc");
-
-		List<List<string>> included = new List<List<string>> ();
-		included.Add (include1);
-		included.Add (include2);
-
-		bool found = FoundASubmissionNotInExcludedListButSharedByAllLists (excluded, included);
-		Debug.Log (found);
+//		List< string > excluded = new List<string > ();
+//		excluded.Add ("abc");
+//		excluded.Add ("acb");
+//
+//		List< string > include1 = new List<string > ();
+//		include1.Add ("bca");
+//		include1.Add ("bac");
+//
+//		List<string> include2 = new List<string > ();
+////		include2.Add ("bca");
+//		include2.Add ("abc");
+//
+//		List<List<string>> included = new List<List<string>> ();
+//		included.Add (include1);
+//		included.Add (include2);
+//
+//		bool found = FoundASubmissionNotInExcludedListButSharedByAllLists (excluded, included);
+//		Debug.Log (found);
 
 	}
 
@@ -205,7 +205,7 @@ public class Logic : MonoBehaviour {
 			}
 		}
 
-		metaData.SetStatsForTrial (model.currentLevel, model.currentProblemInTrial, model.currentTrial, trialRules.ruleStack.Count, ruleIndentifiers, tiles.Count);
+		metaData.SetStatsForTrial (model.currentLevel, model.currentTrialInRound, model.currentRound, trialRules.ruleStack.Count, ruleIndentifiers, tiles.Count);
 		metaData.SetTimeSinceProblemStart (Time.time);
 
 		trialRules.ConstructRandomOrderedVerbal ();
@@ -269,20 +269,30 @@ public class Logic : MonoBehaviour {
 		return false;
 	}
 
+	bool TileInList( List< Tile > tilesList, Tile tile )
+	{
+		if( tilesList.Contains( tile ))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	List<Tile> GetTilesToUse( Dictionary < Tile, int > tileUsage, int tilesNeeded, List< Tile > unavailableTiles = null )
 	{
 		bool availableReusedTiles = ReusedTilesAvailable ( tileUsage, unavailableTiles );
 		int minReusedTiles = 0;
 		int maxReusedTiles = 0;
 
-		Debug.Log ("available reused : " + availableReusedTiles);
+//		Debug.Log ("available reused : " + availableReusedTiles);
 		if( availableReusedTiles )
 		{
 			minReusedTiles = 1;
 			maxReusedTiles = 1;
 		}
 
-		Debug.Log (" min reused : " + minReusedTiles + ", maxReused : " + maxReusedTiles);
+//		Debug.Log (" min reused : " + minReusedTiles + ", maxReused : " + maxReusedTiles);
 
 		bool findTilesWithFewestReuses = false;
 		int fewestReuses = 100;
@@ -298,27 +308,28 @@ public class Logic : MonoBehaviour {
 			foreach( KeyValuePair< Tile , int > pair in tileUsage )
 			{
 				Tile tile = pair.Key;
+
 				//if tile has been used only once and reused tiles is less than max reused tiles
 				if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
 				{
-					if( unavailableTiles == null )
+					if( unavailableTiles == null && !TileInList( tilesToUse, tile ))
 					{
 						tilesToUse.Add ( tile );
 						reusedTiles ++;
 					}
-					else if( !unavailableTiles.Contains( pair.Key ))
+					else if( !unavailableTiles.Contains( pair.Key )  && !TileInList( tilesToUse, tile ))
 					{
 						tilesToUse.Add ( tile );
 						reusedTiles ++;
 					}
 				}
 
-				else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
+				else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ) && !TileInList( tilesToUse, tile ))
 				{
 					tilesToUse.Add ( tile );
 				}
 
-				else if( findTilesWithFewestReuses )
+				else if( findTilesWithFewestReuses && !TileInList( tilesToUse, tile ))
 				{
 					if( pair.Value < fewestReuses )
 					{
@@ -340,7 +351,7 @@ public class Logic : MonoBehaviour {
 					for( int i = 0; i < tilesToUse.Count; i ++ )
 					{
 						tileUsage[tilesToUse[i]] ++;
-						Debug.Log ( "USED : " + tilesToUse[i]);
+//						Debug.Log ( "USED : " + tilesToUse[i]);
 					}
 					
 					return tilesToUse;
@@ -351,14 +362,14 @@ public class Logic : MonoBehaviour {
 			if( tileWithFewestReuses != null )
 			{
 				tilesToUse.Add ( tileWithFewestReuses );
-				Debug.Log ("ADDED TILE WITH FEWEST REUSES");
+//				Debug.Log ("ADDED TILE WITH FEWEST REUSES");
 
 				if( tilesToUse.Count == tilesNeeded )
 				{
 					for( int i = 0; i < tilesToUse.Count; i ++ )
 					{
 						tileUsage[tilesToUse[i]] ++;
-						Debug.Log ( "USED : " + tilesToUse[i]);
+//						Debug.Log ( "USED : " + tilesToUse[i]);
 					}
 					
 					return tilesToUse;
@@ -367,32 +378,7 @@ public class Logic : MonoBehaviour {
 
 		}
 
-//		Debug.Log (" adding more tiles ");
-
-//		foreach( KeyValuePair< Tile , int > pair in tileUsage )
-//		{
-//			Tile tile = pair.Key;
-//			//if tile has been used only once and reused tiles is less than max resused tiels
-//			if( ( pair.Value == 1 ) && ( reusedTiles < maxReusedTiles ))
-//			{
-//				tilesToUse.Add ( tile );
-//				reusedTiles ++;
-//			}
-//			else if( pair.Value == 0 && ( reusedTiles >= minReusedTiles ))
-//			{
-//				tilesToUse.Add ( tile );
-//			}
-//			if( tilesToUse.Count == tilesNeeded )
-//			{
-//				for( int i = 0; i < tilesToUse.Count; i ++ )
-//				{
-//					tileUsage[tilesToUse[i]] ++;
-//				}
-//				
-//				return tilesToUse;
-//			}
-//		}
-		Debug.Log (" not enough tiles added ");
+//		Debug.Log (" not enough tiles added ");
 		return null;
 	}
 
@@ -433,9 +419,7 @@ public class Logic : MonoBehaviour {
 		//create absolute position rule
 		int absolutePosition = Random.Range ( 0, holderPositions.Count );	
 
-		Debug.Log (" absolutePosition : " + absolutePosition); 
 		holderPositions.Remove (absolutePosition);
-//		Debug.Log ("ABSOLUTE POSITION : " + absolutePosition);
 
 		int absPosTile = Random.Range (0, tilesToOrder.Count);
 
@@ -485,71 +469,9 @@ public class Logic : MonoBehaviour {
 	
 	}
 //
-//	Conditional CreateConditionalRule( List<TileHolder> holders, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
-//	{
-//		List<Tile> tilesUsedInRules = new List<Tile> ();
-//		
-//		//choose 2 types of rules randomly ( not of same type )
-//		int random = Random.Range (0, 2);
-//		int random2 = Random.Range (0, 2);
-//		
-//		while( random == random2 )
-//		{
-//			random2 = Random.Range( 0, 2 );
-//		}
-//		
-//		Rule rule1;
-//		Rule rule2;
-//		
-//		if( random == 0 )
-//		{
-//			rule1 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
-//		}
-//		else if( random == 1 )
-//		{
-//			rule1 = CreateAdjacencyRule( tilesToOrder, tileUsage );
-//		}
-//		else
-//		{
-//			rule1 = CreateRelativeRule( tilesToOrder, tileUsage );
-//		}
-//		
-//		if( random2 == 0 )
-//		{
-//			rule2 = CreateAbsoluteRule( holders, tilesToOrder, tileUsage );
-//		}
-//		else if( random2 == 1 )
-//		{
-//			rule2 = CreateAdjacencyRule( tilesToOrder, tileUsage );
-//		}
-//		else
-//		{
-//			rule2 = CreateRelativeRule( tilesToOrder, tileUsage );
-//		}
-//		
-//		Conditional newConditional = new Conditional (rule1, rule2, tilesToOrder );
-//		bool validRule = newConditional.IsValidRule ();
-//		
-//		while( !validRule )
-//		{
-//			//remove a point for each used tile in tileUsage dict
-//			RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
-//			newConditional = CreateConditionalRule( holders, tilesToOrder, tileUsage );
-//			validRule = newConditional.IsValidRule();
-//		}
-//		
-//		return newConditional;
-//	}
 
 	Conditional CreateConditionalRule( List<int> holderPositions, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
-
-//		if( ( maxRelInConditional + maxAdjInConditional + maxAbsInConditional ) < 2 )
-//		{
-//			Debug.Log (" not enough rules to make conditional");
-//			Debug.Log (" tile count : " + tilesToOrder.Count );
-//			Debug.Log (" level : " + model.currentLevel );
-//		}
 
 		List<Tile> unusableTiles = new List<Tile> ();
 
@@ -647,9 +569,9 @@ public class Logic : MonoBehaviour {
 		List < string > bestPresetTiles = GetBestPresetToCompleteBoard (2, tileBank);
 
 		string presetTiles = bestPresetTiles [Random.Range (0, bestPresetTiles.Count)];
-//		List< string > bestPresetTiles = GetBestPresetToCompleteBoard( 
+
 		Debug.Log (presetTiles);
-		//		create string with only 1 placed tile in newSubmission
+		//	create string with only 1 placed tile in newSubmission
 		
 		model.SetImpossible( false );
 		
