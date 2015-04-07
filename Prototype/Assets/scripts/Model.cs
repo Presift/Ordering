@@ -5,6 +5,8 @@ using System.Collections.Generic;
 public class Model : MonoBehaviour {
 
 	public int currentLevel;
+	public float currentNuancedLevel;
+
 	public int pointsForCorrect = 100;
 	public int score;
 	public int currentTrialInRound;
@@ -28,18 +30,57 @@ public class Model : MonoBehaviour {
 	public int maxSecondsForTimeBonus = 60;
 	public int pointsPerSecondUnderBonusTime;
 
+	float maxLevelChange = 1.5f;
+	float minLevelChange = -.25f;
+
+	public float responseTimeForMaxLevelChange;
+	public float responseTimeForMinLevelChange;
+
 	// Use this for initialization
 	void Awake () {
 		currentRound = 0;
 
 		GameData.dataControl.Load ();
-		currentLevel = GameData.dataControl.previousFinalLevel;
+		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
+		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
+
 
 //		currentTotalTileCount = 4;
 	}
 	
 	// Update is called once per frame
 	void Update () {
+	}
+
+	public float CalculateLevelChange( bool correctAnswer, float responseTime )
+	{
+		if( !correctAnswer )
+		{
+			return minLevelChange * 2;
+		}
+		else
+		{
+			if( responseTime < responseTimeForMaxLevelChange )
+			{
+//				Debug.Log (" max level Change ");
+				return maxLevelChange;
+			}
+			else if( responseTime > responseTimeForMinLevelChange )
+			{
+//				Debug.Log ("min level Change ");
+				return minLevelChange;
+			}
+			else
+			{
+				float timeDiffFromTimeForMaxLevelChange = responseTime - responseTimeForMaxLevelChange;
+
+				float levelChangeSlope = ( maxLevelChange - minLevelChange ) / ( responseTimeForMinLevelChange - responseTimeForMaxLevelChange );
+
+				float levelChange = maxLevelChange - ( levelChangeSlope * timeDiffFromTimeForMaxLevelChange );
+
+				return levelChange;
+			}
+		}
 	}
 
 	public void SetImpossible( bool notPossible )
@@ -116,24 +157,6 @@ public class Model : MonoBehaviour {
 		controller.ActivateSubmissionButton( submissionReady );
 	}
 
-//	public bool ReadyForSubmission()
-//	{
-//		bool readyForSubmission = true;
-//		int tilesOccupied = 0;
-//			for( int i = 0; i < holders.Count; i ++ )
-//		{
-//			if( holders[ i ].occupyingTile == null )
-//			{
-//				readyForSubmission = false;
-//			}
-//			else
-//			{
-//				tilesOccupied ++;
-//			}
-//		}
-//		Debug.Log ("holders occupied : " + tilesOccupied);
-//		return readyForSubmission;	
-//	}
 
 	public void ManageCurrentSelection( Tile newSelection )
 	{
@@ -188,20 +211,11 @@ public class Model : MonoBehaviour {
 		}
 	}
 
-	public void UpdateLevel( bool correctAnswer )
+	public void UpdateLevel( float levelChange )
 	{
-		//if correct
-		if (correctAnswer)
-
-		{
-			//increase level
-			currentLevel ++;
-		}
-		else
-		{
-			//decrease level
-			currentLevel = Mathf.Max ( 0, currentLevel - 1);
-		}
+		Debug.Log ("Level Change : " + levelChange);
+		currentNuancedLevel = Mathf.Max( levelChange + currentNuancedLevel, 0 );
+		currentLevel = ( int ) Mathf.Floor( currentNuancedLevel );
 			
 	}
 

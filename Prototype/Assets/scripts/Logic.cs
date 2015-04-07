@@ -66,30 +66,36 @@ public class Logic : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 
-//		List< string > excluded = new List<string > ();
-//		excluded.Add ("abc");
-//		excluded.Add ("acb");
-//
-//		List< string > include1 = new List<string > ();
-//		include1.Add ("bca");
-//		include1.Add ("bac");
-//
-//		List<string> include2 = new List<string > ();
-////		include2.Add ("bca");
-//		include2.Add ("abc");
-//
-//		List<List<string>> included = new List<List<string>> ();
-//		included.Add (include1);
-//		included.Add (include2);
-//
-//		bool found = FoundASubmissionNotInExcludedListButSharedByAllLists (excluded, included);
-//		Debug.Log (found);
 
 	}
 
 	// Update is called once per frame
 	void Update () {
 	
+	}
+
+	public void SetMinMaxResponseTimesForLevelChange()
+	{
+		float minReadingTime = 0;
+
+		for(int i = 0; i < trialRules.ruleStack.Count; i ++ )
+		{
+			if( trialRules.ruleStack[ i ] is Conditional )
+			{
+				minReadingTime += 1.5f;
+			}
+			else
+			{
+				minReadingTime += 1;
+			}
+		}
+
+		float timeForTilePlacement = .5f * tilesCount;
+
+		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + 2;
+		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * 5;
+		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
+		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
 	}
 	
 	public string CreateRules( List<Tile> tiles )
@@ -216,6 +222,8 @@ public class Logic : MonoBehaviour {
 		}
 //		Debug.Log (" ************CORRECT ANSWERS****************** : " );
 //		trialRules.PrintEachDictionaryValue (trialRules.correctSubmissions);
+		SetMinMaxResponseTimesForLevelChange ();
+
 		return trialRules.verbal;
 	}
 
@@ -963,52 +971,6 @@ public class Logic : MonoBehaviour {
 		return presetInstances;
 	}
 
-//	int UpdateBestPresetCount( int 
-
-//	string GetBestPresetToCompleteBoard ( int presets, List< string > tileBank )
-//	{
-//		int fewestPossibleCompletions = 1000;
-//		string bestKey = null;
-//
-//		List< List<string> > tileCombos = new List< List<string> >();
-//		List< string > newCombo = new List< string > ();
-//		GetAllCombinationsForPresets( tileBank, newCombo, presets, tileCombos);
-//
-//		//for each combo in allCombos
-//		for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
-//		{
-//			List<int> digitBank = CreateDigitBank( tileBank.Count );
-//			
-//			List< string > presetKeyCombos = new List< string > ();
-//			
-//			List<int> currPosOrder = new List<int> ();
-//			
-//			GetPresetOrdersFromCombos( currPosOrder, digitBank, digitBank.Count, tileCombos[ comboIndex ], presetKeyCombos );
-//			
-//			for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
-//			{
-//				string preset = presetKeyCombos[ presetOrderIndex ];
-//
-//				if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions))
-//				{
-//					//test to see if preset has fewer possibilites than best
-//					int instances = GetPresetInstances( preset );
-//					if ( instances < fewestPossibleCompletions && fewestPossibleCompletions > 0)
-//					{
-//						bestKey = preset;
-//						fewestPossibleCompletions = instances;
-//					}
-//				}
-//
-//				if( fewestPossibleCompletions == 1 )
-//				{
-//					return bestKey;
-//				}
-//			}
-//		}
-//
-//		return bestKey;
-//	}
 
 
 	RuleStack ReturnRuleStackFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
@@ -1051,7 +1013,86 @@ public class Logic : MonoBehaviour {
 		
 		return condRules;
 	}
-	
+
+//	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
+//	{
+//		
+//		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
+//		List< List<Rule> > allRuleCombos = new List< List<Rule> > ();
+//		List< Rule > newCombo = new List<Rule > ();
+//		List< Rule > ruleBank = new List<Rule>( trialRules.ruleStack );
+//		
+//		int rulesToSetImpossible = Mathf.Min (maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count);
+//		GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
+//		
+//		string presetTiles = null;
+//		
+//		Debug.Log (" combo list count : " + allRuleCombos.Count); 
+//		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
+//		
+//		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
+//		int minPresetTiles = 1;
+//		
+//		while( presetTiles == null && minPresetTiles <= maxPresetTiles )
+//		{
+//			for( int i = 0; i < allRuleCombos.Count; i ++ )
+//			{
+//				RuleStack rulesToBreak = ReturnRuleStackFromComboList ( allRuleCombos, i );
+//				
+//				//				UpdateMinPresets (minPresetTiles, rulesToBreak);
+//				
+//				List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
+//				
+//				presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
+//				
+//				if( presetTiles != null )
+//				{
+//					previousImpossiblePresetKey = presetTiles;
+//					break;
+//				}
+//			}
+//			
+//			//if this is read then preset is null
+//			//increase min preset tiles
+//			minPresetTiles ++;
+//			
+//			// if presets are maxed and rules can still be dropped from rule combinations
+//			if( minPresetTiles > maxPresetTiles && rulesToSetImpossible > 1 )
+//			{
+//				//make more rule combos with fewer rules
+//				allRuleCombos = new List< List<Rule> > ();
+//				newCombo = new List<Rule > ();
+//				ruleBank = new List<Rule>( trialRules.ruleStack );
+//				
+//				rulesToSetImpossible --;
+//				
+//				GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
+//				
+//				tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
+//				
+//				maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
+//				minPresetTiles = 1;
+//			}
+//		}
+//		
+//		if( presetTiles != null )
+//		{
+//			Debug.Log ("CREATING IMPOSSIBLE BOARD");
+//			model.SetImpossible( true );
+//			impossiblesUsed ++;
+//			Debug.Log ("found valid preset tile order ");
+//			previousImpossiblePresetKey = presetTiles;
+//			return presetTiles;
+//		}
+//		else
+//		{
+//			model.SetImpossible( false );
+//			presetTiles = CreatePossibleBoard( previousSubmission );
+//			Debug.Log ("impossible preset NOT found, creating possible board ");
+//		}
+//		
+//		return presetTiles;
+//	}
 
 	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
 	{
@@ -1064,7 +1105,8 @@ public class Logic : MonoBehaviour {
 		int rulesToSetImpossible = Mathf.Min (maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count);
 		GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
 
-		string presetTiles = null;
+		List<string> presetTiles = new List<string>();
+		string presets;
 
 		Debug.Log (" combo list count : " + allRuleCombos.Count); 
 		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
@@ -1072,7 +1114,7 @@ public class Logic : MonoBehaviour {
 		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
 		int minPresetTiles = 1;
 		
-		while( presetTiles == null && minPresetTiles <= maxPresetTiles )
+		while( presetTiles.Count == 0 && minPresetTiles <= maxPresetTiles )
 		{
 			for( int i = 0; i < allRuleCombos.Count; i ++ )
 			{
@@ -1084,9 +1126,9 @@ public class Logic : MonoBehaviour {
 
 				presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
 
-				if( presetTiles != null )
+				if(  presetTiles.Count == 0 )
 				{
-					previousImpossiblePresetKey = presetTiles;
+					Debug.Log (presetTiles.Count + " impossible presets found ");
 					break;
 				}
 			}
@@ -1114,28 +1156,31 @@ public class Logic : MonoBehaviour {
 			}
 		}
 
-		if( presetTiles != null )
+		if(  presetTiles.Count == 0 )
 		{
 			Debug.Log ("CREATING IMPOSSIBLE BOARD");
 			model.SetImpossible( true );
 			impossiblesUsed ++;
 			Debug.Log ("found valid preset tile order ");
-			previousImpossiblePresetKey = presetTiles;
-			return presetTiles;
+
+			presets = presetTiles[ Random.Range( 0, presetTiles.Count) ];
+			previousImpossiblePresetKey = presets;
 		}
 		else
 		{
 			model.SetImpossible( false );
-			presetTiles = CreatePossibleBoard( previousSubmission );
+			presets = CreatePossibleBoard( previousSubmission );
 			Debug.Log ("impossible preset NOT found, creating possible board ");
 		}
 
-		return presetTiles;
+		return presets;
 	}
 
 
-	string AttemptToGetImpossibleKey( int presets, List<string> tileBank, RuleStack rulesToBreak, List< Rule> nonBreakingRules )
+	List<string> AttemptToGetImpossibleKey( int presets, List<string> tileBank, RuleStack rulesToBreak, List< Rule> nonBreakingRules )
 	{
+		List<string> impossibleKeys = new List<string> ();
+
 		bool singleRuleBreak = rulesToBreak.ruleStack.Count == 1;
 
 		Debug.Log ("RULES TO BREAK : ");
@@ -1165,13 +1210,14 @@ public class Logic : MonoBehaviour {
 				{
 					if( ImpossibleKey( presetKeyCombos[ presetOrderIndex ], rulesToBreak, nonBreakingRules, singleRuleBreak ))
 					{
-						return presetKeyCombos[ presetOrderIndex ];
+//						return ;
+						impossibleKeys.Add (presetKeyCombos[ presetOrderIndex ]);
 					}
 				}
 			}
 		}
 			
-		return null;
+		return impossibleKeys;
 	}
 
 	List<int> CreateDigitBank( int length )

@@ -64,7 +64,7 @@ public class Controller : MonoBehaviour {
 
 	public void DecreaseLevel()
 	{
-		model.UpdateLevel( false );
+		model.UpdateLevel( -1 );
 		Debug.Log ("Trial : " + model.currentLevel );
 		UpdateDisplay ();
 		NewRound ();
@@ -72,7 +72,7 @@ public class Controller : MonoBehaviour {
 
 	public void IncreaseLevel()
 	{
-		model.UpdateLevel( true );
+		model.UpdateLevel( 1 );
 		Debug.Log ("Trial : " + model.currentLevel );
 		UpdateDisplay ();
 		NewRound ();
@@ -82,14 +82,14 @@ public class Controller : MonoBehaviour {
 	{
 		upLevel.gameObject.SetActive (true);
 		downLevel.gameObject.SetActive (true);
-		Debug.Log ("show debug");
+//		Debug.Log ("show debug");
 	}
 
 	void HideDebug()
 	{
 		upLevel.gameObject.SetActive (false);
 		downLevel.gameObject.SetActive (false);
-		Debug.Log("hide debug");
+//		Debug.Log("hide debug");
 	}
 
 	public void ActivateSubmissionButton( bool activate )
@@ -149,6 +149,11 @@ public class Controller : MonoBehaviour {
 	{
 		int responseTime = metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
 		int timeBonus = CalculateTimeBonusEarned (correctAnswer, responseTime);
+		UpdateScoreDisplay ();
+
+		float levelChange = model.CalculateLevelChange (correctAnswer, responseTime);
+		model.UpdateLevel (levelChange);
+
 		Debug.Log ("BONUS POINTS : " + timeBonus);
 		metaData.SaveStats ();
 		view.DisplayFeedback ( true, correctAnswer );
@@ -203,7 +208,7 @@ public class Controller : MonoBehaviour {
 			else
 			{
 				//update level
-				model.UpdateLevel( correctAnswer );
+//				model.UpdateLevel( correctAnswer );
 				EndOfTrial();
 //				ShowOnlyNextTrialButton();
 //				NewRound();
@@ -211,7 +216,7 @@ public class Controller : MonoBehaviour {
 		} 
 		else 
 		{
-			model.UpdateLevel( correctAnswer );
+//			model.UpdateLevel( correctAnswer );
 //			EndOfTrial();
 			ShowOnlyContinueButton();
 		}
@@ -221,7 +226,7 @@ public class Controller : MonoBehaviour {
 
 	void EndOfTrial()
 	{
-		GameData.dataControl.previousFinalLevel = model.currentLevel;
+		GameData.dataControl.previousFinalLevel = model.currentNuancedLevel;
 		GameData.dataControl.Save ();
 
 		if( ( model.currentRound ) == model.roundsPerPlaySession )

@@ -18,7 +18,7 @@ public class GameData : MonoBehaviour {
 //	private string levelingStats = "/levelingStats";
 //	public int currentStatsFile = 0;
 	
-	public int previousFinalLevel;
+	public float previousFinalLevel;
 	public bool debugOn;
 	
 	void Awake(){
@@ -75,7 +75,8 @@ public class GameData : MonoBehaviour {
 
 			StreamReader data = new StreamReader( filePath );
 
-			previousFinalLevel = Convert.ToInt32( data.ReadLine() );
+//			previousFinalLevel = Convert.ToInt32( data.ReadLine() );
+			previousFinalLevel = float.Parse( data.ReadLine ());
 
 			debugOn = Convert.ToBoolean( data.ReadLine ());
 
@@ -93,7 +94,7 @@ public class GameData : MonoBehaviour {
 //[Serializable]
 class PlayerData
 {
-	public int previousFinalLevel;
+	public float previousFinalLevel;
 	public bool debugOn;
 //	public int currentStatsFile;
 }

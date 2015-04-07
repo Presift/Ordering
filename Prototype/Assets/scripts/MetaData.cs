@@ -114,7 +114,7 @@ public class MetaData : MonoBehaviour {
 
 		for ( int i = 0; i < floats.Count; i ++ )
 		{
-			Debug.Log ( floats[i]);
+//			Debug.Log ( floats[i]);
 			floatsAsString += floats[ i ].ToString();
 
 			if( i < (floats.Count - 1 ))
