@@ -10,54 +10,54 @@ public class Logic : MonoBehaviour {
 
 	public RuleStack trialRules;
 
-	public int problemsPerTrial;
+//	public int problemsPerTrial;
 
 //	public int maxRuleDifficulty;
 //	public int maxProblemDifficulty;
-	public int maxRules;
-	public int tilesCount;
+//	public int maxRules;
+//	public int tilesCount;
 	public int chanceOfImpossible;
-	public int maxImpossiblePerTrial;
+//	public int maxImpossiblePerTrial;
 	int impossiblesUsed;
 
 	//rules that can be used
-	int maxAbsPosRules;
-	int maxRelativePosRules;
-	int maxAdjacencyRules;
-	int maxConditionals;
-	bool usingEitherOr;
-	bool usingPositiveOfAbsolute;
+//	int maxAbsPosRules;
+//	int maxRelativePosRules;
+//	int maxAdjacencyRules;
+//	int maxConditionals;
+//	bool usingEitherOr;
+//	bool usingPositiveOfAbsolute;
 
 	//integers for rule types
-	int absPosition = 1;
-	int eitherOrAbsPosition = 2;
-	int negAbsPosition = 3;
-
-	int adjacent = 4;
-	int notAdjacent = 5;
-
-	int relativeOrder = 6;
+//	int absPosition = 1;
+//	int eitherOrAbsPosition = 2;
+//	int negAbsPosition = 3;
+//
+//	int adjacent = 4;
+//	int notAdjacent = 5;
+//
+//	int relativeOrder = 6;
 
 	//difficulty for impossible board
-	int maxRulesToSetImpossibleBoard;
-	int maxConditionalInImpossibleSet;
-
+//	int maxRulesToSetImpossibleBoard;
+//	int maxConditionalInImpossibleSet;
+//
 	public int consecutiveTollensErrors;
 	public int errorsCountToNeedHelp = 3;
 
 	//CONDITIONALS
 
 	//construction
-	int maxAbsInConditional;
-	int maxAdjInConditional;
-	int maxRelInConditional;
-
-	// difficulty for possible board
-	bool modusPonens; //if a then b
-	bool modusTollens; //if !b, then !a
-	bool modusTollensImplyNotA;
-
-	bool showClauseBNotA;  // b and !a
+//	int maxAbsInConditional;
+//	int maxAdjInConditional;
+//	int maxRelInConditional;
+//
+//	// difficulty for possible board
+//	bool modusPonens; //if a then b
+//	bool modusTollens; //if !b, then !a
+//	bool modusTollensImplyNotA;
+//
+//	bool showClauseBNotA;  // b and !a
 //	bool showClauseBImplyNotA;  // b and make a impossible
 
 //	int maxModusTollens;
@@ -66,7 +66,9 @@ public class Logic : MonoBehaviour {
 	string previousPossiblePresetKey;
 	string previousImpossiblePresetKey;
 
-	public List<Level> allLevels = new List<Level> ();
+	List<Level> allLevels = new List<Level> ();
+
+	public Level currentLeveling;
 
 	void Awake()
 	{
@@ -102,7 +104,7 @@ public class Logic : MonoBehaviour {
 			}
 		}
 
-		float timeForTilePlacement = .5f * tilesCount;
+		float timeForTilePlacement = .5f * currentLeveling.tilesCount;
 
 		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + 2;
 		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * 6;
@@ -138,13 +140,13 @@ public class Logic : MonoBehaviour {
 
 //		Debug.Log ("max rules : " + maxRules );
 
-		for( int conditional = 0; conditional < maxConditionals; conditional ++ )
+		for( int conditional = 0; conditional < currentLeveling.maxConditionals; conditional ++ )
 		{
-			if( rulesCreated < maxRules )
+			if( rulesCreated < currentLeveling.maxRules )
 			{
 				Conditional newConditional = CreateConditionalRule( positionsToUse, tiles, tileUsage );
 //				newConditional.ConstructVerbal();
-				if( !trialRules.RuleConflictsWithRuleStack( newConditional, problemsPerTrial ))
+				if( !trialRules.RuleConflictsWithRuleStack( newConditional, currentLeveling.maxTrialsInRuleSet ))
 				{
 //					Debug.Log ( "successful rule : " + newConditional.verbal );
 					trialRules.AddRule( newConditional );
@@ -161,12 +163,12 @@ public class Logic : MonoBehaviour {
 		}
 
 
-		for( int relatives = 0; relatives < maxRelativePosRules; relatives ++ )
+		for( int relatives = 0; relatives < currentLeveling.maxRelativePosRules; relatives ++ )
 		{
-			if( rulesCreated < maxRules )
+			if( rulesCreated < currentLeveling.maxRules )
 			{
 				RelativePositionRule newRel = CreateRelativeRule( tiles, tileUsage );
-				if( !trialRules.RuleConflictsWithRuleStack(newRel, problemsPerTrial ))
+				if( !trialRules.RuleConflictsWithRuleStack(newRel, currentLeveling.maxTrialsInRuleSet ))
 				{
 //					Debug.Log ( "successful rule : " + newRel.verbal );
 					trialRules.AddRule( newRel );
@@ -182,12 +184,12 @@ public class Logic : MonoBehaviour {
 
 		}
 		
-		for( int adjacency = 0; adjacency < maxAdjacencyRules; adjacency ++ )
+		for( int adjacency = 0; adjacency < currentLeveling.maxAdjacencyRules; adjacency ++ )
 		{
-			if( rulesCreated < maxRules )
+			if( rulesCreated < currentLeveling.maxRules )
 			{
 				AdjacencyRule newAdj = CreateAdjacencyRule( tiles, tileUsage );
-				if( !trialRules.RuleConflictsWithRuleStack( newAdj, problemsPerTrial ))
+				if( !trialRules.RuleConflictsWithRuleStack( newAdj, currentLeveling.maxTrialsInRuleSet ))
 				{
 //					Debug.Log ( "successful rule : " + newAdj.verbal );
 					trialRules.AddRule( newAdj );
@@ -202,12 +204,12 @@ public class Logic : MonoBehaviour {
 			}
 
 		}
-		for( int abs = 0; abs < maxAbsPosRules; abs ++ )
+		for( int abs = 0; abs < currentLeveling.maxAbsPosRules; abs ++ )
 		{
-			if( rulesCreated < maxRules )
+			if( rulesCreated < currentLeveling.maxRules )
 			{
 				AbsolutePositionRule newAbs = CreateAbsoluteRule( positionsToUse, tiles, tileUsage );
-				if( !trialRules.RuleConflictsWithRuleStack( newAbs, problemsPerTrial ))
+				if( !trialRules.RuleConflictsWithRuleStack( newAbs, currentLeveling.maxTrialsInRuleSet ))
 				{
 //					Debug.Log ( "successful rule : " + newAbs.verbal );
 					trialRules.AddRule( newAbs );
@@ -446,7 +448,7 @@ public class Logic : MonoBehaviour {
 		int absPosTile = Random.Range (0, tilesToOrder.Count);
 
 		//decide if using 1 or 2 tiles for rule
-		if (usingEitherOr) 
+		if (currentLeveling.usingEitherOr) 
 		{
 			int random = Random.Range (0, 2);
 			if( random == 0 ) //create rule with 2 tiles
@@ -463,7 +465,7 @@ public class Logic : MonoBehaviour {
 			else
 			{
 				int negatedAbsolute;  //0 is positive, 1 is negative ( i know this is counter intuitive )
-				if( !isPartOfConditional && !usingPositiveOfAbsolute )
+				if( !isPartOfConditional && !currentLeveling.usingPositiveOfAbsolute )
 				{
 					negatedAbsolute = 1;
 				}
@@ -499,19 +501,19 @@ public class Logic : MonoBehaviour {
 
 		List< Rule > rulesPoolForConditional = new List< Rule > ();
 
-		for( int i = 0; i < maxRelInConditional; i ++ )
+		for( int i = 0; i < currentLeveling.maxRelInConditional; i ++ )
 		{
 			RelativePositionRule relRule = CreateRelativeRule( tilesToOrder, tileUsage );
 			rulesPoolForConditional.Add ( relRule as Rule );
 		}
 
-		for( int i = 0; i < maxAdjInConditional; i ++ )
+		for( int i = 0; i < currentLeveling.maxAdjInConditional; i ++ )
 		{
 			AdjacencyRule adjRule = CreateAdjacencyRule( tilesToOrder, tileUsage );
 			rulesPoolForConditional.Add ( adjRule as Rule );
 		}
 
-		for( int i = 0; i < maxAbsInConditional; i ++ )
+		for( int i = 0; i < currentLeveling.maxAbsInConditional; i ++ )
 		{
 			Debug.Log ( holderPositions.Count );
 			AbsolutePositionRule absRule = CreateAbsoluteRule( holderPositions, tilesToOrder, tileUsage, unusableTiles, true );
@@ -558,11 +560,24 @@ public class Logic : MonoBehaviour {
 
 	public string NewTrialSetUp( List<Tile> previousSubmission )
 	{
+//		model.
 		//refresh tile positions
 		bool createImpossible = false;
 		string presetTiles;
+		bool setUpWithPresets;
 
-		if( impossiblesUsed < maxImpossiblePerTrial )
+		//if first trial
+		if( model.currentTrialInRound == 0 )
+		{
+			setUpWithPresets = HappenedByChance (currentLeveling.chanceOfPresetsOnFirstTrial);
+		}
+		else
+		{
+			setUpWithPresets = true;
+		}
+
+
+		if( impossiblesUsed < currentLeveling.maxImpossiblePerTrial )
 		{
 			createImpossible = HappenedByChance( chanceOfImpossible );
 
@@ -874,7 +889,7 @@ public class Logic : MonoBehaviour {
 								bool alwaysBreaksRule2 = KeyAlwaysBreaksRule( preset, condRule.rule2 );
 								bool neverBreaksRule2 = KeyNeverBreaksRule( preset, condRule.rule2 );
 
-								if( showClauseBNotA )
+								if( currentLeveling.showClauseBNotA )
 								{
 									if( KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 ))
 									{
@@ -882,13 +897,13 @@ public class Logic : MonoBehaviour {
 //										Debug.Log ( "bAndNotA : " + preset );
 									}
 								}
-								if( modusTollens )
+								if( currentLeveling.modusTollens )
 								{
 									if( KeyIsContraPositiveOfConditional( alwaysBreaksRule2 ))
 									{
 
 //										Debug.Log ("tollens : " + preset );
-										if( modusTollensImplyNotA )  //this is easier for most people; it shows clause 2 as false and has user fill in NOT A ( rather than preset breaking always both b and a )
+										if( currentLeveling.modusTollensImplyNotA )  //this is easier for most people; it shows clause 2 as false and has user fill in NOT A ( rather than preset breaking always both b and a )
 										{
 											if( !alwaysBreaksRule1 )
 											{
@@ -901,7 +916,7 @@ public class Logic : MonoBehaviour {
 										}
 									}
 								}
-								if( modusPonens )
+								if( currentLeveling.modusPonens )
 								{
 									if( KeyIsPositiveOfConditional( neverBreaksRule1 ))
 									{
@@ -1054,7 +1069,7 @@ public class Logic : MonoBehaviour {
 		List< Rule > newCombo = new List<Rule > ();
 		List< Rule > ruleBank = new List<Rule>( trialRules.ruleStack );
 
-		int rulesToSetImpossible = Mathf.Min (maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count);
+		int rulesToSetImpossible = Mathf.Min (currentLeveling.maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count);
 		GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
 
 		List<string> presetTiles = new List<string>();
@@ -1092,7 +1107,7 @@ public class Logic : MonoBehaviour {
 			minPresetTiles ++;
 
 			// if presets are maxed and rules can still be dropped from rule combinations
-			if( minPresetTiles > maxPresetTiles && rulesToSetImpossible > 1 )
+			if( minPresetTiles > maxPresetTiles && rulesToSetImpossible > currentLeveling.minRulesToSetImpossibleBoard )
 			{
 				//make more rule combos with fewer rules
 				allRuleCombos = new List< List<Rule> > ();
@@ -1441,7 +1456,21 @@ public class Logic : MonoBehaviour {
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
-		ResetStats ();
+		currentLeveling = allLevels [currentLevel];
+
+		if ( !model.impossibleEnabled )
+		{
+			chanceOfImpossible = 0;
+		}
+		else
+		{
+			chanceOfImpossible = currentLeveling.chanceOfImpossible;
+		}
+	}
+
+//	public void UpdateLevelingStats( int currentLevel )
+//	{
+//		ResetStats ();
 
 //		Debug.Log (currentLevel);
 
@@ -1831,36 +1860,33 @@ public class Logic : MonoBehaviour {
 //			usingPositiveOfAbsolute = false;
 //
 //		}
-	
-		if ( !model.impossibleEnabled )
-		{
-			chanceOfImpossible = 0;
-		}
-		
-	}
+//	
+//		
+//		
+//	}
 	
 
-	void ResetStats()
-	{
-		maxAbsPosRules = 0;
-		maxRelativePosRules = 0;
-		maxAdjacencyRules = 0;
-		maxConditionals = 0;
-		chanceOfImpossible = 0;
-		maxImpossiblePerTrial = 0;
-		maxRulesToSetImpossibleBoard = 0;
-		usingEitherOr = false;
-
-		previousPossiblePresetKey = null;
-		previousImpossiblePresetKey = null;
-
-		maxAbsInConditional = 0;
-		maxAdjInConditional = 0;
-		maxRelInConditional = 0;
-
-//		SetPossibleBoardParameters( false, false, false, false );
-
-	}
+//	void ResetStats()
+//	{
+//		maxAbsPosRules = 0;
+//		maxRelativePosRules = 0;
+//		maxAdjacencyRules = 0;
+//		maxConditionals = 0;
+//		chanceOfImpossible = 0;
+//		maxImpossiblePerTrial = 0;
+//		maxRulesToSetImpossibleBoard = 0;
+//		usingEitherOr = false;
+//
+//		previousPossiblePresetKey = null;
+//		previousImpossiblePresetKey = null;
+//
+//		maxAbsInConditional = 0;
+//		maxAdjInConditional = 0;
+//		maxRelInConditional = 0;
+//
+////		SetPossibleBoardParameters( false, false, false, false );
+//
+//	}
 	
 
 	List<Tile> ShuffleThis(List<Tile> listToShuffle ){

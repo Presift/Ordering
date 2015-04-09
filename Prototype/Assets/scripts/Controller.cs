@@ -158,6 +158,8 @@ public class Controller : MonoBehaviour {
 
 	public void RespondToAnswer( bool correctAnswer )
 	{
+		model.responseTotal ++;
+
 		if( correctAnswer && model.currentChallenge.usesModusTollens )
 		{
 			logic.consecutiveTollensErrors = 0;
@@ -226,7 +228,7 @@ public class Controller : MonoBehaviour {
 			UpdateScoreDisplay();
 
 			//if trial is not yet completed
-			if( model.currentTrialInRound < ( logic.problemsPerTrial - 1 ))
+			if( model.currentTrialInRound < ( logic.currentLeveling.maxTrialsInRuleSet - 1 ))
 			{
 				//increase problem count
 				model.currentTrialInRound++;
@@ -268,7 +270,7 @@ public class Controller : MonoBehaviour {
 
 		GameData.dataControl.Save ();
 
-		if( ( model.currentRound ) == model.roundsPerPlaySession )
+		if( ( model.responseTotal ) == model.maxResponsesInPlaySession )
 		{
 			Debug.Log ( "trial over ");
 			//show end display
@@ -308,13 +310,14 @@ public class Controller : MonoBehaviour {
 
 	void UpdateRoundDisplay()
 	{
-		round.text = "Round : " + (model.currentRound) + " of " + model.roundsPerPlaySession;
+//		round.text = "Round : " + (model.currentRound) + " of " + model.roundsPerPlaySession;
 	}
 
 	void UpdateTrialDisplay()
 	{
-		trial.text = "Trial : " + (model.currentTrialInRound + 1);
+		trial.text = "Trial : " + (model.responseTotal + 1)  + " of " + model.maxResponsesInPlaySession;
 	}
+	
 
 	public void ContinueGame()
 	{
@@ -327,9 +330,9 @@ public class Controller : MonoBehaviour {
 		rulePanel.SetActive( true );
 		buttonPanel.SetActive( true );
 		
-		model.currentRound = 0;
+		model.responseTotal = 0;
 
-		Debug.Log (" current trial : " + model.currentRound);
+//		Debug.Log (" current trial : " + model.currentRound);
 
 		NewRound ();
 	}
@@ -357,7 +360,7 @@ public class Controller : MonoBehaviour {
 		//destroy children of view
 		DestroyChildren (view.gameObject.transform);
 		//create new board
-		model.stagingAreas = view.CreateBoard (logic.tilesCount);
+		model.stagingAreas = view.CreateBoard ( logic.currentLeveling.tilesCount );
 
 		bool submissionReady = model.ReadyForSubmission();
 		ActivateSubmissionButton( submissionReady );
@@ -418,7 +421,7 @@ public class Controller : MonoBehaviour {
 //		EndOfTrial ();
 //		NewTrial();
 
-		if( model.currentTrialInRound < ( logic.problemsPerTrial - 1 ))
+		if( model.currentTrialInRound < ( logic.currentLeveling.maxImpossiblePerTrial - 1 ))
 		{
 			//increase problem count
 			model.currentTrialInRound++;

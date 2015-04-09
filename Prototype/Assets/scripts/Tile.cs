@@ -38,27 +38,7 @@ public class Tile : MonoBehaviour {
 		currentStaging = staging;
 		transform.position = staging.position;
 	}
-
-//	public void SetCurrentHolder( TileHolder newHolder )
-//	{
-//		Debug.Log ("called");
-//		currentHolder = newHolder;
-//		if( currentHolder != null )
-//		{
-//			transform.position = newHolder.transform.position;
-//			currentHolder.occupyingTile = this;
-//		}
-//		else
-//		{
-//			if( targetHolder != null )
-//			{
-//				targetHolder.Highlight( false );
-//			}
-//			targetHolder = null;
-//
-//		}
-//
-//	}
+	
 
 	//MOVEMENT
 	void OnMouseDown()
@@ -89,16 +69,6 @@ public class Tile : MonoBehaviour {
 
 	public void StartMove( TileHolder newHolder, bool initialSetup )
 	{
-//		if( currentHolder != null )
-//		{
-//			Debug.Log (this.name + "'s current holder " + currentHolder.name);
-//		}
-//		if (newHolder != null) 
-//		{
-//			Debug.Log (this.name + "'s new holder " + newHolder.name);	
-//		}
-
-
 		//if currently in holder tile
 		if( currentHolder != null )
 		{

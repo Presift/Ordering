@@ -57,15 +57,6 @@ public class TileHolder : MonoBehaviour {
 
 	public void SetOccupied( Tile tile )
 	{
-//		if (tile != null) 
-//		{
-//
-//			Debug.Log (this.name + "set to " + tile.name);	
-//		}
-//		else
-//		{
-//			Debug.Log (this.name + "set to null ");
-//		}
 
 		if( occupyingTile != null )
 		{
@@ -76,15 +67,5 @@ public class TileHolder : MonoBehaviour {
 		model.UpdateSubmitButton ();
 
 	}
-
-//	void UpdateSubmitButton()
-//	{
-//		bool submissionReady = model.ReadyForSubmission();
-//		model.controller.ActivateSubmissionButton( submissionReady );
-//	}
-
-
-
-
 
 }

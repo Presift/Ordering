@@ -25,7 +25,9 @@ public class Model : MonoBehaviour {
 	public bool impossible;
 
 	public int currentRound;
-	public int roundsPerPlaySession = 5;
+	public int responseTotal = 0;
+//	public int roundsPerPlaySession = 5;
+	public int maxResponsesInPlaySession = 15;
 
 	public int maxSecondsForTimeBonus = 60;
 	public int pointsPerSecondUnderBonusTime;
@@ -42,7 +44,7 @@ public class Model : MonoBehaviour {
 
 	// Use this for initialization
 	void Awake () {
-		currentRound = 0;
+//		currentRound = 0;
 
 		GameData.dataControl.Load ();
 		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
