@@ -20,6 +20,8 @@ public class GameData : MonoBehaviour {
 	
 	public float previousFinalLevel;
 	public bool debugOn;
+	public int consecutiveModusTollensIncorrect;
+//	public bool impossibleEnabled;
 	
 	void Awake(){
 		if(dataControl == null)
@@ -49,9 +51,12 @@ public class GameData : MonoBehaviour {
 		PlayerData data = new PlayerData();
 		data.previousFinalLevel = previousFinalLevel;
 		data.debugOn = debugOn;
+		data.consecutiveModusTollensIncorrect = consecutiveModusTollensIncorrect;
 
 		file.WriteLine ( data.previousFinalLevel );
 		file.WriteLine (data.debugOn);
+		file.WriteLine (data.consecutiveModusTollensIncorrect);
+//		file.WriteLine (data.impossibleEnabled);
 
 		file.Close ();
 		
@@ -80,6 +85,10 @@ public class GameData : MonoBehaviour {
 
 			debugOn = Convert.ToBoolean( data.ReadLine ());
 
+			consecutiveModusTollensIncorrect = Convert.ToInt32( data.ReadLine() );
+
+//			impossibleEnabled = Convert.ToBoolean( data.ReadLine());
+
 			data.Close ();
 		}
 
@@ -96,5 +105,6 @@ class PlayerData
 {
 	public float previousFinalLevel;
 	public bool debugOn;
-//	public int currentStatsFile;
+	public int consecutiveModusTollensIncorrect;
+//	public bool impossibleEnabled;
 }

@@ -50,6 +50,12 @@ public class Rule
 //		Debug.Log ( listReadOut );
 	}
 
+	public virtual string GetNegationForInvertedConditional( int newPositionInConditional )
+	{
+		string inverted = "";
+		return inverted;
+	}
+
 	public virtual string ConstructVerbal()
 	{
 		Debug.Log ("failed verbal");
@@ -244,6 +250,36 @@ public class RelativePositionRule : Rule
 		clause1OfConditional = "If " + tile1.name +  " is after " + tile2.name + ", ";
 		return verbal;
 	}
+
+	public override string GetNegationForInvertedConditional( int newPositionInConditional )
+	{
+		string invertedConditionalPart;
+
+		if( newPositionInConditional == 1 )
+		{
+			if (ruleType == 0) 
+			{
+				invertedConditionalPart = "If " + tile1.name  + " is after " + tile2.name + ", ";
+			}
+			else
+			{
+				invertedConditionalPart = "If " + tile1.name + " is before " + tile2.name + ", ";
+			}
+		}
+		else
+		{
+			if (ruleType == 0) 
+			{
+				invertedConditionalPart = "then " + tile1.name  + " is after " + tile2.name + ".";
+			}
+			else
+			{
+				invertedConditionalPart = "then " + tile1.name + " is before " + tile2.name + ".";
+			}
+		}
+
+		return invertedConditionalPart;
+	}
 	
 
 	public override bool SubmissionFollowsRule( List<Tile> submission )
@@ -327,6 +363,36 @@ public class AdjacencyRule : Rule
 			return verbal;
 		}
 	}
+
+	public override string GetNegationForInvertedConditional( int newPositionInConditional )
+	{
+		string invertedConditionalPart;
+		
+		if( newPositionInConditional == 1 )
+		{
+			if (ruleType == 0) 
+			{
+				invertedConditionalPart = "If " + tile1.name  + " is NOT next to " + tile2.name + ", ";
+			}
+			else
+			{
+				invertedConditionalPart = "If " + tile1.name + " IS next to " + tile2.name + ", ";
+			}
+		}
+		else
+		{
+			if (ruleType == 0) 
+			{
+				invertedConditionalPart = "then " + tile1.name  + " is NOT next to " + tile2.name + ".";
+			}
+			else
+			{
+				invertedConditionalPart = "then " + tile1.name + " IS next to " + tile2.name + ".";
+			}
+		}
+		
+		return invertedConditionalPart;
+	}
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{
@@ -379,8 +445,8 @@ public class AbsolutePositionRule : Rule
 		List<Tile> tilesInOrder = new List<Tile> ();
 //		Debug.Log ("tilesInBank 1 tile: " + tilesInBank.Count);
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank);
-		Debug.Log ("correctSubmissions : " + correctSubmissions.Count);
-		Debug.Log ("incorrect subs : " + incorrectSubmissions.Count);
+//		Debug.Log ("correctSubmissions : " + correctSubmissions.Count);
+//		Debug.Log ("incorrect subs : " + incorrectSubmissions.Count);
 		tilesUsedInRule.Add (tile1);
 		SetRuleIndentifier();
 	}
@@ -394,8 +460,8 @@ public class AbsolutePositionRule : Rule
 		List<Tile> tilesInOrder = new List<Tile> ();
 //		Debug.Log ("tilesInBank 2 tiles : " + tilesInBank.Count);
 		GetAllPossibleSubmissions ( tilesInOrder, tilesInBank );
-		Debug.Log ("correctSubmissions : " + correctSubmissions.Count);
-		Debug.Log ("incorrect subs : " + incorrectSubmissions.Count);
+//		Debug.Log ("correctSubmissions : " + correctSubmissions.Count);
+//		Debug.Log ("incorrect subs : " + incorrectSubmissions.Count);
 		tilesUsedInRule.Add (tile1);
 		tilesUsedInRule.Add (tile2);
 		SetRuleIndentifier();
@@ -442,6 +508,44 @@ public class AbsolutePositionRule : Rule
 			clause1OfConditional = "If " + tile1.name +  " is NOT in position " + (absolutePositionIndex + 1 ) + ", ";
 			return verbal;
 		}
+	}
+
+	public override string GetNegationForInvertedConditional( int newPositionInConditional )
+	{
+		string invertedConditionalPart;
+		
+		if( newPositionInConditional == 1 )
+		{
+			if( tile2 != null )
+			{
+				invertedConditionalPart = "If " + tile1.name + " or " + tile2.name + " is NOT in position " + ( absolutePositionIndex + 1 ) + ",";
+			}
+			else if (ruleType == 0) 
+			{
+				invertedConditionalPart = "If " + tile1.name  + " is NOT in position " + ( absolutePositionIndex + 1 ) + ", ";
+			}
+			else
+			{
+				invertedConditionalPart = "If " + tile1.name + " IS in position " + ( absolutePositionIndex + 1 ) + ", ";
+			}
+		}
+		else
+		{
+			if( tile2 != null )
+			{
+				invertedConditionalPart = "then " + tile1.name + " or " + tile2.name + " is NOT in position " + ( absolutePositionIndex + 1 ) + ".";
+			}
+			else if (ruleType == 0) 
+			{
+				invertedConditionalPart = "then " + tile1.name  + " is NOT in position " + ( absolutePositionIndex + 1 ) + ".";
+			}
+			else
+			{
+				invertedConditionalPart = "then " + tile1.name + " IS in position " + ( absolutePositionIndex + 1 ) + ".";
+			}
+		}
+		
+		return invertedConditionalPart;
 	}
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
@@ -688,34 +792,51 @@ public class RuleStack: Rule
 
 	public string ConstructRandomOrderedVerbal() // 0 is in a spot, 1 is NOT in a spot
 	{
-		List< int> random = GetListOfShuffledIntegers (ruleStack.Count);
+		ShuffleRules ();
+
 		verbal = "";
-		for(int i = 0; i < random.Count; i ++ )
+
+		for(int i = 0; i < ruleStack.Count; i ++ )
 		{
-			verbal += ruleStack[ random[ i ] ].verbal + "\n";
+			verbal += ruleStack[ i ].verbal + "\n\n";
 		}
+
 		return verbal;
 	}
 
-	List<int> GetListOfShuffledIntegers ( int max, int min = 0 ){
+	public string ConstructVerbalWithInvertedConditionals()
+	{
+		string rulesWithInvertedConditionals = "";
 
-		List<int> unshuffled = new List<int>();
-		for( int i = min; i < max; i ++ )
+		for(int i = 0; i < ruleStack.Count; i ++ )
 		{
-			unshuffled.Add ( i );
-		}
+			rulesWithInvertedConditionals += ruleStack[ i ].verbal + "\n";
 
-		int size = unshuffled.Count;
+			if( ruleStack[ i ] is Conditional )
+			{
+				Conditional rule = ruleStack[ i ] as Conditional;
+
+				string invertedConditional = rule.ConstructInvertedConditional();
+
+				rulesWithInvertedConditionals += "THIS ALSO MEANS : " + "\n";
+				rulesWithInvertedConditionals += invertedConditional +  "\n\n";
+			}
+
+		}
 		
-		for (int i = 0; i < size; i++){
-			int indexToSwap = Random.Range(i, size);
-			int oldValue = unshuffled[i];
-			unshuffled[i] = unshuffled[indexToSwap];
-			unshuffled[indexToSwap] = oldValue;
-		}
-
-		return unshuffled;  //now shuffled
+		return rulesWithInvertedConditionals;
 	}
+
+	public void ShuffleRules()
+	{
+		for (int i = 0; i < ruleStack.Count; i++){
+			int indexToSwap = Random.Range( i, ruleStack.Count );
+			Rule oldValue = ruleStack[i];
+			ruleStack[i] = ruleStack[ indexToSwap ];
+			ruleStack[indexToSwap] = oldValue;
+		}
+	}
+	
 }
 
 public class Conditional: Rule
@@ -743,12 +864,13 @@ public class Conditional: Rule
 
 	public override void SetRuleIndentifier()
 	{
-		Debug.Log ("rule 1 identifier : " + rule1.ruleIdentifier + ", rule 2 identifer : " + rule2.ruleIdentifier);
+//		Debug.Log ("rule 1 identifier : " + rule1.ruleIdentifier + ", rule 2 identifer : " + rule2.ruleIdentifier);
 		ruleIdentifier = rule1.ruleIdentifier + (rule2.ruleIdentifier / 10);
 	}
 
 	public bool IsValidRule()
 	{
+
 		if( rule1 is AbsolutePositionRule && rule2 is AbsolutePositionRule )
 		{
 			if( rule1.tile1 == rule2.tile1 )
@@ -756,6 +878,25 @@ public class Conditional: Rule
 				return false;
 			}
 		}
+
+		bool possibleToSatisfyBothClausesOfConditional = false;
+
+		//if it is never possibel to satisfy both parts of conditional
+		foreach( KeyValuePair<string, List<Tile>> pair in rule1.correctSubmissions )
+		{
+			string correctSubmission = pair.Key;
+			if( rule2.correctSubmissions.ContainsKey( correctSubmission ))
+			{
+				possibleToSatisfyBothClausesOfConditional = true;
+				break;
+			}
+		} 
+
+		if( !possibleToSatisfyBothClausesOfConditional )
+		{
+			return false;
+		}
+
 		if( correctSubmissions.Count > 1 && rule1 != rule2 )
 		{
 
@@ -769,6 +910,13 @@ public class Conditional: Rule
 	{
 		verbal = rule1.clause1OfConditional + rule2.clause2OfConditional;
 		return verbal;
+	}
+
+	public string ConstructInvertedConditional()
+	{
+		string inversion = rule2.GetNegationForInvertedConditional( 1 ) + rule1.GetNegationForInvertedConditional (2);
+		Debug.Log (" INVERSION : " + inversion);
+		return inversion;
 	}
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
@@ -801,3 +949,5 @@ public class Conditional: Rule
 		
 	}
 }
+
+

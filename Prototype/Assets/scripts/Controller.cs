@@ -46,19 +46,29 @@ public class Controller : MonoBehaviour {
 		{
 			HideDebug();
 		}
+
+		logic.consecutiveTollensErrors = GameData.dataControl.consecutiveModusTollensIncorrect;
+
+		if( model.currentLevel > model.firstLevelWithImpossibles )
+		{
+			EnableImpossible( true );
+		}
+		else
+		{
+			EnableImpossible( false );
+		}
 	}
 	
 	// Update is called once per frame
 	void Update () {
-//		if(Input.GetKeyDown(KeyCode.UpArrow ))
-//		{
-//			model.UpdateLevel( true );
-//			Debug.Log ("Trial : " + model.currentLevel );
-//		}
+		if(Input.GetKeyDown(KeyCode.UpArrow ))
+		{
+			string inversion = logic.trialRules.ConstructVerbalWithInvertedConditionals();
+			Debug.Log (inversion);
+		}
 //		else if( Input.GetKeyDown(KeyCode.DownArrow))
 //		{
-//			model.UpdateLevel( false );
-//			Debug.Log ("Trial : " + model.currentLevel );
+
 //		}
 	}
 
@@ -145,15 +155,33 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
+
 	public void RespondToAnswer( bool correctAnswer )
 	{
+		if( correctAnswer && model.currentChallenge.usesModusTollens )
+		{
+			logic.consecutiveTollensErrors = 0;
+		}
+		else if( !correctAnswer && model.currentChallenge.usesModusTollens )
+		{
+			logic.consecutiveTollensErrors ++;
+			Debug.Log ( "consecutive erros : " + logic.consecutiveTollensErrors );
+
+			if( logic.consecutiveTollensErrors >= logic.errorsCountToNeedHelp )
+			{
+				Debug.Log (" SHOW INVERSION ");
+				string inversion = logic.trialRules.ConstructVerbalWithInvertedConditionals();
+				rules.text = inversion;
+			}
+		}
+
 		int responseTime = metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
 		int timeBonus = CalculateTimeBonusEarned (correctAnswer, responseTime);
 		UpdateScoreDisplay ();
 
 		float levelChange = model.CalculateLevelChange (correctAnswer, responseTime);
 		model.UpdateLevel (levelChange);
-
+		Debug.Log ("RESPONSE TIME : " + responseTime);
 		Debug.Log ("BONUS POINTS : " + timeBonus);
 		metaData.SaveStats ();
 		view.DisplayFeedback ( true, correctAnswer );
@@ -207,26 +235,37 @@ public class Controller : MonoBehaviour {
 			}
 			else
 			{
-				//update level
-//				model.UpdateLevel( correctAnswer );
 				EndOfTrial();
-//				ShowOnlyNextTrialButton();
-//				NewRound();
 			}
 		} 
 		else 
 		{
-//			model.UpdateLevel( correctAnswer );
-//			EndOfTrial();
 			ShowOnlyContinueButton();
 		}
-		
-//		UpdateDisplay ();
+
+	}
+
+	public void EnableImpossible( bool enable )
+	{
+		Debug.Log (enable);
+		if( enable )
+		{
+			model.impossibleEnabled = true;
+			impossibleButton.gameObject.SetActive( true );
+		}
+		else
+		{
+			model.impossibleEnabled = true;
+			impossibleButton.gameObject.SetActive( false );
+		}
 	}
 
 	void EndOfTrial()
 	{
 		GameData.dataControl.previousFinalLevel = model.currentNuancedLevel;
+		GameData.dataControl.consecutiveModusTollensIncorrect = logic.consecutiveTollensErrors;
+//		GameData.dataControl.impossibleEnabled = model.impossibleIsEnabled;
+
 		GameData.dataControl.Save ();
 
 		if( ( model.currentRound ) == model.roundsPerPlaySession )
@@ -269,7 +308,7 @@ public class Controller : MonoBehaviour {
 
 	void UpdateRoundDisplay()
 	{
-		round.text = "Round : " + (model.currentRound);
+		round.text = "Round : " + (model.currentRound) + " of " + model.roundsPerPlaySession;
 	}
 
 	void UpdateTrialDisplay()
@@ -313,6 +352,8 @@ public class Controller : MonoBehaviour {
 
 		UpdateDisplay ();
 
+		model.CreateNewChallengeSet ();
+
 		//destroy children of view
 		DestroyChildren (view.gameObject.transform);
 		//create new board
@@ -330,6 +371,8 @@ public class Controller : MonoBehaviour {
 	{
 //		UpdateDisplay ();
 		UpdateTrialDisplay ();
+
+		model.CreateNewChallengeSet ();
 
 		view.WipePreviousProblem (model.tilesToOrder, model.holders, model.stagingAreas);
 

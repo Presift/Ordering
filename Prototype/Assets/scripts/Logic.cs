@@ -6,7 +6,7 @@ public class Logic : MonoBehaviour {
 
 	public Model model;
 	public MetaData metaData;
-//	public View view;
+	public CSVReader levelReader;
 
 	public RuleStack trialRules;
 
@@ -42,7 +42,8 @@ public class Logic : MonoBehaviour {
 	int maxRulesToSetImpossibleBoard;
 	int maxConditionalInImpossibleSet;
 
-
+	public int consecutiveTollensErrors;
+	public int errorsCountToNeedHelp = 3;
 
 	//CONDITIONALS
 
@@ -54,14 +55,25 @@ public class Logic : MonoBehaviour {
 	// difficulty for possible board
 	bool modusPonens; //if a then b
 	bool modusTollens; //if !b, then !a
-	bool showClauseBNotA;  // b and !a
-	bool showClauseBImplyNotA;  // b and make a impossible
+	bool modusTollensImplyNotA;
 
-	int maxModusTollens;
-	int maxBAndNotA;
+	bool showClauseBNotA;  // b and !a
+//	bool showClauseBImplyNotA;  // b and make a impossible
+
+//	int maxModusTollens;
+//	int maxBAndNotA;
 	
 	string previousPossiblePresetKey;
 	string previousImpossiblePresetKey;
+
+	public List<Level> allLevels = new List<Level> ();
+
+	void Awake()
+	{
+
+		CompileLevels (levelReader.levelingInfo);
+
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -86,14 +98,14 @@ public class Logic : MonoBehaviour {
 			}
 			else
 			{
-				minReadingTime += 1;
+				minReadingTime += .75f;
 			}
 		}
 
 		float timeForTilePlacement = .5f * tilesCount;
 
 		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + 2;
-		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * 5;
+		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * 6;
 		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
 		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
 	}
@@ -134,7 +146,7 @@ public class Logic : MonoBehaviour {
 //				newConditional.ConstructVerbal();
 				if( !trialRules.RuleConflictsWithRuleStack( newConditional, problemsPerTrial ))
 				{
-					Debug.Log ( "successful rule : " + newConditional.verbal );
+//					Debug.Log ( "successful rule : " + newConditional.verbal );
 					trialRules.AddRule( newConditional );
 					ruleIndentifiers.Add ( newConditional.ruleIdentifier );
 					rulesCreated ++;
@@ -156,7 +168,7 @@ public class Logic : MonoBehaviour {
 				RelativePositionRule newRel = CreateRelativeRule( tiles, tileUsage );
 				if( !trialRules.RuleConflictsWithRuleStack(newRel, problemsPerTrial ))
 				{
-					Debug.Log ( "successful rule : " + newRel.verbal );
+//					Debug.Log ( "successful rule : " + newRel.verbal );
 					trialRules.AddRule( newRel );
 					ruleIndentifiers.Add ( newRel.ruleIdentifier );
 					rulesCreated ++;
@@ -177,7 +189,7 @@ public class Logic : MonoBehaviour {
 				AdjacencyRule newAdj = CreateAdjacencyRule( tiles, tileUsage );
 				if( !trialRules.RuleConflictsWithRuleStack( newAdj, problemsPerTrial ))
 				{
-					Debug.Log ( "successful rule : " + newAdj.verbal );
+//					Debug.Log ( "successful rule : " + newAdj.verbal );
 					trialRules.AddRule( newAdj );
 					ruleIndentifiers.Add ( newAdj.ruleIdentifier );
 					rulesCreated ++;
@@ -197,7 +209,7 @@ public class Logic : MonoBehaviour {
 				AbsolutePositionRule newAbs = CreateAbsoluteRule( positionsToUse, tiles, tileUsage );
 				if( !trialRules.RuleConflictsWithRuleStack( newAbs, problemsPerTrial ))
 				{
-					Debug.Log ( "successful rule : " + newAbs.verbal );
+//					Debug.Log ( "successful rule : " + newAbs.verbal );
 					trialRules.AddRule( newAbs );
 					ruleIndentifiers.Add ( newAbs.ruleIdentifier );
 					rulesCreated ++;
@@ -223,6 +235,8 @@ public class Logic : MonoBehaviour {
 //		Debug.Log (" ************CORRECT ANSWERS****************** : " );
 //		trialRules.PrintEachDictionaryValue (trialRules.correctSubmissions);
 		SetMinMaxResponseTimesForLevelChange ();
+
+		model.currentChallenge.SetPresetCount ( 0 );
 
 		return trialRules.verbal;
 	}
@@ -872,8 +886,19 @@ public class Logic : MonoBehaviour {
 								{
 									if( KeyIsContraPositiveOfConditional( alwaysBreaksRule2 ))
 									{
-										testKeyUsesModusTollens = true;
+
 //										Debug.Log ("tollens : " + preset );
+										if( modusTollensImplyNotA )  //this is easier for most people; it shows clause 2 as false and has user fill in NOT A ( rather than preset breaking always both b and a )
+										{
+											if( !alwaysBreaksRule1 )
+											{
+												testKeyUsesModusTollens = true;
+											}
+										}
+										else
+										{
+											testKeyUsesModusTollens = true;
+										}
 									}
 								}
 								if( modusPonens )
@@ -958,6 +983,11 @@ public class Logic : MonoBehaviour {
 		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
 		Debug.Log ("best keys count : " + bestKeys.Count);
 		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
+
+		model.currentChallenge.SetPresetCount (bestPresetCount);
+		model.currentChallenge.SetConditionalLogic (bestKeyUsesModusPonens, bestKeyUsesModusTollens, bestKeyUsesBAndNotA);
+		Debug.Log ("current challenge using tollens : " + model.currentChallenge.usesModusTollens);
+
 		return bestKeys;
 
 	}
@@ -1014,85 +1044,7 @@ public class Logic : MonoBehaviour {
 		return condRules;
 	}
 
-//	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
-//	{
-//		
-//		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
-//		List< List<Rule> > allRuleCombos = new List< List<Rule> > ();
-//		List< Rule > newCombo = new List<Rule > ();
-//		List< Rule > ruleBank = new List<Rule>( trialRules.ruleStack );
-//		
-//		int rulesToSetImpossible = Mathf.Min (maxRulesToSetImpossibleBoard, trialRules.ruleStack.Count);
-//		GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
-//		
-//		string presetTiles = null;
-//		
-//		Debug.Log (" combo list count : " + allRuleCombos.Count); 
-//		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
-//		
-//		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
-//		int minPresetTiles = 1;
-//		
-//		while( presetTiles == null && minPresetTiles <= maxPresetTiles )
-//		{
-//			for( int i = 0; i < allRuleCombos.Count; i ++ )
-//			{
-//				RuleStack rulesToBreak = ReturnRuleStackFromComboList ( allRuleCombos, i );
-//				
-//				//				UpdateMinPresets (minPresetTiles, rulesToBreak);
-//				
-//				List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
-//				
-//				presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
-//				
-//				if( presetTiles != null )
-//				{
-//					previousImpossiblePresetKey = presetTiles;
-//					break;
-//				}
-//			}
-//			
-//			//if this is read then preset is null
-//			//increase min preset tiles
-//			minPresetTiles ++;
-//			
-//			// if presets are maxed and rules can still be dropped from rule combinations
-//			if( minPresetTiles > maxPresetTiles && rulesToSetImpossible > 1 )
-//			{
-//				//make more rule combos with fewer rules
-//				allRuleCombos = new List< List<Rule> > ();
-//				newCombo = new List<Rule > ();
-//				ruleBank = new List<Rule>( trialRules.ruleStack );
-//				
-//				rulesToSetImpossible --;
-//				
-//				GetAllCombinationsOfRules (ruleBank, newCombo, rulesToSetImpossible, allRuleCombos);
-//				
-//				tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
-//				
-//				maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
-//				minPresetTiles = 1;
-//			}
-//		}
-//		
-//		if( presetTiles != null )
-//		{
-//			Debug.Log ("CREATING IMPOSSIBLE BOARD");
-//			model.SetImpossible( true );
-//			impossiblesUsed ++;
-//			Debug.Log ("found valid preset tile order ");
-//			previousImpossiblePresetKey = presetTiles;
-//			return presetTiles;
-//		}
-//		else
-//		{
-//			model.SetImpossible( false );
-//			presetTiles = CreatePossibleBoard( previousSubmission );
-//			Debug.Log ("impossible preset NOT found, creating possible board ");
-//		}
-//		
-//		return presetTiles;
-//	}
+
 
 	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
 	{
@@ -1126,9 +1078,11 @@ public class Logic : MonoBehaviour {
 
 				presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
 
-				if(  presetTiles.Count == 0 )
+				if(  presetTiles.Count != 0 )
 				{
 					Debug.Log (presetTiles.Count + " impossible presets found ");
+					model.currentChallenge.SetPresetCount (minPresetTiles);
+					model.currentChallenge.SetImpossibleStats( true, rulesToSetImpossible );
 					break;
 				}
 			}
@@ -1283,12 +1237,13 @@ public class Logic : MonoBehaviour {
 		return false;
 	}
 
+
 	bool ImpossibleKey( string possibleKey, RuleStack rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
 	{
 		
 		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
 		{
-			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS : " + possibleKey);
+//			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS : " + possibleKey);
 			
 			//test to see if preset is a possible correct answer each concerned breakable rule
 			bool passBreakableRulesTest = false;
@@ -1297,7 +1252,7 @@ public class Logic : MonoBehaviour {
 			if( singleRuleBreak )
 			{
 				List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak.ruleStack[ 0 ] );
-				Debug.Log ( "correct submissions : " + correctSubmissions.Count );
+//				Debug.Log ( "correct submissions : " + correctSubmissions.Count );
 				if( correctSubmissions.Count == 0 )
 				{
 					passBreakableRulesTest = true;
@@ -1327,7 +1282,7 @@ public class Logic : MonoBehaviour {
 
 				if( eachRuleHasAPossibleCorrect )
 				{
-					Debug.Log (" each rule has possible corrects : " + eachRuleHasAPossibleCorrect );
+//					Debug.Log (" each rule has possible corrects : " + eachRuleHasAPossibleCorrect );
 
 					//check that each rule does not share a correct submission that is shared by the other breakable rules
 					for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.ruleStack.Count; ruleToExclude ++ )
@@ -1368,14 +1323,14 @@ public class Logic : MonoBehaviour {
 			
 			if( passBreakableRulesTest )
 			{
-				Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
+//				Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
 				bool passOtherRulesTest = true;
 				//test to see if preset is impossible for non-concerned rules in trial rules
 				for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
 				{
 					if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
 					{
-						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
+//						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
 						passOtherRulesTest = false;
 						break;
 					}
@@ -1383,7 +1338,7 @@ public class Logic : MonoBehaviour {
 				
 				if( passOtherRulesTest )
 				{
-					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
+//					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
 					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
 					{
 						Debug.Log (rulesToBreak.ruleStack[ i ].verbal);
@@ -1395,62 +1350,6 @@ public class Logic : MonoBehaviour {
 		
 		return false;
 	}
-
-//	bool ImpossibleKey( string possibleKey, RuleStack rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
-//	{
-////		if( !trialRules.WildCardKeyInDictionary( possibleKey, trialRules.correctSubmissions ))
-//		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
-//		{
-//			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS" );
-//
-//			//test to see if preset is a possible correct answer each concerned breakable rule
-//			bool passBreakableRulesTest = true;
-//
-//
-//			for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
-//			{
-//				//if key is not in rule to break's correct submissions
-//				if( !rulesToBreak.ruleStack[ i ].WildCardKeyInDictionary( possibleKey, rulesToBreak.ruleStack[ i ].correctSubmissions ))
-//				{
-//					if ( !singleRuleBreak )
-//					{
-//						Debug.Log ( " PRESET BREAKS RULE TO BREAK " );
-//						passBreakableRulesTest = false;
-//						break;
-//					}
-//
-//				}
-//			}
-//			
-//			if( passBreakableRulesTest )
-//			{
-//				Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
-//				bool passOtherRulesTest = true;
-//				//test to see if preset is impossible for non-concerned rules in trial rules
-//				for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
-//				{
-//					if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
-//					{
-//						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
-//						passOtherRulesTest = false;
-//						break;
-//					}
-//				}
-//				
-//				if( passOtherRulesTest )
-//				{
-//					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
-//					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
-//					{
-//						Debug.Log (rulesToBreak.ruleStack[ i ].verbal);
-//					}
-//					return true;
-//				}
-//			}
-//		}
-//
-//		return false;
-//	}
 
 
 
@@ -1503,42 +1402,42 @@ public class Logic : MonoBehaviour {
 	}
 
 
-	void SetRuleCreationParameters( int maxCond, int maxRel, int maxAdj, int maxAbs )
-	{
-		maxConditionals = maxCond;
-		maxRelativePosRules = maxRel;
-		maxAdjacencyRules = maxAdj;
-		maxAbsPosRules = maxAbs;
-		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
-
-	}
-
-	void SetConditionalParameters( int maxRel, int maxAdj, int maxAbs )
-	{
-		maxAbsInConditional = maxAbs;
-		maxAdjInConditional = maxAdj;
-		maxRelInConditional = maxRel;
-	}
-
-	void SetTileCount( int tilesInTrial )
-	{
-		tilesCount = tilesInTrial;
-	}
-
-	void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
-	{
-		maxRulesToSetImpossibleBoard = rulesToSetBoard;
-		chanceOfImpossible = impChance;
-		maxImpossiblePerTrial = maxImp;
-	}
-
-	void SetPossibleBoardParameters( bool AThenB, bool notBThenNotA, bool showBAndNotA, bool showBAndAImpossible )
-	{
-		modusPonens = AThenB;
-		modusTollens = notBThenNotA;
-		showBAndNotA  = showClauseBNotA;
-		showBAndAImpossible = showClauseBImplyNotA;
-	}
+//	void SetRuleCreationParameters( int maxCond, int maxRel, int maxAdj, int maxAbs )
+//	{
+//		maxConditionals = maxCond;
+//		maxRelativePosRules = maxRel;
+//		maxAdjacencyRules = maxAdj;
+//		maxAbsPosRules = maxAbs;
+//		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
+//
+//	}
+//
+//	void SetConditionalParameters( int maxRel, int maxAdj, int maxAbs )
+//	{
+//		maxAbsInConditional = maxAbs;
+//		maxAdjInConditional = maxAdj;
+//		maxRelInConditional = maxRel;
+//	}
+//
+//	void SetTileCount( int tilesInTrial )
+//	{
+//		tilesCount = tilesInTrial;
+//	}
+//
+//	void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
+//	{
+//		maxRulesToSetImpossibleBoard = rulesToSetBoard;
+//		chanceOfImpossible = impChance;
+//		maxImpossiblePerTrial = maxImp;
+//	}
+//
+//	void SetPossibleBoardParameters( bool AThenB, bool notBThenNotA, bool contraPositivePresetDoNotAlwaysBreakClause1, bool showBAndNotA )
+//	{
+//		modusPonens = AThenB;
+//		modusTollens = notBThenNotA;
+//		showBAndNotA  = showClauseBNotA;
+//		modusTollensImplyNotA = contraPositivePresetDoNotAlwaysBreakClause1;
+//	}
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
@@ -1546,408 +1445,401 @@ public class Logic : MonoBehaviour {
 
 //		Debug.Log (currentLevel);
 
-		if (currentLevel == 0) 
-		{
-			SetRuleCreationParameters( 0, 1, 0, 0 );
-			SetTileCount ( 3 );
-			SetImpossibleBoardParameters( 1, 30, 1 );
-			SetPossibleBoardParameters( false, false, false, false );
-			usingPositiveOfAbsolute = true;
-		}
-
-		else if( currentLevel == 1 )
-		{
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			maxRules = 2;
-			tilesCount = 3;
-			chanceOfImpossible = 75;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 2 )
-		{
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-			maxRules = 2;
-			tilesCount = 4;
-			chanceOfImpossible = 40;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 3 )
-		{
-			maxRelativePosRules = 2;
-			maxRules = 2;
-			tilesCount = 4;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 4 )
-		{
-			maxConditionals = 0;
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-			maxRules = 2;
-			tilesCount = 4;
-			chanceOfImpossible = 50;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 5 )
-		{
-			maxConditionals = 1;
-			maxRules = 1;
-			tilesCount = 4;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, false, false, false );
-			SetConditionalParameters( 0, 1, 1 );
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 6 )
-		{
-			maxConditionals = 1;
-			maxRules = 1;
-			tilesCount = 3;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = false;
-			SetPossibleBoardParameters( true, true, false, false );
-			SetConditionalParameters( 0, 0, 2 );
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 7 )
-		{
-			maxRules = 1;
-			maxConditionals = 1;
-			
-			tilesCount = 4;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, false, false );
-			SetConditionalParameters( 0, 1, 1 );
-			usingPositiveOfAbsolute = true;
-		}
-		else if( currentLevel == 8 )
-		{
-			maxRules = 2;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-
-			tilesCount = 4;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, false, false );
-			SetConditionalParameters( 1, 0, 1 );
-			usingPositiveOfAbsolute = true;
-		}
-
-		else if( currentLevel == 9 )
-		{
-			maxRules = 2;
-			maxConditionals = 1;
-			maxRelativePosRules = 2;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 1;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, false );
-			SetConditionalParameters( 0, 2, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 10 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 0;
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 50;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, false );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 11 )
-		{
-			maxRules = 3;
-
-			maxConditionals = 1;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, false );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 12 )
-		{
-			maxRules = 3;
-
-			maxConditionals = 1;
-			maxRelativePosRules = 1;
-			maxAdjacencyRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, false );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 13 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 14 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 2;
-			maxAbsPosRules = 0;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 30;
-			maxImpossiblePerTrial = 1;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 15 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 2;
-//			maxAbsPosRules = 2;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 16 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 2;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 2;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 17 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 2;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 3;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 18 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 2;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 3;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 19 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 1;
-			maxRelativePosRules = 2;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 3;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 20 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 2;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 3;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 21 )
-		{
-			maxRules = 3;
-			
-			maxConditionals = 2;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 5;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 3;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 22 )
-		{
-			maxRules = 4;
-			
-			maxConditionals = 2;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 6;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 3;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else if( currentLevel == 23 )
-		{
-			maxRules = 4;
-			
-			maxConditionals = 2;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 6;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 4;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-		}
-		else
-		{
-			maxRules = 4;
-			
-			maxConditionals = 2;
-			maxRelativePosRules = 1;
-			maxAbsPosRules = 1;
-			
-			tilesCount = 6;
-			chanceOfImpossible = 25;
-			maxImpossiblePerTrial = 2;
-			maxRulesToSetImpossibleBoard = 4;
-			usingEitherOr = true;
-			SetPossibleBoardParameters( true, true, true, true );
-			SetConditionalParameters( 1, 1, 0 );
-			usingPositiveOfAbsolute = false;
-
-		}
-
-//		maxRules = 4;
-//		maxConditionals = 0;
-//		maxAbsPosRules = 1;
-//		maxRelativePosRules = 1;
-//		maxAdjacencyRules = 2;
+//		if (currentLevel == 0) 
+//		{
+//			SetRuleCreationParameters( 0, 1, 0, 0 );
+//			SetTileCount ( 3 );
+//			SetImpossibleBoardParameters( 1, 30, 1 );
+//			SetPossibleBoardParameters( false, false, false, false );
+//			usingPositiveOfAbsolute = true;
+//		}
 //
-//		tilesCount = 6;
-//		chanceOfImpossible = 100;
-//		maxImpossiblePerTrial = 2;
-//		maxRulesToSetImpossibleBoard = 3;
-//		usingEitherOr = true;
-		
+//		else if( currentLevel == 1 )
+//		{
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			maxRules = 2;
+//			tilesCount = 3;
+//			chanceOfImpossible = 75;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 2 )
+//		{
+//			maxRelativePosRules = 1;
+//			maxAdjacencyRules = 1;
+//			maxRules = 2;
+//			tilesCount = 4;
+//			chanceOfImpossible = 40;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = true;
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 3 )
+//		{
+//			maxRelativePosRules = 2;
+//			maxRules = 2;
+//			tilesCount = 4;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = true;
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 4 )
+//		{
+//			maxConditionals = 0;
+//			maxRelativePosRules = 1;
+//			maxAdjacencyRules = 1;
+//			maxRules = 2;
+//			tilesCount = 4;
+//			chanceOfImpossible = 50;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 5 )
+//		{
+//			maxConditionals = 1;
+//			maxRules = 1;
+//			tilesCount = 4;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, false, false, false );
+//			SetConditionalParameters( 0, 1, 1 );
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 6 )
+//		{
+//			maxConditionals = 1;
+//			maxRules = 1;
+//			tilesCount = 3;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = false;
+//			SetPossibleBoardParameters( true, true, true, false );
+//			SetConditionalParameters( 0, 0, 2 );
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 7 )
+//		{
+//			maxRules = 1;
+//			maxConditionals = 1;
+//			
+//			tilesCount = 4;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, false );
+//			SetConditionalParameters( 0, 1, 1 );
+//			usingPositiveOfAbsolute = true;
+//		}
+//		else if( currentLevel == 8 )
+//		{
+//			maxRules = 2;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAdjacencyRules = 1;
+//
+//			tilesCount = 4;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, false );
+//			SetConditionalParameters( 1, 0, 1 );
+//			usingPositiveOfAbsolute = true;
+//		}
+//
+//		else if( currentLevel == 9 )
+//		{
+//			maxRules = 2;
+//			maxConditionals = 1;
+//			maxRelativePosRules = 2;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 1;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, false );
+//			SetConditionalParameters( 0, 2, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 10 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 0;
+//			maxRelativePosRules = 1;
+//			maxAdjacencyRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 50;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 11 )
+//		{
+//			maxRules = 3;
+//
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 12 )
+//		{
+//			maxRules = 3;
+//
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAdjacencyRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 13 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 14 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 2;
+//			maxAbsPosRules = 0;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 30;
+//			maxImpossiblePerTrial = 1;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 15 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 2;
+////			maxAbsPosRules = 2;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 16 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 2;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 2;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 17 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 2;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 3;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 18 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 2;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 3;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 19 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 1;
+//			maxRelativePosRules = 2;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 3;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 20 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 2;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 3;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 21 )
+//		{
+//			maxRules = 3;
+//			
+//			maxConditionals = 2;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 5;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 3;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 22 )
+//		{
+//			maxRules = 4;
+//			
+//			maxConditionals = 2;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 6;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 3;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else if( currentLevel == 23 )
+//		{
+//			maxRules = 4;
+//			
+//			maxConditionals = 2;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 6;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 4;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//		}
+//		else
+//		{
+//			maxRules = 4;
+//			
+//			maxConditionals = 2;
+//			maxRelativePosRules = 1;
+//			maxAbsPosRules = 1;
+//			
+//			tilesCount = 6;
+//			chanceOfImpossible = 25;
+//			maxImpossiblePerTrial = 2;
+//			maxRulesToSetImpossibleBoard = 4;
+//			usingEitherOr = true;
+//			SetPossibleBoardParameters( true, true, true, true );
+//			SetConditionalParameters( 1, 1, 0 );
+//			usingPositiveOfAbsolute = false;
+//
+//		}
+	
+		if ( !model.impossibleEnabled )
+		{
+			chanceOfImpossible = 0;
+		}
 		
 	}
 	
+
 	void ResetStats()
 	{
 		maxAbsPosRules = 0;
@@ -1966,7 +1858,7 @@ public class Logic : MonoBehaviour {
 		maxAdjInConditional = 0;
 		maxRelInConditional = 0;
 
-		SetPossibleBoardParameters( false, false, false, false );
+//		SetPossibleBoardParameters( false, false, false, false );
 
 	}
 	
@@ -1986,13 +1878,32 @@ public class Logic : MonoBehaviour {
 
 	bool HappenedByChance( int chance ) //out of 100
 	{
-		int random = Random.Range (0, 101);
+		int random = Random.Range (1, 101);
 //		Debug.Log (" ROLLED : " + random + " , CHANCE : " + chance);
 		if( random > chance )
 		{
 			return false;
 		}
 		return true;
+	}
+
+	public void CompileLevels( List< List<int> > levelingInfo )
+	{
+		for( int i = 0; i < levelingInfo.Count; i ++ )
+		{
+			List< int > levelInfo = levelingInfo[ i ];
+
+			Level newLevel = new Level( i );
+			
+			newLevel.SetTileCount ( levelInfo[ 0 ] );
+			newLevel.SetRuleCreationParameters ( levelInfo[ 1 ], levelInfo[ 2 ], levelInfo[ 3 ], levelInfo[ 4 ], levelInfo[ 5 ], levelInfo[ 6 ] );
+			newLevel.SetConditionalParameters( levelInfo[ 7 ], levelInfo[ 8 ], levelInfo[ 9 ] );
+			newLevel.SetImpossibleBoardParameters(levelInfo[ 10 ], levelInfo[ 11 ], levelInfo[ 12 ] );
+			newLevel.SetPossibleBoardParameters( levelInfo[ 13 ], levelInfo[ 14 ], levelInfo[ 15 ], levelInfo[ 16 ] );
+			newLevel.SetMaxTrials( levelInfo [ 17 ], levelInfo [ 18 ] );
+
+			allLevels.Add( newLevel );
+		}
 	}
 
 	int CalculateConditionalDifficulty( Rule rule1, Rule rule2 )
@@ -2006,3 +1917,148 @@ public class Logic : MonoBehaviour {
 		return ruleDifficulty + additionalDifficulty;
 	}
 }
+
+public class CurrentSetUp
+{
+	public int presetCount = 0;
+
+	public bool usesModusPonens = false;
+	public bool usesModusTollens = false;
+	public bool usesbAndNotA = false;
+
+	public bool impossible = false;
+	public int rulesBreaking = 0;
+
+	public CurrentSetUp()
+	{
+		
+	}
+
+	public void SetImpossibleStats( bool notPossible, int breakingRules )
+	{
+		impossible = notPossible;
+		rulesBreaking = breakingRules;
+	}
+
+	public void SetConditionalLogic( bool modusPonens, bool modusTollens, bool bAndNotA )
+	{
+		usesModusPonens = modusPonens;
+		usesModusTollens = modusTollens;
+		usesbAndNotA = bAndNotA;
+	}
+
+	public void SetPresetCount( int count )
+	{
+		presetCount = count;
+	}
+}
+
+
+
+public class Level
+{
+	public int maxRules;
+	public int tilesCount;
+	public int chanceOfImpossible;
+	public int maxImpossiblePerTrial;
+	public int maxTrialsInRuleSet;
+
+	//rules that can be used
+	public int maxAbsPosRules;
+	public int maxRelativePosRules;
+	public int maxAdjacencyRules;
+	public int maxConditionals;
+	public bool usingEitherOr;
+	public bool usingPositiveOfAbsolute;
+
+	public int chanceOfPresetsOnFirstTrial;
+
+	//difficulty for impossible board
+	public int maxRulesToSetImpossibleBoard;
+	public int minRulesToSetImpossibleBoard;
+//	public int maxConditionalInImpossibleSet;
+
+
+	//CONDITIONALS
+
+	//construction
+	public int maxAbsInConditional;
+	public int maxAdjInConditional;
+	public int maxRelInConditional;
+	
+	// difficulty for possible board
+	public bool modusPonens; //if a then b
+	public bool modusTollens; //if !b, then !a
+	public bool modusTollensImplyNotA;
+	
+	public bool showClauseBNotA;  // b and !a
+	//	bool showClauseBImplyNotA;  // b and make a impossible
+	
+	public int maxModusTollens;
+	public int maxBAndNotA;
+
+	public int level;
+
+	public Level( int levelNum )
+	{
+		level = levelNum;
+	}
+
+
+	public void SetRuleCreationParameters( int maxAbs, int maxAdj, int maxRel, int maxCond, int usingPosOfAbs, int eitherOr )
+	{
+		maxConditionals = maxCond;
+		maxRelativePosRules = maxRel;
+		maxAdjacencyRules = maxAdj;
+		maxAbsPosRules = maxAbs;
+		usingPositiveOfAbsolute = ConvertIntToBool( usingPosOfAbs );
+		usingEitherOr = ConvertIntToBool( eitherOr );
+		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
+
+	}
+	
+	public void SetConditionalParameters( int maxRel, int maxAdj, int maxAbs )
+	{
+		maxAbsInConditional = maxAbs;
+		maxAdjInConditional = maxAdj;
+		maxRelInConditional = maxRel;
+	}
+	
+	public void SetTileCount( int tilesInTrial )
+	{
+		tilesCount = tilesInTrial;
+	}
+
+	public void SetMaxTrials( int maxTrials, int chanceOfPresets )
+	{
+		maxTrialsInRuleSet = maxTrials;
+		chanceOfPresetsOnFirstTrial = chanceOfPresets;
+	}
+	
+	public void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
+	{
+		maxRulesToSetImpossibleBoard = rulesToSetBoard;
+		minRulesToSetImpossibleBoard = Mathf.Max (0, maxRulesToSetImpossibleBoard --);
+		chanceOfImpossible = impChance;
+		maxImpossiblePerTrial = maxImp;
+	}
+	
+	public void SetPossibleBoardParameters( int AThenB, int notBThenNotA, int contraPositivePresetDoNotAlwaysBreakClause1, int showBNotA )
+	{
+		modusPonens = ConvertIntToBool( AThenB );
+		modusTollens = ConvertIntToBool( notBThenNotA );
+		showClauseBNotA  = ConvertIntToBool( showBNotA );
+		modusTollensImplyNotA = ConvertIntToBool( contraPositivePresetDoNotAlwaysBreakClause1 );
+	}
+
+	bool ConvertIntToBool( int num )
+	{
+		if( num == 0 )
+		{
+			return false;
+		}
+		return true;
+	}
+}
+
+

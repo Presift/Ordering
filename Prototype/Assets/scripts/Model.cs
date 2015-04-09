@@ -13,7 +13,7 @@ public class Model : MonoBehaviour {
 //	public int trial;
 	public int scoreIncreaseForCorrectAnswer;
 
-	public bool impossibleIsEnabled;
+	public bool impossibleEnabled;
 
 	int occupiedTiles;
 	public List<StagingArea> stagingAreas;
@@ -30,11 +30,15 @@ public class Model : MonoBehaviour {
 	public int maxSecondsForTimeBonus = 60;
 	public int pointsPerSecondUnderBonusTime;
 
-	float maxLevelChange = 1.5f;
+	float maxLevelChange = 1f;
 	float minLevelChange = -.25f;
 
 	public float responseTimeForMaxLevelChange;
 	public float responseTimeForMinLevelChange;
+
+	public CurrentSetUp currentChallenge;
+
+	public int firstLevelWithImpossibles = 10;
 
 	// Use this for initialization
 	void Awake () {
@@ -43,13 +47,15 @@ public class Model : MonoBehaviour {
 		GameData.dataControl.Load ();
 		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
 		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
-
-
-//		currentTotalTileCount = 4;
 	}
 	
 	// Update is called once per frame
 	void Update () {
+	}
+
+	public void CreateNewChallengeSet()
+	{
+		currentChallenge = new CurrentSetUp ();
 	}
 
 	public float CalculateLevelChange( bool correctAnswer, float responseTime )
