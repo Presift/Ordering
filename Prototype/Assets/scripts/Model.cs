@@ -32,7 +32,7 @@ public class Model : MonoBehaviour {
 	public int maxSecondsForTimeBonus = 60;
 	public int pointsPerSecondUnderBonusTime;
 
-	float maxLevelChange = 1f;
+	float maxLevelChange = 4f;
 	float minLevelChange = -.25f;
 
 	public float responseTimeForMaxLevelChange;
@@ -40,7 +40,7 @@ public class Model : MonoBehaviour {
 
 	public CurrentSetUp currentChallenge;
 
-	public int firstLevelWithImpossibles = 10;
+	public int firstLevelWithImpossibles = 0;
 
 	// Use this for initialization
 	void Awake () {
@@ -64,7 +64,7 @@ public class Model : MonoBehaviour {
 	{
 		if( !correctAnswer )
 		{
-			return minLevelChange * 2;
+			return -1;
 		}
 		else
 		{

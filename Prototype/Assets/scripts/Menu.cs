@@ -40,12 +40,12 @@ public class Menu : MonoBehaviour {
 		{
 			GameData.dataControl.debugOn = true;
 
-			Debug.Log("checked");
+//			Debug.Log("checked");
 		}
 		else
 		{
 			GameData.dataControl.debugOn = false;
-			Debug.Log ("unchecked");
+//			Debug.Log ("unchecked");
 		}
 
 		GameData.dataControl.Save();

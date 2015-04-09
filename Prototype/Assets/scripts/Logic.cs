@@ -96,11 +96,11 @@ public class Logic : MonoBehaviour {
 		{
 			if( trialRules.ruleStack[ i ] is Conditional )
 			{
-				minReadingTime += 1.5f;
+				minReadingTime += 1.25f;
 			}
 			else
 			{
-				minReadingTime += .75f;
+				minReadingTime += .5f;
 			}
 		}
 
@@ -232,7 +232,7 @@ public class Logic : MonoBehaviour {
 		Debug.Log ("rule count : " + trialRules.ruleStack.Count);
 		for( int i = 0; i < trialRules.ruleStack.Count; i++ )
 		{
-			Debug.Log ( trialRules.ruleStack[ i ].verbal );
+//			Debug.Log ( trialRules.ruleStack[ i ].verbal );
 		}
 //		Debug.Log (" ************CORRECT ANSWERS****************** : " );
 //		trialRules.PrintEachDictionaryValue (trialRules.correctSubmissions);
@@ -496,7 +496,7 @@ public class Logic : MonoBehaviour {
 
 	Conditional CreateConditionalRule( List<int> holderPositions, List<Tile> tilesToOrder, Dictionary < Tile, int > tileUsage )
 	{
-
+	
 		List<Tile> unusableTiles = new List<Tile> ();
 
 		List< Rule > rulesPoolForConditional = new List< Rule > ();
@@ -592,6 +592,7 @@ public class Logic : MonoBehaviour {
 			presetTiles = CreatePossibleBoard( previousSubmission );
 		}
 		Debug.Log (presetTiles);
+
 		return presetTiles;
 	}
 	
@@ -1456,7 +1457,15 @@ public class Logic : MonoBehaviour {
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
-		currentLeveling = allLevels [currentLevel];
+		if( currentLevel >= allLevels.Count )
+		{
+			currentLeveling = allLevels [ allLevels.Count - 1 ];
+		}
+		else
+		{
+			currentLeveling = allLevels [currentLevel];
+		}
+
 
 		if ( !model.impossibleEnabled )
 		{
@@ -1929,6 +1938,21 @@ public class Logic : MonoBehaviour {
 			newLevel.SetMaxTrials( levelInfo [ 17 ], levelInfo [ 18 ] );
 
 			allLevels.Add( newLevel );
+
+			//set first level with impossible option
+			if( model.firstLevelWithImpossibles == 0 && levelInfo[ levelInfo[ 11 ] ] > 0 )
+			{
+				Debug.Log ( "Level " + i + " is first level with Impossible ");
+				model.firstLevelWithImpossibles = i;
+			}
+			//if using conditionals, ensure that rules to build conditionals is at least 2
+			if( levelInfo[ 4 ] > 0 )
+			{
+				if( ( levelInfo[ 7 ] + levelInfo[ 8 ] + levelInfo[ 9 ] ) < 2 )
+				{
+					Debug.Log ( "Conditional does not have sufficient building rules ");
+				}
+			}
 		}
 	}
 

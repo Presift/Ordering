@@ -249,7 +249,7 @@ public class Controller : MonoBehaviour {
 
 	public void EnableImpossible( bool enable )
 	{
-		Debug.Log (enable);
+//		Debug.Log (enable);
 		if( enable )
 		{
 			model.impossibleEnabled = true;
@@ -407,7 +407,11 @@ public class Controller : MonoBehaviour {
 	{
 		continueButton.gameObject.SetActive (true);
 
-		impossibleButton.gameObject.SetActive (false);
+		if( model.impossibleEnabled )
+		{
+			impossibleButton.gameObject.SetActive (false);
+		}
+
 		submitButton.gameObject.SetActive (false);
 	}
 
@@ -415,23 +419,26 @@ public class Controller : MonoBehaviour {
 	{
 		continueButton.gameObject.SetActive (false);
 		
-		impossibleButton.gameObject.SetActive (true);
+		if( model.impossibleEnabled )
+		{
+			impossibleButton.gameObject.SetActive (true);
+		}
 		submitButton.gameObject.SetActive (true);
 
 //		EndOfTrial ();
 //		NewTrial();
 
-		if( model.currentTrialInRound < ( logic.currentLeveling.maxImpossiblePerTrial - 1 ))
-		{
-			//increase problem count
-			model.currentTrialInRound++;
-			//create new problem
-			NewTrial();
-		}
-		else
-		{
+//		if( model.currentTrialInRound < ( logic.currentLeveling.maxImpossiblePerTrial - 1 ))
+//		{
+//			//increase problem count
+//			model.currentTrialInRound++;
+//			//create new problem
+//			NewTrial();
+//		}
+//		else
+//		{
 			EndOfTrial();
-		}
+//		}
 
 	}
 	
