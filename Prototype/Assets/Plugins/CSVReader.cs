@@ -53,6 +53,7 @@ public class CSVReader : MonoBehaviour
 				//				Debug.Log ("y : " + y);
 				//				Debug.Log ("x : " + x);
 				int value = int.Parse( grid[x,y] );
+//				Debug.Log ( value );
 				singleLevelInfo.Add ( value );
 				//				Debug.Log(grid[x ,y]);
 			}

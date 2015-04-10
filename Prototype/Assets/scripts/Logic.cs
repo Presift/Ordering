@@ -10,6 +10,9 @@ public class Logic : MonoBehaviour {
 
 	public RuleStack trialRules;
 
+	Dictionary < int, int > levelToBucketDict = new Dictionary < int, int >();
+	Dictionary < int, List< Level >> bucketNumToAvailableLevelsDict = new Dictionary < int, List< Level >>();
+
 //	public int problemsPerTrial;
 
 //	public int maxRuleDifficulty;
@@ -994,15 +997,15 @@ public class Logic : MonoBehaviour {
 			}
 
 			currentPresets ++;
-			Debug.Log ( "increase presets to : " + currentPresets );
+//			Debug.Log ( "increase presets to : " + currentPresets );
 		}
-		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
-		Debug.Log ("best keys count : " + bestKeys.Count);
-		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
+//		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
+//		Debug.Log ("best keys count : " + bestKeys.Count);
+//		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
 
 		model.currentChallenge.SetPresetCount (bestPresetCount);
 		model.currentChallenge.SetConditionalLogic (bestKeyUsesModusPonens, bestKeyUsesModusTollens, bestKeyUsesBAndNotA);
-		Debug.Log ("current challenge using tollens : " + model.currentChallenge.usesModusTollens);
+//		Debug.Log ("current challenge using tollens : " + model.currentChallenge.usesModusTollens);
 
 		return bestKeys;
 
@@ -1417,53 +1420,25 @@ public class Logic : MonoBehaviour {
 		return randomValue;
 	}
 
-
-//	void SetRuleCreationParameters( int maxCond, int maxRel, int maxAdj, int maxAbs )
-//	{
-//		maxConditionals = maxCond;
-//		maxRelativePosRules = maxRel;
-//		maxAdjacencyRules = maxAdj;
-//		maxAbsPosRules = maxAbs;
-//		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
-//
-//	}
-//
-//	void SetConditionalParameters( int maxRel, int maxAdj, int maxAbs )
-//	{
-//		maxAbsInConditional = maxAbs;
-//		maxAdjInConditional = maxAdj;
-//		maxRelInConditional = maxRel;
-//	}
-//
-//	void SetTileCount( int tilesInTrial )
-//	{
-//		tilesCount = tilesInTrial;
-//	}
-//
-//	void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
-//	{
-//		maxRulesToSetImpossibleBoard = rulesToSetBoard;
-//		chanceOfImpossible = impChance;
-//		maxImpossiblePerTrial = maxImp;
-//	}
-//
-//	void SetPossibleBoardParameters( bool AThenB, bool notBThenNotA, bool contraPositivePresetDoNotAlwaysBreakClause1, bool showBAndNotA )
-//	{
-//		modusPonens = AThenB;
-//		modusTollens = notBThenNotA;
-//		showBAndNotA  = showClauseBNotA;
-//		modusTollensImplyNotA = contraPositivePresetDoNotAlwaysBreakClause1;
-//	}
+	
 
 	public void UpdateLevelingStats( int currentLevel )
 	{
-		if( currentLevel >= allLevels.Count )
+		//if surpassed highest Level
+		if( !levelToBucketDict.ContainsKey( currentLevel ) )
 		{
-			currentLeveling = allLevels [ allLevels.Count - 1 ];
+//			currentLeveling = allLevels [ allLevels.Count - 1 ];
+			int bucketNum = bucketNumToAvailableLevelsDict.Count;
+			List< Level > availableLevels = bucketNumToAvailableLevelsDict[ bucketNum ];
+			currentLeveling = availableLevels[ Random.Range( 0, availableLevels.Count ) ];
 		}
 		else
 		{
-			currentLeveling = allLevels [currentLevel];
+//			currentLeveling = allLevels [currentLevel];
+			//get bucket number for level
+			int bucketNum = levelToBucketDict[ currentLevel ];
+			List< Level > availableLevels = bucketNumToAvailableLevelsDict[ bucketNum ];
+			currentLeveling = availableLevels[ Random.Range( 0, availableLevels.Count ) ];
 		}
 
 
@@ -1477,425 +1452,6 @@ public class Logic : MonoBehaviour {
 		}
 	}
 
-//	public void UpdateLevelingStats( int currentLevel )
-//	{
-//		ResetStats ();
-
-//		Debug.Log (currentLevel);
-
-//		if (currentLevel == 0) 
-//		{
-//			SetRuleCreationParameters( 0, 1, 0, 0 );
-//			SetTileCount ( 3 );
-//			SetImpossibleBoardParameters( 1, 30, 1 );
-//			SetPossibleBoardParameters( false, false, false, false );
-//			usingPositiveOfAbsolute = true;
-//		}
-//
-//		else if( currentLevel == 1 )
-//		{
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			maxRules = 2;
-//			tilesCount = 3;
-//			chanceOfImpossible = 75;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 2 )
-//		{
-//			maxRelativePosRules = 1;
-//			maxAdjacencyRules = 1;
-//			maxRules = 2;
-//			tilesCount = 4;
-//			chanceOfImpossible = 40;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = true;
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 3 )
-//		{
-//			maxRelativePosRules = 2;
-//			maxRules = 2;
-//			tilesCount = 4;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = true;
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 4 )
-//		{
-//			maxConditionals = 0;
-//			maxRelativePosRules = 1;
-//			maxAdjacencyRules = 1;
-//			maxRules = 2;
-//			tilesCount = 4;
-//			chanceOfImpossible = 50;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 5 )
-//		{
-//			maxConditionals = 1;
-//			maxRules = 1;
-//			tilesCount = 4;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, false, false, false );
-//			SetConditionalParameters( 0, 1, 1 );
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 6 )
-//		{
-//			maxConditionals = 1;
-//			maxRules = 1;
-//			tilesCount = 3;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = false;
-//			SetPossibleBoardParameters( true, true, true, false );
-//			SetConditionalParameters( 0, 0, 2 );
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 7 )
-//		{
-//			maxRules = 1;
-//			maxConditionals = 1;
-//			
-//			tilesCount = 4;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, false );
-//			SetConditionalParameters( 0, 1, 1 );
-//			usingPositiveOfAbsolute = true;
-//		}
-//		else if( currentLevel == 8 )
-//		{
-//			maxRules = 2;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAdjacencyRules = 1;
-//
-//			tilesCount = 4;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, false );
-//			SetConditionalParameters( 1, 0, 1 );
-//			usingPositiveOfAbsolute = true;
-//		}
-//
-//		else if( currentLevel == 9 )
-//		{
-//			maxRules = 2;
-//			maxConditionals = 1;
-//			maxRelativePosRules = 2;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 1;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, false );
-//			SetConditionalParameters( 0, 2, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 10 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 0;
-//			maxRelativePosRules = 1;
-//			maxAdjacencyRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 50;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 11 )
-//		{
-//			maxRules = 3;
-//
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 12 )
-//		{
-//			maxRules = 3;
-//
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAdjacencyRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 13 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 14 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 2;
-//			maxAbsPosRules = 0;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 30;
-//			maxImpossiblePerTrial = 1;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 15 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 2;
-////			maxAbsPosRules = 2;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 16 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 2;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 2;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 17 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 2;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 3;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 18 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 2;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 3;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 19 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 1;
-//			maxRelativePosRules = 2;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 3;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 20 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 2;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 3;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 21 )
-//		{
-//			maxRules = 3;
-//			
-//			maxConditionals = 2;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 5;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 3;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 22 )
-//		{
-//			maxRules = 4;
-//			
-//			maxConditionals = 2;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 6;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 3;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else if( currentLevel == 23 )
-//		{
-//			maxRules = 4;
-//			
-//			maxConditionals = 2;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 6;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 4;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//		}
-//		else
-//		{
-//			maxRules = 4;
-//			
-//			maxConditionals = 2;
-//			maxRelativePosRules = 1;
-//			maxAbsPosRules = 1;
-//			
-//			tilesCount = 6;
-//			chanceOfImpossible = 25;
-//			maxImpossiblePerTrial = 2;
-//			maxRulesToSetImpossibleBoard = 4;
-//			usingEitherOr = true;
-//			SetPossibleBoardParameters( true, true, true, true );
-//			SetConditionalParameters( 1, 1, 0 );
-//			usingPositiveOfAbsolute = false;
-//
-//		}
-//	
-//		
-//		
-//	}
-	
-
-//	void ResetStats()
-//	{
-//		maxAbsPosRules = 0;
-//		maxRelativePosRules = 0;
-//		maxAdjacencyRules = 0;
-//		maxConditionals = 0;
-//		chanceOfImpossible = 0;
-//		maxImpossiblePerTrial = 0;
-//		maxRulesToSetImpossibleBoard = 0;
-//		usingEitherOr = false;
-//
-//		previousPossiblePresetKey = null;
-//		previousImpossiblePresetKey = null;
-//
-//		maxAbsInConditional = 0;
-//		maxAdjInConditional = 0;
-//		maxRelInConditional = 0;
-//
-////		SetPossibleBoardParameters( false, false, false, false );
-//
-//	}
 	
 
 	List<Tile> ShuffleThis(List<Tile> listToShuffle ){
@@ -1924,6 +1480,7 @@ public class Logic : MonoBehaviour {
 
 	public void CompileLevels( List< List<int> > levelingInfo )
 	{
+
 		for( int i = 0; i < levelingInfo.Count; i ++ )
 		{
 			List< int > levelInfo = levelingInfo[ i ];
@@ -1931,42 +1488,57 @@ public class Logic : MonoBehaviour {
 			Level newLevel = new Level( i );
 			
 			newLevel.SetTileCount ( levelInfo[ 0 ] );
-			newLevel.SetRuleCreationParameters ( levelInfo[ 1 ], levelInfo[ 2 ], levelInfo[ 3 ], levelInfo[ 4 ], levelInfo[ 5 ], levelInfo[ 6 ] );
-			newLevel.SetConditionalParameters( levelInfo[ 7 ], levelInfo[ 8 ], levelInfo[ 9 ] );
-			newLevel.SetImpossibleBoardParameters(levelInfo[ 10 ], levelInfo[ 11 ], levelInfo[ 12 ] );
-			newLevel.SetPossibleBoardParameters( levelInfo[ 13 ], levelInfo[ 14 ], levelInfo[ 15 ], levelInfo[ 16 ] );
-			newLevel.SetMaxTrials( levelInfo [ 17 ], levelInfo [ 18 ] );
+			newLevel.SetRuleCreationParameters ( levelInfo[ 1 ], levelInfo[ 2 ], levelInfo[ 3 ], levelInfo[ 4 ], levelInfo[ 5 ], levelInfo[ 6 ], levelInfo[ 7 ] );
+			newLevel.SetConditionalParameters( levelInfo[ 8 ], levelInfo[ 9 ], levelInfo[ 10 ] );
+			newLevel.SetImpossibleBoardParameters(levelInfo[ 11 ], levelInfo[ 12 ], levelInfo[ 13 ] );
+			newLevel.SetPossibleBoardParameters( levelInfo[ 14 ], levelInfo[ 15 ], levelInfo[ 16 ], levelInfo[ 17 ] );
+			newLevel.SetMaxTrials( levelInfo [ 18 ], levelInfo [ 19 ] );
+			newLevel.SetBucketNumber( levelInfo [ 20 ] );
 
 			allLevels.Add( newLevel );
+			levelToBucketDict.Add ( newLevel.level, newLevel.bucketNumber );
+			SortLevelsIntoBuckets( newLevel );
 
 			//set first level with impossible option
-			if( model.firstLevelWithImpossibles == 0 && levelInfo[ levelInfo[ 11 ] ] > 0 )
+			if( model.firstLevelWithImpossibles == 0 && newLevel.maxRulesToSetImpossibleBoard > 0 )
 			{
 				Debug.Log ( "Level " + i + " is first level with Impossible ");
 				model.firstLevelWithImpossibles = i;
 			}
+
 			//if using conditionals, ensure that rules to build conditionals is at least 2
 			if( levelInfo[ 4 ] > 0 )
 			{
-				if( ( levelInfo[ 7 ] + levelInfo[ 8 ] + levelInfo[ 9 ] ) < 2 )
+				if( ( levelInfo[ 8 ] + levelInfo[ 9 ] + levelInfo[ 10 ] ) < 2 )
 				{
-					Debug.Log ( "Conditional does not have sufficient building rules ");
+					Debug.Log ( "Conditional " + i + " does not have sufficient building rules ");
 				}
 			}
 		}
 	}
 
-	int CalculateConditionalDifficulty( Rule rule1, Rule rule2 )
+	void SortLevelsIntoBuckets( Level newLevel )
 	{
-		int difficulty = (rule1.difficulty + rule2.difficulty) * 2;
-		return difficulty; 
+		// if new level's bucket already in dict
+		if( bucketNumToAvailableLevelsDict.ContainsKey( newLevel.bucketNumber ) )
+		{
+			//add new level to list of levels in bucket's list of values
+			bucketNumToAvailableLevelsDict[ newLevel.bucketNumber ].Add( newLevel );
+		}
+		else
+		{
+			//add new level's bucket and new list of available levels
+			List< Level > availableLevels = new List< Level >();
+			availableLevels.Add ( newLevel );
+			bucketNumToAvailableLevelsDict.Add ( newLevel.bucketNumber, availableLevels );
+		}
+		   
+
 	}
 
-	int ProblemDifficulty( int ruleDifficulty, int additionalDifficulty )
-	{
-		return ruleDifficulty + additionalDifficulty;
-	}
 }
+
+
 
 public class CurrentSetUp
 {
@@ -2048,14 +1620,19 @@ public class Level
 	public int maxBAndNotA;
 
 	public int level;
+	public int bucketNumber;
 
 	public Level( int levelNum )
 	{
 		level = levelNum;
 	}
 
+	public void SetBucketNumber( int num )
+	{
+		bucketNumber = num;
+	}
 
-	public void SetRuleCreationParameters( int maxAbs, int maxAdj, int maxRel, int maxCond, int usingPosOfAbs, int eitherOr )
+	public void SetRuleCreationParameters( int maxAbs, int maxAdj, int maxRel, int maxCond, int totalRules, int usingPosOfAbs, int eitherOr )
 	{
 		maxConditionals = maxCond;
 		maxRelativePosRules = maxRel;
@@ -2063,7 +1640,8 @@ public class Level
 		maxAbsPosRules = maxAbs;
 		usingPositiveOfAbsolute = ConvertIntToBool( usingPosOfAbs );
 		usingEitherOr = ConvertIntToBool( eitherOr );
-		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
+//		maxRules = maxConditionals + maxRelativePosRules + maxAdjacencyRules + maxAbsPosRules;
+		maxRules = totalRules;
 
 	}
 	
@@ -2088,7 +1666,7 @@ public class Level
 	public void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
 	{
 		maxRulesToSetImpossibleBoard = rulesToSetBoard;
-		minRulesToSetImpossibleBoard = Mathf.Max (0, maxRulesToSetImpossibleBoard --);
+		minRulesToSetImpossibleBoard = Mathf.Max (0, maxRulesToSetImpossibleBoard - 1 );
 		chanceOfImpossible = impChance;
 		maxImpossiblePerTrial = maxImp;
 	}

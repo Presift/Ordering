@@ -20,7 +20,7 @@ public class Staging : MonoBehaviour {
 
 		if (model.selectedTile != null ) 
 		{
-			Debug.Log (model.selectedTile.name);
+//			Debug.Log (model.selectedTile.name);
 
 //			if( !model.selectedTile.preset )
 //			{

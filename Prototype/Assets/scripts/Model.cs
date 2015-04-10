@@ -33,7 +33,7 @@ public class Model : MonoBehaviour {
 	public int pointsPerSecondUnderBonusTime;
 
 	float maxLevelChange = 4f;
-	float minLevelChange = -.25f;
+	float minLevelChange = -.5f;
 
 	public float responseTimeForMaxLevelChange;
 	public float responseTimeForMinLevelChange;

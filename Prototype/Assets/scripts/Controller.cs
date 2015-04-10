@@ -49,7 +49,7 @@ public class Controller : MonoBehaviour {
 
 		logic.consecutiveTollensErrors = GameData.dataControl.consecutiveModusTollensIncorrect;
 
-		if( model.currentLevel > model.firstLevelWithImpossibles )
+		if( model.currentLevel >= model.firstLevelWithImpossibles )
 		{
 			EnableImpossible( true );
 		}
@@ -228,14 +228,14 @@ public class Controller : MonoBehaviour {
 			UpdateScoreDisplay();
 
 			//if trial is not yet completed
-			if( model.currentTrialInRound < ( logic.currentLeveling.maxTrialsInRuleSet - 1 ))
+			if( model.currentTrialInRound < ( logic.currentLeveling.maxTrialsInRuleSet - 1 ) && ( model.responseTotal ) != model.maxResponsesInPlaySession )
 			{
 				//increase problem count
 				model.currentTrialInRound++;
 				//create new problem
 				NewTrial();
 			}
-			else
+			else 
 			{
 				EndOfTrial();
 			}
@@ -262,24 +262,29 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
-	void EndOfTrial()
+	void EndOfPlaySession()
 	{
 		GameData.dataControl.previousFinalLevel = model.currentNuancedLevel;
 		GameData.dataControl.consecutiveModusTollensIncorrect = logic.consecutiveTollensErrors;
-//		GameData.dataControl.impossibleEnabled = model.impossibleIsEnabled;
-
+		//		GameData.dataControl.impossibleEnabled = model.impossibleIsEnabled;
+		
 		GameData.dataControl.Save ();
-
+		
+		Debug.Log ( "trial over ");
+		//show end display
+		trialsEndDisplay.SetActive( true );
+		
+		//stop showing other game info
+		statPanel.SetActive( false );
+		rulePanel.SetActive( false );
+		buttonPanel.SetActive( false );
+	}
+	
+	void EndOfTrial()
+	{
 		if( ( model.responseTotal ) == model.maxResponsesInPlaySession )
 		{
-			Debug.Log ( "trial over ");
-			//show end display
-			trialsEndDisplay.SetActive( true );
-
-			//stop showing other game info
-			statPanel.SetActive( false );
-			rulePanel.SetActive( false );
-			buttonPanel.SetActive( false );
+			EndOfPlaySession();
 		}
 		else
 		{
@@ -321,18 +326,24 @@ public class Controller : MonoBehaviour {
 
 	public void ContinueGame()
 	{
+		if( model.currentLevel >= model.firstLevelWithImpossibles )
+		{
+			EnableImpossible( true );
+		}
+		else
+		{
+			EnableImpossible( false );
+		}
+
 		//stop showing end display
 		trialsEndDisplay.SetActive( false );
 		
 		//show other game info
-//		gamesDisplay.SetActive ( true );
 		statPanel.SetActive( true );
 		rulePanel.SetActive( true );
 		buttonPanel.SetActive( true );
 		
 		model.responseTotal = 0;
-
-//		Debug.Log (" current trial : " + model.currentRound);
 
 		NewRound ();
 	}
@@ -425,20 +436,8 @@ public class Controller : MonoBehaviour {
 		}
 		submitButton.gameObject.SetActive (true);
 
-//		EndOfTrial ();
-//		NewTrial();
+		EndOfTrial();
 
-//		if( model.currentTrialInRound < ( logic.currentLeveling.maxImpossiblePerTrial - 1 ))
-//		{
-//			//increase problem count
-//			model.currentTrialInRound++;
-//			//create new problem
-//			NewTrial();
-//		}
-//		else
-//		{
-			EndOfTrial();
-//		}
 
 	}
 	
