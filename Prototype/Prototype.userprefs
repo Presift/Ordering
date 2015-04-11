@@ -2,17 +2,18 @@
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
   <MonoDevelop.Ide.Workbench ActiveDocument="Assets/scripts/Logic.cs">
     <Files>
-      <File FileName="Assets/scripts/Controller.cs" Line="350" Column="23" />
-      <File FileName="Assets/scripts/Rule.cs" Line="727" Column="27" />
-      <File FileName="Assets/scripts/TileHolder.cs" Line="69" Column="3" />
-      <File FileName="Assets/scripts/Tile.cs" Line="71" Column="3" />
-      <File FileName="Assets/scripts/View.cs" Line="58" Column="22" />
-      <File FileName="Assets/scripts/Model.cs" Line="27" Column="24" />
-      <File FileName="Assets/scripts/Logic.cs" Line="228" Column="154" />
-      <File FileName="Assets/Plugins/GameData.cs" Line="4" Column="1" />
+      <File FileName="Assets/scripts/Controller.cs" Line="66" Column="38" />
+      <File FileName="Assets/scripts/Rule.cs" Line="750" Column="16" />
+      <File FileName="Assets/scripts/TileHolder.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/Tile.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/View.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/Model.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/Logic.cs" Line="189" Column="25" />
+      <File FileName="Assets/Plugins/GameData.cs" Line="1" Column="1" />
       <File FileName="Assets/scripts/Menu.cs" Line="1" Column="1" />
-      <File FileName="Assets/scripts/MetaData.cs" Line="31" Column="12" />
-      <File FileName="Assets/Plugins/CSVReader.cs" Line="13" Column="19" />
+      <File FileName="Assets/scripts/MetaData.cs" Line="1" Column="1" />
+      <File FileName="Assets/Plugins/CSVReader.cs" Line="1" Column="1" />
+      <File FileName="Assets/scripts/Staging.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

@@ -576,7 +576,7 @@ public class AbsolutePositionRule : Rule
 public class RuleStack: Rule
 {
 	public List<Rule> ruleStack;
-	public Dictionary<string, List<Tile>> sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ();
+//	public Dictionary<string, List<Tile>> sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ();
 	
 	
 	public RuleStack()
@@ -597,12 +597,14 @@ public class RuleStack: Rule
 		if (ruleStack.Count == 0) 
 		{
 			correctSubmissions = new Dictionary<string, List<Tile>> ( newRule.correctSubmissions );
-			sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ( newRule.incorrectSubmissions );
+//			sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ( newRule.incorrectSubmissions );
+			incorrectSubmissions = new Dictionary<string, List<Tile>> ( newRule.incorrectSubmissions );
 		}
 		else
 		{
-			RemoveCorrectSubmissionsNotShared( newRule );
-			RemoveIncorrectSubmissionsNotShared( newRule );
+			UpdateCorrectAndIncorrectSubmissions( GetCorrectSubmissionsNotShared( newRule ));
+//			RemoveCorrectSubmissionsNotShared( newRule );
+//			RemoveIncorrectSubmissionsNotShared( newRule );
 		}
 		ruleStack.Add (newRule);
 	}
@@ -622,28 +624,28 @@ public class RuleStack: Rule
 		return rulesNotInList;
 	}
 
-	public void RemoveLastRuleAdded()
-	{
-		Rule ruleToRemove = ruleStack [ruleStack.Count - 1];
-		ruleStack.Remove (ruleToRemove);
-
-		if( ruleStack.Count == 2 )
-		{
-			correctSubmissions = ruleStack[ 0 ].correctSubmissions;
-			sharedImpossibleSubmissions = ruleStack[ 0 ].incorrectSubmissions;
-		}
-		else
-		{
-			List< Rule > rulesToReAdd = new List<Rule>( ruleStack );
-			ruleStack = new List<Rule>();
-
-			for( int i = 0; i < rulesToReAdd.Count; i ++ )
-			{
-				AddRule( rulesToReAdd[ i ] );
-			}
-		}
-
-	}
+//	public void RemoveLastRuleAdded()
+//	{
+//		Rule ruleToRemove = ruleStack [ruleStack.Count - 1];
+//		ruleStack.Remove (ruleToRemove);
+//
+//		if( ruleStack.Count == 2 )
+//		{
+//			correctSubmissions = ruleStack[ 0 ].correctSubmissions;
+//			sharedImpossibleSubmissions = ruleStack[ 0 ].incorrectSubmissions;
+//		}
+//		else
+//		{
+//			List< Rule > rulesToReAdd = new List<Rule>( ruleStack );
+//			ruleStack = new List<Rule>();
+//
+//			for( int i = 0; i < rulesToReAdd.Count; i ++ )
+//			{
+//				AddRule( rulesToReAdd[ i ] );
+//			}
+//		}
+//
+//	}
 
 
 	public bool RuleInStack( Rule newRule )
@@ -665,7 +667,7 @@ public class RuleStack: Rule
 		}
 	}
 
-	public void RemoveCorrectSubmissionsNotShared( Rule newRule )
+	public List< string > GetCorrectSubmissionsNotShared( Rule newRule )
 	{
 		List<string> keysToRemove = new List<string> ();
 
@@ -678,29 +680,40 @@ public class RuleStack: Rule
 			}
 		}
 
-		for( int i = 0; i < keysToRemove.Count; i ++ )
-		{
-			correctSubmissions.Remove( keysToRemove[ i ] );
-		}
+//		for( int i = 0; i < keysToRemove.Count; i ++ )
+//		{
+//			correctSubmissions.Remove( keysToRemove[ i ] );
+//		}
+
+		return keysToRemove;
 	}
 
-	public void RemoveIncorrectSubmissionsNotShared( Rule newRule )
+	public void UpdateCorrectAndIncorrectSubmissions( List<string> keysFromNewRuleNotInCurrentCorrect )
 	{
-		List<string> keysToRemove = new List<string> ();
-
-		foreach( KeyValuePair<string, List<Tile>> pair in sharedImpossibleSubmissions )
-		{ 
-			string submission1 = pair.Key;
-			if( !newRule.incorrectSubmissions.ContainsKey( submission1))
-			{
-				keysToRemove.Add ( submission1 );
-			}
-		}
-		for( int i = 0; i < keysToRemove.Count; i ++ )
+		for( int i = 0; i < keysFromNewRuleNotInCurrentCorrect.Count; i ++ )
 		{
-			sharedImpossibleSubmissions.Remove( keysToRemove[ i ] );
+			incorrectSubmissions.Add ( keysFromNewRuleNotInCurrentCorrect[ i ], correctSubmissions[ keysFromNewRuleNotInCurrentCorrect[ i ] ] );
+			correctSubmissions.Remove( keysFromNewRuleNotInCurrentCorrect[ i ] );
 		}
 	}
+
+//	public void RemoveIncorrectSubmissionsNotShared( Rule newRule )
+//	{
+//		List<string> keysToRemove = new List<string> ();
+//
+//		foreach( KeyValuePair<string, List<Tile>> pair in sharedImpossibleSubmissions )
+//		{ 
+//			string submission1 = pair.Key;
+//			if( !newRule.incorrectSubmissions.ContainsKey( submission1))
+//			{
+//				keysToRemove.Add ( submission1 );
+//			}
+//		}
+//		for( int i = 0; i < keysToRemove.Count; i ++ )
+//		{
+//			sharedImpossibleSubmissions.Remove( keysToRemove[ i ] );
+//		}
+//	}
 
 	public bool SharesImpossibleRules( Rule newRule )
 	{
@@ -728,7 +741,14 @@ public class RuleStack: Rule
 	{
 		if( ruleStack.Count == 0 )
 		{
-			return false;
+			if ( newRule.correctSubmissions.Count > requiredSharedPossibleSubmissions && newRule.incorrectSubmissions.Count > 0 )
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
 		}
 
 		for( int i = 0; i < ruleStack.Count; i ++ )

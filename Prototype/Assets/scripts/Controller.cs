@@ -257,7 +257,7 @@ public class Controller : MonoBehaviour {
 		}
 		else
 		{
-			model.impossibleEnabled = true;
+			model.impossibleEnabled = false;
 			impossibleButton.gameObject.SetActive( false );
 		}
 	}
@@ -376,9 +376,15 @@ public class Controller : MonoBehaviour {
 		bool submissionReady = model.ReadyForSubmission();
 		ActivateSubmissionButton( submissionReady );
 
-		string ruleList = logic.CreateRules ( model.tilesToOrder );
+		string ruleList = logic.CreateRules ( model.tilesToOrder, logic.maxAttemptsToCreateRules );
 		rules.text = ruleList;
 
+		bool createPresets = logic.TrialGetsPresets ();
+
+		if( createPresets )
+		{
+			logic.NewTrialSetUp( model.tilesToOrder );
+		}
 	}
 	
 	public void NewTrial()
@@ -394,10 +400,21 @@ public class Controller : MonoBehaviour {
 		//determine logic for new problem and set board for new problem
 		string presetBoard = logic.NewTrialSetUp (model.tilesToOrder);
 
-		view.PresetTilesWithHolders (presetBoard, model.tilesToOrder, model.holders);
+		//if no good preset board
+		if( presetBoard == null )
+		{
+			//start new round with new rules
+			Debug.Log ("STARTING NEW ROUND BECAUSE TRIAL PRESETS NULL ");
+			NewRound();
+		}
+		else
+		{
+			view.PresetTilesWithHolders (presetBoard, model.tilesToOrder, model.holders);
+			
+			bool submissionReady = model.ReadyForSubmission();
+			ActivateSubmissionButton( submissionReady );
+		}
 
-		bool submissionReady = model.ReadyForSubmission();
-		ActivateSubmissionButton( submissionReady );
 	}
 
 	public void DestroyChildren( Transform parent )
@@ -433,7 +450,9 @@ public class Controller : MonoBehaviour {
 		if( model.impossibleEnabled )
 		{
 			impossibleButton.gameObject.SetActive (true);
+			Debug.Log ("impossible enable ");
 		}
+
 		submitButton.gameObject.SetActive (true);
 
 		EndOfTrial();
