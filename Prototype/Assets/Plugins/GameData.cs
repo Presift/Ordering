@@ -15,12 +15,11 @@ public class GameData : MonoBehaviour {
 	private string levelingStats = "/levelingStats.csv";
 	private string dataFile = "/playerInfo.csv";
 	
-//	private string levelingStats = "/levelingStats";
-//	public int currentStatsFile = 0;
-	
 	public float previousFinalLevel;
 	public bool debugOn;
 	public int consecutiveModusTollensIncorrect;
+	public bool fitTestTaken;
+
 //	public bool impossibleEnabled;
 	
 	void Awake(){
@@ -56,7 +55,7 @@ public class GameData : MonoBehaviour {
 		file.WriteLine ( data.previousFinalLevel );
 		file.WriteLine (data.debugOn);
 		file.WriteLine (data.consecutiveModusTollensIncorrect);
-//		file.WriteLine (data.impossibleEnabled);
+		file.WriteLine (data.fitTestTaken);
 
 		file.Close ();
 		
@@ -87,7 +86,7 @@ public class GameData : MonoBehaviour {
 
 			consecutiveModusTollensIncorrect = Convert.ToInt32( data.ReadLine() );
 
-//			impossibleEnabled = Convert.ToBoolean( data.ReadLine());
+			fitTestTaken = Convert.ToBoolean( data.ReadLine ());
 
 			data.Close ();
 		}
@@ -106,5 +105,5 @@ class PlayerData
 	public float previousFinalLevel;
 	public bool debugOn;
 	public int consecutiveModusTollensIncorrect;
-//	public bool impossibleEnabled;
+	public bool fitTestTaken;
 }

@@ -35,6 +35,14 @@ public class Model : MonoBehaviour {
 	float maxLevelChange = 4f;
 	float minLevelChange = -.5f;
 
+	float fitTestMaxLevelChange = 13f;
+	float fitTestMinLevelChange = -5f;
+//	float fitTestWorstTimeMultiplier = ;
+
+	float currentMinLevelChange;
+	float currentMaxLevelChange;
+//	float currentWorstTimeMultiplier;
+
 	public float responseTimeForMaxLevelChange;
 	public float responseTimeForMinLevelChange;
 
@@ -49,10 +57,35 @@ public class Model : MonoBehaviour {
 		GameData.dataControl.Load ();
 		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
 		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
+
+		if( GameData.dataControl.fitTestTaken )
+		{
+			TakeFitTest( false );
+		}
+		else
+		{
+			TakeFitTest( true );
+		}
+		
 	}
 	
 	// Update is called once per frame
 	void Update () {
+
+	}
+
+	public void TakeFitTest( bool takeTest )
+	{
+		if( !takeTest )
+		{
+			currentMaxLevelChange = maxLevelChange;
+			currentMinLevelChange = minLevelChange;
+		}
+		else
+		{
+			currentMaxLevelChange = fitTestMaxLevelChange;
+			currentMinLevelChange = fitTestMinLevelChange;
+		}
 	}
 
 	public void CreateNewChallengeSet()
@@ -64,27 +97,27 @@ public class Model : MonoBehaviour {
 	{
 		if( !correctAnswer )
 		{
-			return -1;
+			return Mathf.Min( -1, currentMinLevelChange );
 		}
 		else
 		{
 			if( responseTime < responseTimeForMaxLevelChange )
 			{
 //				Debug.Log (" max level Change ");
-				return maxLevelChange;
+				return currentMaxLevelChange;
 			}
 			else if( responseTime > responseTimeForMinLevelChange )
 			{
 //				Debug.Log ("min level Change ");
-				return minLevelChange;
+				return currentMinLevelChange;
 			}
 			else
 			{
 				float timeDiffFromTimeForMaxLevelChange = responseTime - responseTimeForMaxLevelChange;
 
-				float levelChangeSlope = ( maxLevelChange - minLevelChange ) / ( responseTimeForMinLevelChange - responseTimeForMaxLevelChange );
+				float levelChangeSlope = ( currentMaxLevelChange - currentMinLevelChange ) / ( responseTimeForMinLevelChange - responseTimeForMaxLevelChange );
 
-				float levelChange = maxLevelChange - ( levelChangeSlope * timeDiffFromTimeForMaxLevelChange );
+				float levelChange = currentMaxLevelChange - ( levelChangeSlope * timeDiffFromTimeForMaxLevelChange );
 
 				return levelChange;
 			}

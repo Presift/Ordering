@@ -22,7 +22,7 @@ public class Controller : MonoBehaviour {
 
 	public Logic logic;
 
-	public Text statsDisplay;
+//	public Text statsDisplay;
 	public GameObject statPanel;
 	public GameObject rulePanel;
 	public GameObject buttonPanel;
@@ -127,6 +127,7 @@ public class Controller : MonoBehaviour {
 			{
 				Debug.Log ("CORRECT");
 				RespondToAnswer( true );
+				logic.AddPreviousSubmission( submissionKey );
 
 			}
 			else
@@ -266,6 +267,7 @@ public class Controller : MonoBehaviour {
 	{
 		GameData.dataControl.previousFinalLevel = model.currentNuancedLevel;
 		GameData.dataControl.consecutiveModusTollensIncorrect = logic.consecutiveTollensErrors;
+		GameData.dataControl.fitTestTaken = true;
 		//		GameData.dataControl.impossibleEnabled = model.impossibleIsEnabled;
 		
 		GameData.dataControl.Save ();
@@ -335,6 +337,8 @@ public class Controller : MonoBehaviour {
 			EnableImpossible( false );
 		}
 
+		model.TakeFitTest (false);
+
 		//stop showing end display
 		trialsEndDisplay.SetActive( false );
 		
@@ -383,7 +387,7 @@ public class Controller : MonoBehaviour {
 
 		if( createPresets )
 		{
-			logic.NewTrialSetUp( model.tilesToOrder );
+			logic.NewTrialSetUp();
 		}
 	}
 	
@@ -398,7 +402,7 @@ public class Controller : MonoBehaviour {
 
 		Debug.Log ("creating new problem");
 		//determine logic for new problem and set board for new problem
-		string presetBoard = logic.NewTrialSetUp (model.tilesToOrder);
+		string presetBoard = logic.NewTrialSetUp ();
 
 		//if no good preset board
 		if( presetBoard == null )

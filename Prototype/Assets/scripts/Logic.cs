@@ -22,12 +22,19 @@ public class Logic : MonoBehaviour {
 	
 	string previousPossiblePresetKey;
 	string previousImpossiblePresetKey;
+	List< string > previousSubmissionsInRound;
 	RuleStack previousRulesBroken;
 
 	List<Level> allLevels = new List<Level> ();
 
 	public Level currentLeveling;
 	public int maxAttemptsToCreateRules = 10;
+
+	float readingTimeConditional = 1.25f;
+	float readingTimeOther = .5f;
+	float constantTime = 1.5f;
+	float timePerTile = .5f;
+	float worstTimeMultiplier = 4;
 
 	void Awake()
 	{
@@ -47,6 +54,11 @@ public class Logic : MonoBehaviour {
 	
 	}
 
+	public void AddPreviousSubmission( string submission )
+	{
+		previousSubmissionsInRound.Add (submission);
+	}
+
 	public void SetMinMaxResponseTimesForLevelChange()
 	{
 		float minReadingTime = 0;
@@ -55,18 +67,18 @@ public class Logic : MonoBehaviour {
 		{
 			if( trialRules.ruleStack[ i ] is Conditional )
 			{
-				minReadingTime += 1.25f;
+				minReadingTime += readingTimeConditional;
 			}
 			else
 			{
-				minReadingTime += .5f;
+				minReadingTime += readingTimeOther;
 			}
 		}
 
-		float timeForTilePlacement = .5f * currentLeveling.tilesCount;
+		float timeForTilePlacement = timePerTile * currentLeveling.tilesCount;
 
-		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + 2;
-		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * 3;
+		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + constantTime;
+		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * worstTimeMultiplier;
 		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
 		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
 	}
@@ -74,7 +86,7 @@ public class Logic : MonoBehaviour {
 	public string CreateRules( List<Tile> tiles, int remainingAttemptsToCreateRules )
 	{
 		previousRulesBroken = null;
-
+		previousSubmissionsInRound = new List< string > ();
 		List< float > ruleIndentifiers = new List< float > ();
 
 		model.SetImpossible (false);
@@ -185,18 +197,21 @@ public class Logic : MonoBehaviour {
 			}
 		}
 	
-		if( trialRules.ruleStack.Count < currentLeveling.maxRules )
-		{
-			Debug.Log ("******************************************");
-			Debug.Log ("RULE COUNT UNDER MAX RULES FOR LEVEL " + currentLeveling.level );
-			Debug.Log (remainingAttemptsToCreateRules + "REMAINING ATTEMPTS TO CREATE RULES ");
-			Debug.Log ("******************************************");
-			if( remainingAttemptsToCreateRules > 0 )
-			{
-				CreateRules( tiles, remainingAttemptsToCreateRules -- );
-			}
-
-		}
+//		if( trialRules.ruleStack.Count < currentLeveling.maxRules )
+//		{
+//			Debug.Log ("******************************************");
+//			Debug.Log ("RULE COUNT UNDER MAX RULES FOR LEVEL " + currentLeveling.level );
+//			Debug.Log (remainingAttemptsToCreateRules + "REMAINING ATTEMPTS TO CREATE RULES ");
+//			trialRules.ConstructRandomOrderedVerbal ();
+//			Debug.Log ( "failed rules : " );
+//			trialRules.PrintRules();
+//			Debug.Log ("******************************************");
+//			if( remainingAttemptsToCreateRules > 0 )
+//			{
+//				CreateRules( tiles, remainingAttemptsToCreateRules -- );
+//			}
+//
+//		}
 
 		metaData.SetStatsForTrial (model.currentLevel, model.currentTrialInRound, model.currentRound, trialRules.ruleStack.Count, ruleIndentifiers, tiles.Count);
 		metaData.SetTimeSinceProblemStart (Time.time);
@@ -509,7 +524,7 @@ public class Logic : MonoBehaviour {
 		while( !validRule )
 		{
 			//remove a point for each used tile in tileUsage dict
-			Debug.Log ( " FAIL : " + newConditional.verbal );
+//			Debug.Log ( " FAIL : " + newConditional.verbal );
 			RemoveTilesUsedInRuleFromDict( tileUsage, newConditional );
 			ReAddHolderPositionsFromRescindedRule( holderPositions, newConditional );
 			newConditional = CreateConditionalRule( holderPositions, tilesToOrder, tileUsage );
@@ -542,7 +557,7 @@ public class Logic : MonoBehaviour {
 		}
 	}
 
-	public string NewTrialSetUp( List<Tile> previousSubmission )
+	public string NewTrialSetUp()
 	{
 //		model.
 		//refresh tile positions
@@ -558,17 +573,17 @@ public class Logic : MonoBehaviour {
 //		Debug.Log ("create impossible : " + createImpossible );
 		if( createImpossible )
 		{
-			presetTiles = AttemptToCreateImpossibleBoard( previousSubmission, model.tilesToOrder );
+			presetTiles = AttemptToCreateImpossibleBoard( model.tilesToOrder );
 		}
 //		else
 		if( presetTiles == null )
 		{
-			presetTiles = CreatePossibleBoard( previousSubmission );
+			presetTiles = CreatePossibleBoard();
 		}
 
 		if( presetTiles == null && !createImpossible )
 		{
-			presetTiles = AttemptToCreateImpossibleBoard( previousSubmission, model.tilesToOrder );
+			presetTiles = AttemptToCreateImpossibleBoard( model.tilesToOrder );
 		}
 
 		Debug.Log (presetTiles);
@@ -577,14 +592,14 @@ public class Logic : MonoBehaviour {
 	}
 	
 
-	string CreatePossibleBoard( List<Tile> previousSubmission )
+	string CreatePossibleBoard()
 	{
 		Debug.Log ("CREATING POSSIBLE BOARD");
 		//create  key string from previousSubmission
 
 		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
 
-		List < string > bestPresetTiles = GetBestPresetToCompleteBoard (2, tileBank);
+		List < string > bestPresetTiles = GetBestPresetToCompleteBoard ( 2, tileBank);
 
 		if( bestPresetTiles.Count == 0 )
 		{
@@ -819,6 +834,29 @@ public class Logic : MonoBehaviour {
 		return false;
 	}
 
+	bool PresetOnlyUsesConditionalLogicInLeveling( bool usesModusPonens, bool usesModusTollens, bool usesTollensAndImpliesA, bool usesClauseBAndNotA )
+	{
+		if( usesClauseBAndNotA && !currentLeveling.showClauseBNotA )
+		{
+			return false;
+		}
+		if( usesModusTollens && !currentLeveling.modusTollens )
+		{
+			return false;
+		}
+		if( usesTollensAndImpliesA && !currentLeveling.modusTollensImplyNotA )
+		{
+			return false;
+		}
+		if (usesModusPonens && !currentLeveling.modusPonens) 
+		{
+			return false;	
+		}
+
+		return true;
+	}
+
+
 	List< string > GetBestPresetToCompleteBoard ( int maxPresets, List< string > tileBank )
 	{
 		int fewestPossibleCompletions = 1000;
@@ -859,8 +897,7 @@ public class Logic : MonoBehaviour {
 				{
 					string preset = presetKeyCombos[ presetOrderIndex ];
 
-					if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions) && trialRules.WildCardKeyInDictionary( preset, trialRules.incorrectSubmissions ))
-//					if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions) )
+					if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions) && trialRules.WildCardKeyInDictionary( preset, trialRules.incorrectSubmissions ) && !PreviousSubmissionValidForNewPreset( preset))
 					{
 						//test to see if preset has fewer possibilites than best
 						int instances = GetPresetInstances( preset );
@@ -871,7 +908,10 @@ public class Logic : MonoBehaviour {
 
 							bool testKeyUsesBAndNotA = false;
 							bool testKeyUsesModusTollens = false;
+							bool testKeyUsesTollensAndImpliesA = false;
 							bool testKeyUsesModusPonens = false;
+
+							bool presetOnlyUsesLogicSetInLeveling = true;
 
 							for( int cond = 0; cond < condRules.Count; cond ++ )
 							{
@@ -881,77 +921,34 @@ public class Logic : MonoBehaviour {
 								bool alwaysBreaksRule2 = KeyAlwaysBreaksRule( preset, condRule.rule2 );
 								bool neverBreaksRule2 = KeyNeverBreaksRule( preset, condRule.rule2 );
 
-								if( currentLeveling.showClauseBNotA )
-								{
-									if( KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 ))
-									{
-										testKeyUsesBAndNotA = true;
-//										Debug.Log ( "bAndNotA : " + preset );
-									}
-								}
-								if( currentLeveling.modusTollens )
-								{
-									if( KeyIsContraPositiveOfConditional( alwaysBreaksRule2 ))
-									{
 
-//										Debug.Log ("tollens : " + preset );
-										if( currentLeveling.modusTollensImplyNotA )  //this is easier for most people; it shows clause 2 as false and has user fill in NOT A ( rather than preset breaking always both b and a )
-										{
-											if( !alwaysBreaksRule1 )
-											{
-												testKeyUsesModusTollens = true;
-											}
-										}
-										else
-										{
-											testKeyUsesModusTollens = true;
-										}
-									}
-								}
-								if( currentLeveling.modusPonens )
+								testKeyUsesBAndNotA =  KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 );
+								testKeyUsesModusTollens = KeyIsContraPositiveOfConditional( alwaysBreaksRule2 );
+
+								if( testKeyUsesModusTollens && !alwaysBreaksRule1 )
 								{
-									if( KeyIsPositiveOfConditional( neverBreaksRule1 ))
-									{
-										testKeyUsesModusPonens = true;
-//										Debug.Log ( "ponens : " +preset );
-									}
-									
+									testKeyUsesTollensAndImpliesA = true;
 								}
+
+								testKeyUsesModusPonens = KeyIsPositiveOfConditional( neverBreaksRule1 );
+
+
+								if( !PresetOnlyUsesConditionalLogicInLeveling( testKeyUsesBAndNotA, testKeyUsesModusTollens, testKeyUsesTollensAndImpliesA, testKeyUsesModusPonens ))
+								{
+									presetOnlyUsesLogicSetInLeveling = false;
+								}
+
 							}
 
-							if( !bestKeyUsesBAndNotA && testKeyUsesBAndNotA )
-							{
-//								fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
-								presetReplacesBest = true;
-								bestKeyUsesBAndNotA = true;
-							}
-							else if ( bestKeyUsesBAndNotA && testKeyUsesBAndNotA && instances == fewestPossibleCompletions && currentPresets == bestPresetCount  )
+							if( presetOnlyUsesLogicSetInLeveling && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
-//								Debug.Log ( " added : " + preset );
 							}
-							else if( !bestKeyUsesModusTollens && testKeyUsesModusTollens && !bestKeyUsesBAndNotA )
+							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthPresetCount( currentPresets, bestPresetCount, instances, fewestPossibleCompletions ))
 							{
-//								fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
 								presetReplacesBest = true;
-								bestKeyUsesModusTollens = true;
 							}
-							else if( bestKeyUsesModusTollens && testKeyUsesModusTollens && !bestKeyUsesBAndNotA && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
-							{
-								bestKeys.Add ( preset );
-//								Debug.Log ( " added : " + preset );
-							}
-							else if( !bestKeyUsesModusPonens && testKeyUsesModusPonens && !bestKeyUsesModusTollens )
-							{
-//								fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
-								presetReplacesBest = true;
-								bestKeyUsesModusPonens = true;
-							}
-							else if( bestKeyUsesModusPonens && testKeyUsesModusPonens && !bestKeyUsesModusTollens && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
-							{
-								bestKeys.Add ( preset );
-//								Debug.Log ( " added : " + preset );
-							}
+
 						}
 						// if no conditionals in stack
 						else
@@ -999,6 +996,24 @@ public class Logic : MonoBehaviour {
 
 	}
 
+	bool PreviousSubmissionValidForNewPreset( string preset)
+	{
+		if( previousSubmissionsInRound.Count == 0 )
+		{
+			return false;
+		}
+	
+		for( int i = 0; i < previousSubmissionsInRound.Count; i ++ )
+		{
+			//if previous correct submission uses all presets
+			if( trialRules.WildCardSubmissionKeyNameMatch( preset, previousSubmissionsInRound[ i ] ))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	int ReplaceBestKeysWithTestKey( List< string > bestKeys, string preset, int presetInstances )
 	{
@@ -1056,7 +1071,7 @@ public class Logic : MonoBehaviour {
 //
 //	}
 
-	string AttemptToCreateImpossibleBoard( List<Tile> previousSubmission, List<Tile> tilesToOrder )
+	string AttemptToCreateImpossibleBoard( List<Tile> tilesToOrder )
 	{
 
 		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
@@ -1442,7 +1457,7 @@ public class Logic : MonoBehaviour {
 			currentLeveling = availableLevels[ Random.Range( 0, availableLevels.Count ) ];
 		}
 
-
+		Debug.Log (" level of current problem : " + currentLeveling.level);
 //		if ( !model.impossibleEnabled )
 //		{
 //			chanceOfImpossible = 0;
@@ -1474,7 +1489,7 @@ public class Logic : MonoBehaviour {
 
 		int random = Random.Range (1, 101);
 //		Debug.Log (" ROLLED : " + random + " , CHANCE : " + chance);
-		Debug.Log (currentLeveling.chanceOfImpossible);
+//		Debug.Log (currentLeveling.chanceOfImpossible);
 		if( random > chance )
 		{
 			return false;
@@ -1502,6 +1517,8 @@ public class Logic : MonoBehaviour {
 //			{
 //				Debug.Log (" chance of impossible : " + newLevel.chanceOfImpossible + ", Level : " + i );
 //			}
+
+			newLevel.chanceOfImpossible = 50;
 
 			allLevels.Add( newLevel );
 			levelToBucketDict.Add ( newLevel.level, newLevel.bucketNumber );

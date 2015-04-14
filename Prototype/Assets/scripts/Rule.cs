@@ -126,6 +126,7 @@ public class Rule
 		return appearanceInDict;
 	}
 
+
 	public bool WildCardSubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
 	{
 		List<char> usedChars = new List<char> ();
@@ -160,6 +161,7 @@ public class Rule
 		
 		return true;
 	}
+
 
 	public void GetAllPossibleSubmissions( List<Tile> tilesInOrder, List<Tile> tilesInBank)  //called first with empty tilesToOrder and full List
 	{
@@ -550,6 +552,13 @@ public class AbsolutePositionRule : Rule
 	
 	public override bool SubmissionFollowsRule( List<Tile> submission )
 	{
+		//if argument out of range
+		if(absolutePositionIndex < 0 || absolutePositionIndex > (submission.Count - 1 ))
+		{
+			Debug.Log (" index : " + absolutePositionIndex );
+			Debug.Log (" submission length : " + submission.Count );
+		}
+
 		if (tile2 != null) 
 		{
 			return ( submission[ absolutePositionIndex ] == tile1 ) || (submission[ absolutePositionIndex ] == tile2 );
@@ -624,6 +633,13 @@ public class RuleStack: Rule
 		return rulesNotInList;
 	}
 
+	public void PrintRules()
+	{
+		for (int i = 0; i < ruleStack.Count; i ++) 
+		{
+			Debug.Log ( ruleStack[ i ].verbal );	
+		}
+	}
 //	public void RemoveLastRuleAdded()
 //	{
 //		Rule ruleToRemove = ruleStack [ruleStack.Count - 1];
