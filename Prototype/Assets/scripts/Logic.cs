@@ -33,7 +33,7 @@ public class Logic : MonoBehaviour {
 	List<Level> allLevels = new List<Level> ();
 
 	public Level currentLeveling;
-	public int maxAttemptsToCreateRules = 10;
+	public int maxAttemptsToCreateRules = 5;
 
 	float readingTimeConditional = 1.25f;
 	float readingTimeOther = .5f;
@@ -102,7 +102,7 @@ public class Logic : MonoBehaviour {
 
 	}
 
-	public string CreateRules( List<Tile> tiles, int remainingAttemptsToCreateRules )
+	public string CreateRules( List<Tile> tiles, int remainingAttemptsToCreateRules, RuleStack bestAttemptedRules )
 	{
 		ResetForNewRound ();
 
@@ -113,14 +113,17 @@ public class Logic : MonoBehaviour {
 
 
 		List< int > positionsToUse = new List< int > ();
+
 		for( int i = 0; i < tiles.Count; i ++ )
 		{
 			positionsToUse.Add ( i );
 		}
 
+		Debug.Log ("position count : " + positionsToUse.Count);
 		List<Tile> shuffledTiles = ShuffleThis (tiles);
 
 		//create tile dictionary where each tile has yet ot be used
+
 		Dictionary<Tile, int > tileUsage = new Dictionary< Tile , int > ();
 		for( int i = 0; i < shuffledTiles.Count; i ++ )
 		{
@@ -214,21 +217,35 @@ public class Logic : MonoBehaviour {
 			}
 		}
 	
-//		if( trialRules.ruleStack.Count < currentLeveling.maxRules )
-//		{
-//			Debug.Log ("******************************************");
-//			Debug.Log ("RULE COUNT UNDER MAX RULES FOR LEVEL " + currentLeveling.level );
-//			Debug.Log (remainingAttemptsToCreateRules + "REMAINING ATTEMPTS TO CREATE RULES ");
-//			trialRules.ConstructRandomOrderedVerbal ();
-//			Debug.Log ( "failed rules : " );
-//			trialRules.PrintRules();
-//			Debug.Log ("******************************************");
-//			if( remainingAttemptsToCreateRules > 0 )
-//			{
-//				CreateRules( tiles, remainingAttemptsToCreateRules -- );
-//			}
-//
-//		}
+		if( trialRules.ruleStack.Count < currentLeveling.maxRules )
+		{
+			Debug.Log ("******************************************");
+			Debug.Log ("RULE COUNT UNDER MAX RULES FOR LEVEL " + currentLeveling.level );
+			Debug.Log (remainingAttemptsToCreateRules + "REMAINING ATTEMPTS TO CREATE RULES ");
+			trialRules.ConstructRandomOrderedVerbal ();
+			Debug.Log ( "failed rules : " );
+			trialRules.PrintRules();
+			Debug.Log ("******************************************");
+
+			if( bestAttemptedRules.ruleStack.Count < trialRules.ruleStack.Count  )
+			{
+				bestAttemptedRules = trialRules;
+			}
+			if( remainingAttemptsToCreateRules > 0 )
+			{
+				CreateRules( tiles, remainingAttemptsToCreateRules --, bestAttemptedRules );
+			}
+			else
+			{
+				trialRules = bestAttemptedRules;
+			}
+
+		}
+
+		if( bestAttemptedRules.ruleStack.Count > trialRules.ruleStack.Count  )
+		{
+			trialRules = bestAttemptedRules;
+		}
 
 		metaData.SetStatsForTrial (model.currentLevel, model.currentTrialInRound, model.currentRound, trialRules.ruleStack.Count, ruleIndentifiers, tiles.Count);
 		metaData.SetTimeSinceProblemStart (Time.time);
@@ -247,13 +264,15 @@ public class Logic : MonoBehaviour {
 
 		return trialRules.verbal;
 	}
+	
 
 	void ReAddHolderPositionsFromRescindedRule( List< int > absolutePositions, Rule rule )
 	{
 		if( rule is AbsolutePositionRule )
 		{
 			AbsolutePositionRule absRule = rule as AbsolutePositionRule;
-			absolutePositions.Add ( rule.absolutePositionIndex );
+//			absolutePositions.Add ( rule.absolutePositionIndex );
+			AddIntegerIfNotInList( rule.absolutePositionIndex, absolutePositions );
 		}
 		else if( rule is Conditional )
 		{
@@ -262,13 +281,23 @@ public class Logic : MonoBehaviour {
 			if( condRule.rule1 is AbsolutePositionRule )
 			{
 				AbsolutePositionRule absRule = condRule.rule1 as AbsolutePositionRule;
-				absolutePositions.Add ( condRule.rule1.absolutePositionIndex );
+				AddIntegerIfNotInList( condRule.rule1.absolutePositionIndex, absolutePositions );
+//				absolutePositions.Add ( condRule.rule1.absolutePositionIndex );
 			}
 			if( condRule.rule2 is AbsolutePositionRule )
 			{
 				AbsolutePositionRule absRule = condRule.rule2 as AbsolutePositionRule;
-				absolutePositions.Add ( condRule.rule2.absolutePositionIndex );
+				AddIntegerIfNotInList( condRule.rule2.absolutePositionIndex, absolutePositions );
+//				absolutePositions.Add ( condRule.rule2.absolutePositionIndex );
 			} 
+		}
+	}
+
+	void AddIntegerIfNotInList( int position, List< int > absolutePositions )
+	{
+		if( !absolutePositions.Contains( position ))
+		{
+			absolutePositions.Add ( position );
 		}
 	}
 
@@ -447,9 +476,18 @@ public class Logic : MonoBehaviour {
 		//create absolute position rule
 		int absolutePosition = Random.Range ( 0, holderPositions.Count );	
 
-		if (absolutePosition >= tilesToOrder.Count) 
+//		if (absolutePosition >= tilesToOrder.Count) 
+		if( tilesToOrder.Count < holderPositions.Count) 
 		{
+			Debug.Log ("******************************************");
 			Debug.Log ( " broken index : " + absolutePosition );
+			Debug.Log ( "length of hold positions : " + holderPositions.Count );
+
+			for( int i = 0; i < holderPositions.Count; i ++ )
+			{
+				Debug.Log (holderPositions[ i ] );
+			}
+			Debug.Log ("******************************************");
 		}
 
 		holderPositions.Remove (absolutePosition);
@@ -602,7 +640,7 @@ public class Logic : MonoBehaviour {
 			presetTiles = CreatePossibleBoard();
 		}
 
-		if( presetTiles == null && !createImpossible )
+		if( presetTiles == null && !createImpossible && model.impossibleEnabled )
 		{
 			presetTiles = AttemptToCreateImpossibleBoard( model.tilesToOrder );
 		}

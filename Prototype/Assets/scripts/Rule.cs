@@ -757,7 +757,9 @@ public class RuleStack: Rule
 	{
 		if( ruleStack.Count == 0 )
 		{
-			if ( newRule.correctSubmissions.Count > requiredSharedPossibleSubmissions && newRule.incorrectSubmissions.Count > 0 )
+			Debug.Log ("required shared : " + requiredSharedPossibleSubmissions );
+			Debug.Log (" correct submissions :" + newRule.correctSubmissions.Count + " , incorrect : " + newRule.incorrectSubmissions.Count );
+			if ( newRule.correctSubmissions.Count >= requiredSharedPossibleSubmissions && newRule.incorrectSubmissions.Count > 0 )
 			{
 				return false;
 			}

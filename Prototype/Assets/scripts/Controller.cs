@@ -58,6 +58,8 @@ public class Controller : MonoBehaviour {
 		{
 			EnableImpossible( false );
 		}
+
+		Debug.Log ("FONT SIZE: " + rules.fontSize);
 	}
 	
 	// Update is called once per frame
@@ -233,7 +235,7 @@ public class Controller : MonoBehaviour {
 		{
 			int secondsToSpare = model.maxSecondsForTimeBonus - responseTime;
 
-			int timeBonus = secondsToSpare * model.pointsPerSecondUnderBonusTime;
+			int timeBonus = Mathf.Min ( 0, secondsToSpare * model.pointsPerSecondUnderBonusTime);
 
 			return timeBonus;
 		}
@@ -415,7 +417,7 @@ public class Controller : MonoBehaviour {
 		bool submissionReady = model.ReadyForSubmission();
 		ActivateSubmissionButton( submissionReady );
 
-		string ruleList = logic.CreateRules ( model.tilesToOrder, logic.maxAttemptsToCreateRules );
+		string ruleList = logic.CreateRules ( model.tilesToOrder, logic.maxAttemptsToCreateRules, new RuleStack() );
 		rules.text = ruleList;
 
 		bool createPresets = logic.TrialGetsPresets ();
