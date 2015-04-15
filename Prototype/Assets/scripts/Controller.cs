@@ -26,7 +26,8 @@ public class Controller : MonoBehaviour {
 	public GameObject statPanel;
 	public GameObject rulePanel;
 	public GameObject buttonPanel;
-	public GameObject trialsEndDisplay;
+
+	public Text trialsEndDisplay;
 
 	public Button upLevel;
 	public Button downLevel;
@@ -92,6 +93,7 @@ public class Controller : MonoBehaviour {
 	{
 		upLevel.gameObject.SetActive (true);
 		downLevel.gameObject.SetActive (true);
+		level.gameObject.SetActive (true);
 //		Debug.Log ("show debug");
 	}
 
@@ -99,6 +101,7 @@ public class Controller : MonoBehaviour {
 	{
 		upLevel.gameObject.SetActive (false);
 		downLevel.gameObject.SetActive (false);
+		level.gameObject.SetActive (false);
 //		Debug.Log("hide debug");
 	}
 
@@ -108,10 +111,39 @@ public class Controller : MonoBehaviour {
 		submitButton.interactable = activate;
 	}
 
+	string GetSubmissionWithSansPresets( string submission )
+	{
+		if (logic.previousSubmissionsInRound.Count == 0) 
+		{
+			return submission;
+		}
+		else
+		{
+			string presets = logic.usedPossiblePresets[ logic.usedPossiblePresets.Count - 1 ];
+			string trueSubmission = "";  //submission without presets
+//			Debug.Log ("presets: " + presets );
+			//for each character in in submission
+			for( int charIndex = 0; charIndex < submission.Length; charIndex ++ )
+			{
+				if( submission[ charIndex ] == presets[ charIndex ] )
+				{
+					trueSubmission += "n";
+				}
+				else
+				{
+					trueSubmission += submission[ charIndex ];
+				}
+			}
+			Debug.Log ( trueSubmission );
+ 			return trueSubmission;
+		}
+	}
+
 	public void CheckSubmission()
 	{
 		//debug
 		string submissionKey = model.OrderedTileKey ();
+//		submissionKey = GetSubmissionWithSansPresets (submissionKey);
 		Debug.Log ("Submission : " + submissionKey);
 		if(model.impossible)
 		{
@@ -127,7 +159,7 @@ public class Controller : MonoBehaviour {
 			{
 				Debug.Log ("CORRECT");
 				RespondToAnswer( true );
-				logic.AddPreviousSubmission( submissionKey );
+				logic.AddPreviousSubmission( GetSubmissionWithSansPresets(submissionKey) );
 
 			}
 			else
@@ -273,9 +305,11 @@ public class Controller : MonoBehaviour {
 		GameData.dataControl.Save ();
 		
 		Debug.Log ( "trial over ");
+		trialsEndDisplay.text = "Good job!  You finished at level " + ( model.currentLevel + 1 );
 		//show end display
-		trialsEndDisplay.SetActive( true );
-		
+		trialsEndDisplay.transform.parent.gameObject.SetActive( true );
+
+		view.gameObject.SetActive (false);
 		//stop showing other game info
 		statPanel.SetActive( false );
 		rulePanel.SetActive( false );
@@ -340,13 +374,14 @@ public class Controller : MonoBehaviour {
 		model.TakeFitTest (false);
 
 		//stop showing end display
-		trialsEndDisplay.SetActive( false );
+		trialsEndDisplay.transform.parent.gameObject.SetActive( false );
 		
 		//show other game info
 		statPanel.SetActive( true );
 		rulePanel.SetActive( true );
 		buttonPanel.SetActive( true );
-		
+		view.gameObject.SetActive (true);
+
 		model.responseTotal = 0;
 
 		NewRound ();
@@ -408,7 +443,9 @@ public class Controller : MonoBehaviour {
 		if( presetBoard == null )
 		{
 			//start new round with new rules
+			Debug.Log ("******************************************");
 			Debug.Log ("STARTING NEW ROUND BECAUSE TRIAL PRESETS NULL ");
+			Debug.Log ("******************************************");
 			NewRound();
 		}
 		else

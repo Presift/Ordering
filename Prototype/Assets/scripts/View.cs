@@ -35,7 +35,8 @@ public class View : MonoBehaviour {
 
 	// Use this for initialization
 	void Awake () {
-		maxTileCount = tileColors.Count;
+//		maxTileCount = tileColors.Count;
+		maxTileCount = 9;
 
 		tileHolder = (GameObject)Resources.Load("tileHolder");
 		coloredTile = (GameObject)Resources.Load("coloredTile");
