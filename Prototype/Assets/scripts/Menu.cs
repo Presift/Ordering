@@ -28,7 +28,7 @@ public class Menu : MonoBehaviour {
 
 	public void NewGame()
 	{
-		GameData.dataControl.previousFinalLevel = 12;
+		GameData.dataControl.previousFinalLevel = 0;
 		GameData.dataControl.fitTestTaken = false;
 		GameData.dataControl.Save ();
 

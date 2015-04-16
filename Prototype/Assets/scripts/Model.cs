@@ -14,6 +14,7 @@ public class Model : MonoBehaviour {
 	public int scoreIncreaseForCorrectAnswer;
 
 	public bool impossibleEnabled;
+	public int impossibleLevelsBuffer = 5;
 
 	int occupiedTiles;
 	public List<StagingArea> stagingAreas;
@@ -254,7 +255,7 @@ public class Model : MonoBehaviour {
 
 	public void UpdateLevel( float levelChange )
 	{
-		Debug.Log ("Level Change : " + levelChange);
+//		Debug.Log ("Level Change : " + levelChange);
 		currentNuancedLevel = Mathf.Max( levelChange + currentNuancedLevel, 0 );
 		currentLevel = ( int ) Mathf.Floor( currentNuancedLevel );
 			

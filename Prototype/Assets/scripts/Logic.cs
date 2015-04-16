@@ -21,7 +21,7 @@ public class Logic : MonoBehaviour {
 	public int errorsCountToNeedHelp = 3;
 	
 //	public string previousPossiblePresetKey;
-	public List< string > usedPossiblePresets;
+	public List< string > previousSubmissions;
 	List< string > bestPossiblePresets;
 	bool attemptedCollectionOfBestPossible;
 
@@ -33,7 +33,7 @@ public class Logic : MonoBehaviour {
 	List<Level> allLevels = new List<Level> ();
 
 	public Level currentLeveling;
-	public int maxAttemptsToCreateRules = 5;
+	public int maxAttemptsToCreateRules = 10;
 
 	float readingTimeConditional = 1.25f;
 	float readingTimeOther = .5f;
@@ -83,13 +83,13 @@ public class Logic : MonoBehaviour {
 
 		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + constantTime;
 		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * worstTimeMultiplier;
-		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
-		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
+//		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
+//		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
 	}
 
 	void ResetForNewRound()
 	{
-		usedPossiblePresets = new List< string > ();
+		previousSubmissions = new List< string > ();
 		previousImpossiblePresets = new List< string >();
 		bestPossiblePresets= new List< string >();
 		attemptedCollectionOfBestPossible = false;
@@ -119,7 +119,6 @@ public class Logic : MonoBehaviour {
 			positionsToUse.Add ( i );
 		}
 
-		Debug.Log ("position count : " + positionsToUse.Count);
 		List<Tile> shuffledTiles = ShuffleThis (tiles);
 
 		//create tile dictionary where each tile has yet ot be used
@@ -233,7 +232,7 @@ public class Logic : MonoBehaviour {
 			}
 			if( remainingAttemptsToCreateRules > 0 )
 			{
-				CreateRules( tiles, remainingAttemptsToCreateRules --, bestAttemptedRules );
+				CreateRules( tiles, remainingAttemptsToCreateRules - 1, bestAttemptedRules );
 			}
 			else
 			{
@@ -650,16 +649,36 @@ public class Logic : MonoBehaviour {
 		return presetTiles;
 	}
 	
+	void RemoveMatchingBestPresetsIfPreviousSubmissionIsMatch( )
+	{
+		List< string > bestPresetsToRemove = new List< string > ();
+
+		for( int i = 0; i < bestPossiblePresets.Count; i ++ )
+		{
+			string bestPreset = bestPossiblePresets[ i ];
+			if( PreviousSubmissionValidForNewPreset( bestPreset ))
+			{
+				bestPresetsToRemove.Add ( bestPreset );
+			}
+		}
+
+		for( int removal = 0; removal < bestPresetsToRemove.Count; removal ++ )
+		{
+			bestPossiblePresets.Remove( bestPresetsToRemove[ removal ] );
+		}
+	}
 
 	string CreatePossibleBoard()
 	{
 		Debug.Log ("CREATING POSSIBLE BOARD");
 		//create  key string from previousSubmission
 
+		RemoveMatchingBestPresetsIfPreviousSubmissionIsMatch ();
 		string presetTiles = null;
 
 		if( attemptedCollectionOfBestPossible && bestPossiblePresets.Count > 0 )
 		{
+			//remove any matching previous submissions from presets
 			presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
 //			return presetTiles;
 		}
@@ -686,13 +705,16 @@ public class Logic : MonoBehaviour {
 				Debug.Log (presetTiles);
 				//	create string with only 1 placed tile in newSubmission
 				
-				model.SetImpossible( false );
-				
-				usedPossiblePresets.Add ( presetTiles );
+				previousSubmissions.Add ( presetTiles );
 				//	previousPossiblePresetKey = presetTiles;
 //				return presetTiles;
 			}
 
+		}
+
+		if( presetTiles != null )
+		{
+			model.SetImpossible( false );
 		}
 
 		UpdateBestPossiblePresets (presetTiles);
@@ -732,11 +754,11 @@ public class Logic : MonoBehaviour {
 
 	bool PresetIsNew( string possiblePreset )  //fewest number of preset tiles that completely fills in tiles
 	{
-		if( usedPossiblePresets.Contains( possiblePreset ))
-		{
-			return false;
-		}
-		return true;
+		if( previousSubmissions.Contains( possiblePreset ))
+			{
+				return false;
+			}
+			return true;
 
 		//if preset matches previouspossible submission
 //		if (previousPossiblePresetKey != null) 
@@ -925,7 +947,7 @@ public class Logic : MonoBehaviour {
 		return false;
 	}
 
-	bool PresetOnlyUsesConditionalLogicInLeveling( bool usesModusPonens, bool usesModusTollens, bool usesTollensAndImpliesA, bool usesClauseBAndNotA )
+	bool PresetUsesConditionalLogicInLeveling( bool usesModusPonens, bool usesModusTollens, bool usesTollensAndImpliesA, bool usesClauseBAndNotA )
 	{
 		if( usesClauseBAndNotA && !currentLeveling.showClauseBNotA )
 		{
@@ -935,17 +957,64 @@ public class Logic : MonoBehaviour {
 		{
 			return false;
 		}
+		if( currentLeveling.modusTollens && !currentLeveling.showClauseBNotA )
+		{
+			if( !usesModusTollens )
+			{
+				return false;
+			}
+			else if( currentLeveling.modusTollensImplyNotA && ! usesTollensAndImpliesA )
+			{
+				return false;
+			}
+		}
 		if( usesTollensAndImpliesA && !currentLeveling.modusTollensImplyNotA )
 		{
 			return false;
 		}
-		if (usesModusPonens && !currentLeveling.modusPonens) 
+//		if (usesModusPonens && !currentLeveling.modusPonens) 
+//		{
+//			return false;	
+//		}
+		if ( !currentLeveling.showClauseBNotA  && !currentLeveling.modusTollens && currentLeveling.modusPonens ) 
 		{
-			return false;	
+			if( !usesModusPonens )
+			{
+				return false;
+			}
+				
 		}
 
 		return true;
 	}
+
+//	bool ForcesModusPonens( bool rule1AlwaysTrue, 
+//	bool PresetOnlyUsesConditionalLogicInLeveling( bool rule1AlwaysTrue, bool rule1AlwaysFalse, bool rule2AlwaysTrue, bool rule2AlwaysFalse )
+//	{
+//
+//		if( !currentLeveling.showClauseBNotA )
+//		{
+//			//if preset forces bAndNotA
+//			return false;
+//		}
+//		if(!currentLeveling.modusTollens )
+//		{
+//			//if preset forces tollens
+//			return false;
+//		}
+//		if( !currentLeveling.modusTollensImplyNotA )
+//		{
+//			//if preset forces
+//			return false;
+//		}
+//		if (!currentLeveling.showClauseBNotA  && !currentLeveling.modusTollens && currentLeveling.modusPonens) 
+//		{
+//			//if preset does not force ponens
+//			return false;	
+//		}
+//		
+//		return true;
+//	}
 
 	bool PresetAlwaysSatisfiesRule( string preset, Rule rule )
 	{
@@ -999,7 +1068,7 @@ public class Logic : MonoBehaviour {
 		{
 			return false;
 		}
-		if(!PreviousSubmissionValidForNewPreset( preset))
+		if(PreviousSubmissionValidForNewPreset( preset))
 		{
 			return false;
 		}
@@ -1076,32 +1145,60 @@ public class Logic : MonoBehaviour {
 								bool alwaysBreaksRule2 = KeyAlwaysBreaksRule( preset, condRule.rule2 );
 								bool neverBreaksRule2 = KeyNeverBreaksRule( preset, condRule.rule2 );
 
+								bool presetForcesPonens = KeyIsPositiveOfConditional( neverBreaksRule1 );
 
-								testKeyUsesBAndNotA =  KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 );
-								testKeyUsesModusTollens = KeyIsContraPositiveOfConditional( alwaysBreaksRule2 );
+								bool presetForcesBAndNotA =  KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 );
 
-								if( testKeyUsesModusTollens && !alwaysBreaksRule1 )
+								bool presetForcesTollens = KeyIsContraPositiveOfConditional( alwaysBreaksRule2 );
+
+								bool onlyShowsNotB = false;
+
+								if( presetForcesTollens && !alwaysBreaksRule1 )
 								{
 									testKeyUsesTollensAndImpliesA = true;
 								}
 
-								testKeyUsesModusPonens = KeyIsPositiveOfConditional( neverBreaksRule1 );
-
-
-								if( !PresetOnlyUsesConditionalLogicInLeveling( testKeyUsesBAndNotA, testKeyUsesModusTollens, testKeyUsesTollensAndImpliesA, testKeyUsesModusPonens ))
+								if( presetForcesPonens )
 								{
-									presetOnlyUsesLogicSetInLeveling = false;
+									testKeyUsesModusPonens = true;
+								}
+								if( presetForcesTollens )
+								{
+									testKeyUsesModusTollens = true;
+
+									if( onlyShowsNotB )
+									{
+										testKeyUsesTollensAndImpliesA = true;
+									}
+								}
+								if( presetForcesBAndNotA )
+								{
+									testKeyUsesBAndNotA = true;
 								}
 
+//								if( testKeyUsesModusPonens )
+//								{
+//									Debug.Log ( "PONENS : " + preset );
+//									Debug.Log(" uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
+//								}
+
+
+							}
+
+							if( !PresetUsesConditionalLogicInLeveling( testKeyUsesBAndNotA, testKeyUsesModusTollens, testKeyUsesTollensAndImpliesA, testKeyUsesModusPonens ))
+							{
+								presetOnlyUsesLogicSetInLeveling = false;
 							}
 
 							if( presetOnlyUsesLogicSetInLeveling && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
+								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
 							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthPresetCount( currentPresets, bestPresetCount, instances, fewestPossibleCompletions ))
 							{
 								presetReplacesBest = true;
+								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
 
 						}
@@ -1126,7 +1223,6 @@ public class Logic : MonoBehaviour {
 							bestKeys.Add ( preset );
 //							Debug.Log ( " added : " + preset );
 							fewestPossibleCompletions = instances;
-//							fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
 							bestPresetCount = currentPresets;
 
 //							Debug.Log ("***keys count : " + bestKeys.Count);
@@ -1139,9 +1235,9 @@ public class Logic : MonoBehaviour {
 			currentPresets ++;
 //			Debug.Log ( "increase presets to : " + currentPresets );
 		}
-//		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
+		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
 //		Debug.Log ("best keys count : " + bestKeys.Count);
-//		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
+		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
 
 		model.currentChallenge.SetPresetCount (bestPresetCount);
 		model.currentChallenge.SetConditionalLogic (bestKeyUsesModusPonens, bestKeyUsesModusTollens, bestKeyUsesBAndNotA);
@@ -1675,7 +1771,7 @@ public class Logic : MonoBehaviour {
 //				Debug.Log (" chance of impossible : " + newLevel.chanceOfImpossible + ", Level : " + i );
 //			}
 
-			newLevel.chanceOfImpossible = 50;
+//			newLevel.chanceOfImpossible = 50;
 //			newLevel.maxTrialsInRuleSet = 6;
 
 			allLevels.Add( newLevel );

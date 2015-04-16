@@ -78,7 +78,7 @@ public class Controller : MonoBehaviour {
 	public void DecreaseLevel()
 	{
 		model.UpdateLevel( -1 );
-		Debug.Log ("Trial : " + model.currentLevel );
+//		Debug.Log ("Trial : " + model.currentLevel );
 		UpdateDisplay ();
 		NewRound ();
 	}
@@ -86,7 +86,7 @@ public class Controller : MonoBehaviour {
 	public void IncreaseLevel()
 	{
 		model.UpdateLevel( 1 );
-		Debug.Log ("Trial : " + model.currentLevel );
+//		Debug.Log ("Trial : " + model.currentLevel );
 		UpdateDisplay ();
 		NewRound ();
 	}
@@ -121,7 +121,7 @@ public class Controller : MonoBehaviour {
 		}
 		else
 		{
-			string presets = logic.usedPossiblePresets[ logic.usedPossiblePresets.Count - 1 ];
+			string presets = logic.previousSubmissions[ logic.previousSubmissions.Count - 1 ];
 			string trueSubmission = "";  //submission without presets
 //			Debug.Log ("presets: " + presets );
 			//for each character in in submission
@@ -364,7 +364,7 @@ public class Controller : MonoBehaviour {
 
 	public void ContinueGame()
 	{
-		if( model.currentLevel >= model.firstLevelWithImpossibles )
+		if( ( model.currentLevel + model.impossibleLevelsBuffer ) >= model.firstLevelWithImpossibles )
 		{
 			EnableImpossible( true );
 		}
@@ -424,7 +424,8 @@ public class Controller : MonoBehaviour {
 
 		if( createPresets )
 		{
-			logic.NewTrialSetUp();
+			Debug.Log ("PRESETS IN FIRST TRIAL OF ROUND");
+			NewTrial();
 		}
 	}
 	
