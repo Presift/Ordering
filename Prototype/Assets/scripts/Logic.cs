@@ -28,7 +28,7 @@ public class Logic : MonoBehaviour {
 	List< string > previousImpossiblePresets;
 //	string previousImpossiblePresetKey;
 	public List< string > previousSubmissionsInRound;
-	RuleStack previousRulesBroken;
+	List<Rule> previousRulesBroken;
 
 	List<Level> allLevels = new List<Level> ();
 
@@ -1276,16 +1276,29 @@ public class Logic : MonoBehaviour {
 
 
 
-	RuleStack ReturnRuleStackFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
-	{
-		RuleStack rulesToBreak = new RuleStack ();
-		List<Rule> rules = allRuleCombos [ comboListIndex ];
+//	RuleStack ReturnRuleStackFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
+//	{
+//		RuleStack rulesToBreak = new RuleStack ();
+//		List<Rule> rules = allRuleCombos [ comboListIndex ];
+//
+//		for( int i = 0; i < rules.Count; i ++ )
+//		{
+//			rulesToBreak.AddRule ( rules [ i ] );
+//		}
+//
+//		return rulesToBreak;
+//	}
 
+	List<Rule> ReturnRulesFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
+	{
+		List<Rule> rulesToBreak = new List<Rule> ();
+		List<Rule> rules = allRuleCombos [ comboListIndex ];
+		
 		for( int i = 0; i < rules.Count; i ++ )
 		{
-			rulesToBreak.AddRule ( rules [ i ] );
+			rulesToBreak.Add( rules [ i ] );
 		}
-
+		
 		return rulesToBreak;
 	}
 
@@ -1347,11 +1360,11 @@ public class Logic : MonoBehaviour {
 		{
 			for( int i = 0; i < allRuleCombos.Count; i ++ )
 			{
-				RuleStack rulesToBreak = ReturnRuleStackFromComboList ( allRuleCombos, i );
+				List<Rule> rulesToBreak = ReturnRulesFromComboList ( allRuleCombos, i );
 
 //				if( rulesToBreak != previousRulesBroken )
 //				{
-					List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak.ruleStack);
+					List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak);
 					
 					presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
 					
@@ -1418,11 +1431,11 @@ public class Logic : MonoBehaviour {
 	}
 
 
-	List<string> AttemptToGetImpossibleKey( int presets, List<string> tileBank, RuleStack rulesToBreak, List< Rule> nonBreakingRules )
+	List<string> AttemptToGetImpossibleKey( int presets, List<string> tileBank, List<Rule> rulesToBreak, List< Rule> nonBreakingRules )
 	{
 		List<string> impossibleKeys = new List<string> ();
 
-		bool singleRuleBreak = rulesToBreak.ruleStack.Count == 1;
+		bool singleRuleBreak = rulesToBreak.Count == 1;
 
 //		Debug.Log ("RULES TO BREAK : ");
 //		for (int rule = 0; rule < rulesToBreak.ruleStack.Count; rule ++) {
@@ -1526,7 +1539,7 @@ public class Logic : MonoBehaviour {
 	}
 
 
-	bool ImpossibleKey( string possibleKey, RuleStack rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
+	bool ImpossibleKey( string possibleKey, List<Rule> rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
 	{
 		
 		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
@@ -1539,7 +1552,7 @@ public class Logic : MonoBehaviour {
 			
 			if( singleRuleBreak )
 			{
-				List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak.ruleStack[ 0 ] );
+				List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak[ 0 ] );
 //				Debug.Log ( "correct submissions : " + correctSubmissions.Count );
 				if( correctSubmissions.Count == 0 )
 				{
@@ -1553,9 +1566,9 @@ public class Logic : MonoBehaviour {
 
 				List< List< string > > correctSubmissionsForKeyByRule = new List< List< string > >();
 
-				for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.ruleStack.Count; ruleToBreak ++ )
+				for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.Count; ruleToBreak ++ )
 				{
-					List< string > correctSubsForRule = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak.ruleStack[ ruleToBreak ] );
+					List< string > correctSubsForRule = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak[ ruleToBreak ] );
 					if( correctSubsForRule.Count == 0 )
 					{
 						eachRuleHasAPossibleCorrect = false;
@@ -1573,12 +1586,12 @@ public class Logic : MonoBehaviour {
 //					Debug.Log (" each rule has possible corrects : " + eachRuleHasAPossibleCorrect );
 
 					//check that each rule does not share a correct submission that is shared by the other breakable rules
-					for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.ruleStack.Count; ruleToExclude ++ )
+					for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.Count; ruleToExclude ++ )
 					{
 						List< string > subsToExclude = new List<string>();
 						List< List< string >> listOfSubsToFindShared = new List<List<string>> ();
 
-						for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.ruleStack.Count; ruleToBreak ++ )
+						for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.Count; ruleToBreak ++ )
 						{
 							if( ruleToBreak == ruleToExclude )
 							{
@@ -1597,7 +1610,7 @@ public class Logic : MonoBehaviour {
 							break;
 						}
 
-						else if( ruleToExclude == ( rulesToBreak.ruleStack.Count - 1 ))
+						else if( ruleToExclude == ( rulesToBreak.Count - 1 ))
 						{
 //							Debug.Log ( "EACH RULE NEEDED TO CREATE IMPOSSIBLE ");
 							passBreakableRulesTest = true; 
@@ -1627,9 +1640,9 @@ public class Logic : MonoBehaviour {
 				if( passOtherRulesTest )
 				{
 //					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
-					for( int i = 0; i < rulesToBreak.ruleStack.Count; i ++ )
+					for( int i = 0; i < rulesToBreak.Count; i ++ )
 					{
-						Debug.Log (rulesToBreak.ruleStack[ i ].verbal);
+						Debug.Log (rulesToBreak[ i ].verbal);
 					}
 					return true;
 				}

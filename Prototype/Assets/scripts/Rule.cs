@@ -606,15 +606,14 @@ public class RuleStack: Rule
 		if (ruleStack.Count == 0) 
 		{
 			correctSubmissions = new Dictionary<string, List<Tile>> ( newRule.correctSubmissions );
-//			sharedImpossibleSubmissions = new Dictionary<string, List<Tile>> ( newRule.incorrectSubmissions );
+
 			incorrectSubmissions = new Dictionary<string, List<Tile>> ( newRule.incorrectSubmissions );
 		}
 		else
 		{
 			UpdateCorrectAndIncorrectSubmissions( GetCorrectSubmissionsNotShared( newRule ));
-//			RemoveCorrectSubmissionsNotShared( newRule );
-//			RemoveIncorrectSubmissionsNotShared( newRule );
 		}
+
 		ruleStack.Add (newRule);
 	}
 

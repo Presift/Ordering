@@ -29,7 +29,7 @@ public class View : MonoBehaviour {
 
 
 	Vector3 centerBoardPosition = new Vector3( 0, -1.0f, 0 );
-	Vector3 verticalCenterPosition = new Vector3 (1.5f, 1, 0);
+	Vector3 verticalCenterPosition = new Vector3 (1.25f, 1, 0);
 	
 	GameObject tileHolder;
 	GameObject coloredTile;
@@ -126,7 +126,7 @@ public class View : MonoBehaviour {
 			float worldHeight = Mathf.Abs (topScreen.y - bottomScreen.y);
 			Debug.Log ( " top : " + topScreen.y + " , bottom : " + bottomScreen.y );
 			Debug.Log ( "height : " +  worldHeight );
-			float verticalSpaceForTiles = worldHeight / 5 * 4;
+			float verticalSpaceForTiles = worldHeight / 3 * 2;
 
 			//calculate max tile holder size
 			tileHolderWidth = verticalSpaceForTiles / ( maxTileCount + (( maxTileCount + 1 ) * spaceAsFractionOfHolder));
@@ -284,7 +284,7 @@ public class View : MonoBehaviour {
 		}
 		else
 		{
-			startPosition = verticalCenterPosition - new Vector3 (0, (totalWidth - tileHolderWidth) / 2, 0);
+			startPosition = verticalCenterPosition + new Vector3 (0, (totalWidth - tileHolderWidth) / 2, 0);
 		}
 
 
@@ -301,7 +301,7 @@ public class View : MonoBehaviour {
 		{
 			for( int tile = 0; tile < tileCount; tile ++ )
 			{
-				Vector3 tilePosition = startPosition + new Vector3( 0, tile * ( tileHolderWidth + tileHolderSpace ), 0 );
+				Vector3 tilePosition = startPosition - new Vector3( 0, tile * ( tileHolderWidth + tileHolderSpace ), 0 );
 				tilePositions.Add ( tilePosition );		
 			}
 		}
