@@ -14,9 +14,14 @@ public class Controller : MonoBehaviour {
 	public Button continueButton;
 	public Button playAgainButton;
 
+	//vertical display
+	public Text verticalRules;
+
+	//horizontal display
+	public Text horizontalRules;
+
 	public Text rules;
 	public Text score;
-	public Text round;
 	public Text trial;
 	public Text level;
 
@@ -32,7 +37,21 @@ public class Controller : MonoBehaviour {
 	public Button upLevel;
 	public Button downLevel;
 
-	// Use this for initialization
+	void Awake (){
+		if( model.verticalLayout )
+		{
+			rules = verticalRules;
+			verticalRules.gameObject.SetActive( true );
+			horizontalRules.gameObject.SetActive ( false );
+		}
+		else
+		{
+			rules = horizontalRules;
+			horizontalRules.gameObject.SetActive( true );
+			verticalRules.gameObject.SetActive ( false );
+		}
+	}
+
 	void Start () {
 
 		UpdateDisplay ();
@@ -60,6 +79,7 @@ public class Controller : MonoBehaviour {
 		}
 
 		Debug.Log ("FONT SIZE: " + rules.fontSize);
+
 	}
 	
 	// Update is called once per frame
@@ -214,6 +234,7 @@ public class Controller : MonoBehaviour {
 
 		int responseTime = metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
 		int timeBonus = CalculateTimeBonusEarned (correctAnswer, responseTime);
+		model.score += timeBonus;
 		UpdateScoreDisplay ();
 
 		float levelChange = model.CalculateLevelChange (correctAnswer, responseTime);

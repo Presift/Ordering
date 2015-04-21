@@ -712,24 +712,7 @@ public class RuleStack: Rule
 			correctSubmissions.Remove( keysFromNewRuleNotInCurrentCorrect[ i ] );
 		}
 	}
-
-//	public void RemoveIncorrectSubmissionsNotShared( Rule newRule )
-//	{
-//		List<string> keysToRemove = new List<string> ();
-//
-//		foreach( KeyValuePair<string, List<Tile>> pair in sharedImpossibleSubmissions )
-//		{ 
-//			string submission1 = pair.Key;
-//			if( !newRule.incorrectSubmissions.ContainsKey( submission1))
-//			{
-//				keysToRemove.Add ( submission1 );
-//			}
-//		}
-//		for( int i = 0; i < keysToRemove.Count; i ++ )
-//		{
-//			sharedImpossibleSubmissions.Remove( keysToRemove[ i ] );
-//		}
-//	}
+	
 
 	public bool SharesImpossibleRules( Rule newRule )
 	{
@@ -752,6 +735,18 @@ public class RuleStack: Rule
 		}
 	}
 	
+	bool RuleSharesAllCorrectSubmissionsOfRule( Rule rule1, Rule rule2 )
+	{
+		foreach( KeyValuePair<string, List<Tile>> pair in rule1.correctSubmissions )
+		{ 
+			if( !rule2.correctSubmissions.ContainsKey( pair.Key ))
+			{
+				return false;
+			}
+
+		}
+		return true;
+	}
 
 	public bool RuleConflictsWithRuleStack( Rule newRule, int requiredSharedPossibleSubmissions )
 	{
@@ -769,8 +764,16 @@ public class RuleStack: Rule
 			}
 		}
 
+
 		for( int i = 0; i < ruleStack.Count; i ++ )
 		{
+			//check that new rule does not share all correct submissions of another rule in stack
+			if(RuleSharesAllCorrectSubmissionsOfRule( ruleStack[ i ], newRule ))
+			{
+				Debug.Log ( " NEW RULE SHARES ALL CORRECT SUBMISSIONS OF " + ruleStack[ i ].verbal );
+				return true;
+			}
+
 			//if rule is conditional
 			if( ruleStack[ i ] is Conditional )
 			{

@@ -43,6 +43,7 @@ public class Tile : MonoBehaviour {
 	//MOVEMENT
 	void OnMouseDown()
 	{
+		Debug.Log ("touched " + this.name);
 		if (!preset)
 		{
 			model.ManageCurrentSelection (this);

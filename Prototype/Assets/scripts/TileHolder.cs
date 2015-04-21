@@ -45,6 +45,7 @@ public class TileHolder : MonoBehaviour {
 
 	void OnMouseDown()
 	{
+		Debug.Log ("holder : " + this.name);
 		if (model.selectedTile != null && !preset && occupyingTile == null ) 
 		{
 			model.StartMove( this );

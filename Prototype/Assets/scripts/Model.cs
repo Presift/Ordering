@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class Model : MonoBehaviour {
 
+	public bool verticalLayout;
 	public int currentLevel;
 	public float currentNuancedLevel;
 
@@ -14,7 +15,7 @@ public class Model : MonoBehaviour {
 	public int scoreIncreaseForCorrectAnswer;
 
 	public bool impossibleEnabled;
-	public int impossibleLevelsBuffer = 5;
+	public int impossibleLevelsBuffer;
 
 	int occupiedTiles;
 	public List<StagingArea> stagingAreas;
@@ -58,6 +59,7 @@ public class Model : MonoBehaviour {
 		GameData.dataControl.Load ();
 		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
 		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
+//		currentLevel = 160;
 
 		if( GameData.dataControl.fitTestTaken )
 		{

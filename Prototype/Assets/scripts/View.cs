@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class View : MonoBehaviour {
 
@@ -27,7 +28,8 @@ public class View : MonoBehaviour {
 	float timeShowingFeedback = 0;
 
 
-	Vector3 centerBoardPosition = new Vector3( 0, 0, 0 );
+	Vector3 centerBoardPosition = new Vector3( 0, -1.0f, 0 );
+	Vector3 verticalCenterPosition = new Vector3 (1.5f, 1, 0);
 	
 	GameObject tileHolder;
 	GameObject coloredTile;
@@ -35,15 +37,22 @@ public class View : MonoBehaviour {
 
 	// Use this for initialization
 	void Awake () {
-//		maxTileCount = tileColors.Count;
-		maxTileCount = 9;
+
 
 		tileHolder = (GameObject)Resources.Load("tileHolder");
 		coloredTile = (GameObject)Resources.Load("coloredTile");
+
+		SpriteRenderer holderRenderer = (SpriteRenderer)tileHolder.GetComponent (typeof(SpriteRenderer));
+		float originalTileSizeHolder = holderRenderer.bounds.extents.x * 2;
+
+
+		maxTileCount = tileColors.Count;
+
 		Tile tileScript = (Tile)coloredTile.GetComponent (typeof(Tile));
 		tileScript.model = model;
 
-		CalculateSizes ();
+		CalculateSizes ( model.verticalLayout );
+
 		RescaleObjects ();
 	}
 	
@@ -95,18 +104,42 @@ public class View : MonoBehaviour {
 		}
 	}
 
-	void CalculateSizes()
+	void CalculateSizes( bool verticalDisplay )
 	{
-		//get world width
-		Vector3 leftScreen = Camera.main.ScreenToWorldPoint (new Vector3( 0, 0, 0 ));
-		Vector3 rightScreen = Camera.main.ScreenToWorldPoint (new Vector3(Screen.width, 0, 0 ));
-		float worldWidth = Mathf.Abs (rightScreen.x - leftScreen.x);
+		if( !verticalDisplay )
+		{
+			//get world width
+			Vector3 leftScreen = Camera.main.ScreenToWorldPoint (new Vector3( 0, 0, 0 ));
+			Vector3 rightScreen = Camera.main.ScreenToWorldPoint (new Vector3(Screen.width, 0, 0 ));
+			float worldWidth = Mathf.Abs (rightScreen.x - leftScreen.x);
+			
+			//calculate max tile holder size
+			tileHolderWidth = worldWidth / ( maxTileCount + (( maxTileCount + 1 ) * spaceAsFractionOfHolder));
+			tileHolderSpace = tileHolderWidth * spaceAsFractionOfHolder;
+			tileWidth = tileHolderWidth * tileAsFractionOfHolder;
+		}
+		else
+		{
+			//get world height
+			Vector3 topScreen = Camera.main.ScreenToWorldPoint (new Vector3( 0, Screen.height, 0 ));
+			Vector3 bottomScreen = Camera.main.ScreenToWorldPoint (new Vector3(0, 0, 0 ));
+			float worldHeight = Mathf.Abs (topScreen.y - bottomScreen.y);
+			Debug.Log ( " top : " + topScreen.y + " , bottom : " + bottomScreen.y );
+			Debug.Log ( "height : " +  worldHeight );
+			float verticalSpaceForTiles = worldHeight / 5 * 4;
 
-		//calculate max tile holder size
-		tileHolderWidth = worldWidth / ( maxTileCount + ( maxTileCount + 1 ) * spaceAsFractionOfHolder);
-		tileHolderSpace = tileHolderWidth * spaceAsFractionOfHolder;
-		tileWidth = tileHolderWidth * tileAsFractionOfHolder;
+			//calculate max tile holder size
+			tileHolderWidth = verticalSpaceForTiles / ( maxTileCount + (( maxTileCount + 1 ) * spaceAsFractionOfHolder));
+			Debug.Log ( " holder width : " + tileHolderWidth );
+			tileHolderSpace = tileHolderWidth * spaceAsFractionOfHolder;
+			Debug.Log ( "holder space : " + tileHolderSpace );
+			tileWidth = tileHolderWidth * tileAsFractionOfHolder;
+			Debug.Log ( "tile width : " + tileWidth );
+		}
+
 	}
+
+
 
 	void RescaleObjects()  
 	{
@@ -114,7 +147,9 @@ public class View : MonoBehaviour {
 		SpriteRenderer holderRenderer = (SpriteRenderer)tileHolder.GetComponent (typeof(SpriteRenderer));
 		float originalTileSizeHolder = holderRenderer.bounds.extents.x * 2;
 		float scaleChangeHolder = tileHolderWidth / originalTileSizeHolder;
+		Debug.Log ("holder width : " + tileHolderWidth + ",  original size : " + originalTileSizeHolder);
 		tileHolder.transform.localScale *= scaleChangeHolder;
+		Debug.Log (scaleChangeHolder);
 
 		//scale tile
 		SpriteRenderer tileRenderer = (SpriteRenderer)coloredTile.GetComponent (typeof(SpriteRenderer));
@@ -124,10 +159,7 @@ public class View : MonoBehaviour {
 
 	}
 
-	public void StageNewProblem(List<Tile> tilesToPositionInHolders, List<TileHolder> occupiedHolders )
-	{
 
-	}
 
 	public void PresetTilesWithHolders( string presets, List<Tile> tilesToOrder, List<TileHolder> holders )
 	{
@@ -180,7 +212,17 @@ public class View : MonoBehaviour {
 
 			//create a tile with a unique color and color name
 			//place tiles above holders
-			Vector3 stagingPosition = tilePosition + new Vector3 ( 0, tileHolderWidth + tileHolderSpace, 0 );
+			Vector3 stagingPosition;
+
+			if( !model.verticalLayout )
+			{
+				stagingPosition = tilePosition + new Vector3 ( 0, tileHolderWidth + tileHolderSpace, 0 );
+			}
+			else
+			{
+				stagingPosition = tilePosition + new Vector3 ( tileHolderWidth + tileHolderSpace, 0, 0 );
+			}
+
 			StagingArea stagingArea = new StagingArea( stagingPosition, true );
 			GameObject tile = ( GameObject ) Instantiate( coloredTile, stagingPosition, Quaternion.identity );
 			tile.name = colorNames[ tileIndex ];
@@ -227,23 +269,45 @@ public class View : MonoBehaviour {
 		}
 	}
 
+
 	List<Vector3> GetTileHolderPositions( int tileCount)
 	{
 		List<Vector3> tilePositions = new List<Vector3>();
 
 		float totalWidth = tileCount * tileHolderWidth + ((tileCount - 1) * tileHolderSpace);
 
-		Vector3 startPosition = centerBoardPosition - new Vector3 ((totalWidth - tileHolderWidth) / 2, 0, 0);
+		Vector3 startPosition;
 
-		for( int tile = 0; tile < tileCount; tile ++ )
+		if (!model.verticalLayout) 
 		{
-			Vector3 tilePosition = startPosition + new Vector3( tile * ( tileHolderWidth + tileHolderSpace ), 0, 0 );
-			tilePositions.Add ( tilePosition );
-
+			startPosition = centerBoardPosition - new Vector3 ((totalWidth - tileHolderWidth) / 2, 0, 0);	
 		}
+		else
+		{
+			startPosition = verticalCenterPosition - new Vector3 (0, (totalWidth - tileHolderWidth) / 2, 0);
+		}
+
+
+
+		if( !model.verticalLayout )
+		{
+			for( int tile = 0; tile < tileCount; tile ++ )
+			{
+				Vector3 tilePosition = startPosition + new Vector3( tile * ( tileHolderWidth + tileHolderSpace ), 0, 0 );
+				tilePositions.Add ( tilePosition );		
+			}
+		}
+		else
+		{
+			for( int tile = 0; tile < tileCount; tile ++ )
+			{
+				Vector3 tilePosition = startPosition + new Vector3( 0, tile * ( tileHolderWidth + tileHolderSpace ), 0 );
+				tilePositions.Add ( tilePosition );		
+			}
+		}
+
 
 		return tilePositions;
 	}
-
 
 }

@@ -1424,10 +1424,10 @@ public class Logic : MonoBehaviour {
 
 		bool singleRuleBreak = rulesToBreak.ruleStack.Count == 1;
 
-		Debug.Log ("RULES TO BREAK : ");
-		for (int rule = 0; rule < rulesToBreak.ruleStack.Count; rule ++) {
-			Debug.Log (rulesToBreak.ruleStack [ rule ].verbal );
-		}
+//		Debug.Log ("RULES TO BREAK : ");
+//		for (int rule = 0; rule < rulesToBreak.ruleStack.Count; rule ++) {
+//			Debug.Log (rulesToBreak.ruleStack [ rule ].verbal );
+//		}
 
 		List< List<string> > tileCombos = new List< List<string> >();
 		List< string > newCombo = new List< string > ();
