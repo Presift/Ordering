@@ -19,6 +19,7 @@ public class GameData : MonoBehaviour {
 	public bool debugOn;
 	public int consecutiveModusTollensIncorrect;
 	public bool fitTestTaken;
+	public bool shortGame;
 
 //	public bool impossibleEnabled;
 	
@@ -56,6 +57,7 @@ public class GameData : MonoBehaviour {
 		file.WriteLine (data.debugOn);
 		file.WriteLine (data.consecutiveModusTollensIncorrect);
 		file.WriteLine (data.fitTestTaken);
+		file.WriteLine (data.shortGame);
 
 		file.Close ();
 		
@@ -88,6 +90,8 @@ public class GameData : MonoBehaviour {
 
 			fitTestTaken = Convert.ToBoolean( data.ReadLine ());
 
+			shortGame = Convert.ToBoolean( data.ReadLine ());
+
 			data.Close ();
 		}
 
@@ -106,4 +110,5 @@ class PlayerData
 	public bool debugOn;
 	public int consecutiveModusTollensIncorrect;
 	public bool fitTestTaken;
+	public bool shortGame;
 }

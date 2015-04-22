@@ -14,6 +14,8 @@ public class Controller : MonoBehaviour {
 	public Button continueButton;
 	public Button playAgainButton;
 
+	public Toggle debugToggle;
+
 	//vertical display
 	public Text verticalRules;
 
@@ -50,6 +52,11 @@ public class Controller : MonoBehaviour {
 			horizontalRules.gameObject.SetActive( true );
 			verticalRules.gameObject.SetActive ( false );
 		}
+
+//		if( GameData.dataControl.shortGame )
+//		{
+//			model.maxResponsesInPlaySession = model.maxResponsesInShort;
+//		}
 	}
 
 	void Start () {
@@ -61,10 +68,12 @@ public class Controller : MonoBehaviour {
 		if( GameData.dataControl.debugOn )
 		{
 			ShowDebug();
+			debugToggle.gameObject.SetActive( true );
 		}
 		else
 		{
 			HideDebug();
+			debugToggle.gameObject.SetActive( false );
 		}
 
 		logic.consecutiveTollensErrors = GameData.dataControl.consecutiveModusTollensIncorrect;
@@ -78,7 +87,7 @@ public class Controller : MonoBehaviour {
 			EnableImpossible( false );
 		}
 
-		Debug.Log ("FONT SIZE: " + rules.fontSize);
+//		Debug.Log ("FONT SIZE: " + rules.fontSize);
 
 	}
 	
@@ -89,10 +98,7 @@ public class Controller : MonoBehaviour {
 			string inversion = logic.trialRules.ConstructVerbalWithInvertedConditionals();
 			Debug.Log (inversion);
 		}
-//		else if( Input.GetKeyDown(KeyCode.DownArrow))
-//		{
 
-//		}
 	}
 
 	public void DecreaseLevel()
@@ -135,13 +141,13 @@ public class Controller : MonoBehaviour {
 
 	string GetSubmissionWithSansPresets( string submission )
 	{
-		if (logic.previousSubmissionsInRound.Count == 0) 
+		if (logic.currentPresetKey == null) 
 		{
 			return submission;
 		}
 		else
 		{
-			string presets = logic.previousSubmissions[ logic.previousSubmissions.Count - 1 ];
+			string presets = logic.currentPresetKey;
 			string trueSubmission = "";  //submission without presets
 //			Debug.Log ("presets: " + presets );
 			//for each character in in submission
@@ -525,10 +531,20 @@ public class Controller : MonoBehaviour {
 
 	}
 	
-	
-
-	public void EmergencyReset()
+	public void OnDebugToggle()
 	{
-		NewRound ();
+		if ( debugToggle.isOn )
+		{
+			ShowDebug();
+		}
+		else
+		{
+			HideDebug();
+		}
 	}
+
+//	public void EmergencyReset()
+//	{
+//		NewRound ();
+//	}
 }

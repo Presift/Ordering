@@ -24,10 +24,10 @@ public class Logic : MonoBehaviour {
 	public List< string > previousSubmissions;
 	List< string > bestPossiblePresets;
 	bool attemptedCollectionOfBestPossible;
-
+	public string currentPresetKey;
 	List< string > previousImpossiblePresets;
 //	string previousImpossiblePresetKey;
-	public List< string > previousSubmissionsInRound;
+//	public List< string > previousSubmissionsInRound;
 	List<Rule> previousRulesBroken;
 
 	List<Level> allLevels = new List<Level> ();
@@ -60,7 +60,7 @@ public class Logic : MonoBehaviour {
 
 	public void AddPreviousSubmission( string submission )
 	{
-		previousSubmissionsInRound.Add (submission);
+		previousSubmissions.Add (submission);
 	}
 
 	public void SetMinMaxResponseTimesForLevelChange()
@@ -93,9 +93,10 @@ public class Logic : MonoBehaviour {
 		previousImpossiblePresets = new List< string >();
 		bestPossiblePresets= new List< string >();
 		attemptedCollectionOfBestPossible = false;
+		currentPresetKey = null;
 
 		previousRulesBroken = null;
-		previousSubmissionsInRound = new List< string > ();
+//		previousSubmissions = new List< string > ();
 		model.SetImpossible (false);
 		impossiblesUsed = 0;
 		trialRules = new RuleStack ();
@@ -667,6 +668,42 @@ public class Logic : MonoBehaviour {
 			bestPossiblePresets.Remove( bestPresetsToRemove[ removal ] );
 		}
 	}
+	
+	string GetBestKeyFromList()
+	{
+		if( currentPresetKey == null )
+		{
+			return bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
+		}
+		else
+		{
+			//get preset with fewest preset positions in common to previous preset key
+			int fewestMatches = 1000;
+			string bestKey = null;
+
+			for( int i = 0; i < bestPossiblePresets.Count; i ++ )
+			{
+				int positionMatchesFound = 0;
+				
+				//	remove any presets that have presets in all same positions as current preset
+				for( int charIndex = 0; charIndex < currentPresetKey.Length; charIndex ++ )
+				{
+					if( currentPresetKey[ charIndex ] != 'n' && bestPossiblePresets[ i ][ charIndex ] != 'n' )
+					{
+						positionMatchesFound ++;
+					}
+				}
+				
+				if( positionMatchesFound < fewestMatches )
+				{
+					fewestMatches = positionMatchesFound;
+					bestKey = bestPossiblePresets[ i ];
+				}
+			}
+
+			return bestKey;
+		}
+	}
 
 	string CreatePossibleBoard()
 	{
@@ -679,7 +716,8 @@ public class Logic : MonoBehaviour {
 		if( attemptedCollectionOfBestPossible && bestPossiblePresets.Count > 0 )
 		{
 			//remove any matching previous submissions from presets
-			presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
+//			presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
+			presetTiles = GetBestKeyFromList();
 //			return presetTiles;
 		}
 
@@ -694,18 +732,20 @@ public class Logic : MonoBehaviour {
 			
 			if( bestPossiblePresets.Count > 0 )
 			{
-				Debug.Log (" BEST PRESETS ");
+				Debug.Log ("BEST PRESETS");
+
 				for( int i = 0; i < bestPossiblePresets.Count; i ++ )
 				{
 					Debug.Log ( bestPossiblePresets[ i ] );
 				}
-				
-				presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
-				
-				Debug.Log (presetTiles);
+
+//				presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
+				presetTiles = GetBestKeyFromList();
+
+				Debug.Log (" preset : " + presetTiles);
 				//	create string with only 1 placed tile in newSubmission
 				
-				previousSubmissions.Add ( presetTiles );
+//				previousSubmissions.Add ( presetTiles );
 				//	previousPossiblePresetKey = presetTiles;
 //				return presetTiles;
 			}
@@ -715,18 +755,61 @@ public class Logic : MonoBehaviour {
 		if( presetTiles != null )
 		{
 			model.SetImpossible( false );
+			currentPresetKey = presetTiles;
+		}
+		else
+		{
+			currentPresetKey = null;
 		}
 
-		UpdateBestPossiblePresets (presetTiles);
+		UpdateBestPossiblePresets ( presetTiles );
 		return presetTiles;
 
 	}
 
 	void UpdateBestPossiblePresets( string presetUsed )
 	{
+
 		if( presetUsed != null )
 		{
-			bestPossiblePresets.Remove( presetUsed );
+			int maxPositionMatches = 0;
+			
+			for (int charIndex = 0; charIndex < presetUsed.Length; charIndex ++) 
+			{
+				if( presetUsed[ charIndex ] != 'n' )
+				{
+					maxPositionMatches ++;
+				}
+			}
+
+			List< string> presetsToRemove = new List<string>();
+
+			for( int i = 0; i < bestPossiblePresets.Count; i ++ )
+			{
+				int positionMatchesFound = 0;
+
+				//	remove any presets that have presets in all same positions as current preset
+				for( int charIndex = 0; charIndex < presetUsed.Length; charIndex ++ )
+				{
+					if( presetUsed[ charIndex ] != 'n' && bestPossiblePresets[ i ][ charIndex ] != 'n' )
+					{
+						positionMatchesFound ++;
+					}
+				}
+
+				if( positionMatchesFound == maxPositionMatches )
+				{
+					presetsToRemove.Add ( bestPossiblePresets[ i ] );
+					Debug.Log ("REMOVED " + bestPossiblePresets[ i ] + " FROM BEST PRESETS");
+				}
+			}
+
+			for( int remove = 0; remove < presetsToRemove.Count; remove ++ )
+			{
+				bestPossiblePresets.Remove( presetsToRemove[ remove ] );
+			}
+
+//			bestPossiblePresets.Remove( presetUsed );
 		}
 	}
 
@@ -759,24 +842,19 @@ public class Logic : MonoBehaviour {
 				return false;
 			}
 			return true;
-
-		//if preset matches previouspossible submission
-//		if (previousPossiblePresetKey != null) 
-//		{
-//			if( previousPossiblePresetKey == possiblePreset )
-//			{
-//				return false;
-//			}
-//		}
-//
-//		return true;
-
 	}
 
-	int GetPresetInstances( string possiblePreset )
+	int GetInstancesOfCorrectSubmissions( string possiblePreset )
 	{
 		int possiblePresetCount = trialRules.CountWildCardInDictionary (possiblePreset, trialRules.correctSubmissions);
 
+		return possiblePresetCount;
+	}
+
+	int GetInstancesOfIncorrectSubmissions( string possiblePreset )
+	{
+		int possiblePresetCount = trialRules.CountWildCardInDictionary (possiblePreset, trialRules.incorrectSubmissions);
+		
 		return possiblePresetCount;
 	}
 
@@ -1124,7 +1202,10 @@ public class Logic : MonoBehaviour {
 					if( IsGoodPreset( preset, otherRules ))
 					{
 						//test to see if preset has fewer possibilites than best
-						int instances = GetPresetInstances( preset );
+						int correctSubmissions = GetInstancesOfCorrectSubmissions ( preset );
+
+//						int incorrectSubmissions = GetInstancesOfIncorrectSubmissions ( preset );
+
 						bool presetReplacesBest = false;
 
 						if( containsConditional )
@@ -1190,29 +1271,32 @@ public class Logic : MonoBehaviour {
 								presetOnlyUsesLogicSetInLeveling = false;
 							}
 
-							if( presetOnlyUsesLogicSetInLeveling && instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
+							if( presetOnlyUsesLogicSetInLeveling && correctSubmissions == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
-								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
+//								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
+//								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
-							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthPresetCount( currentPresets, bestPresetCount, instances, fewestPossibleCompletions ))
+							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthPresetCount( currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions ))
 							{
 								presetReplacesBest = true;
-								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
+//								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
 
 						}
 						// if no conditionals in stack
 						else
 						{
-							if ( CompletionCountIsWorthPresetCount(currentPresets, bestPresetCount, instances, fewestPossibleCompletions) )
+							if ( CompletionCountIsWorthPresetCount(currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions) )
 							{
 //								fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
 								presetReplacesBest = true;
+
 							}
-							else if ( instances == fewestPossibleCompletions && currentPresets == bestPresetCount )
+							else if ( correctSubmissions == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
+//								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
 //								Debug.Log ( " added : " + preset );
 							}
 						}
@@ -1222,9 +1306,9 @@ public class Logic : MonoBehaviour {
 							bestKeys = new List< string >();
 							bestKeys.Add ( preset );
 //							Debug.Log ( " added : " + preset );
-							fewestPossibleCompletions = instances;
+							fewestPossibleCompletions = correctSubmissions;
 							bestPresetCount = currentPresets;
-
+//							Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
 //							Debug.Log ("***keys count : " + bestKeys.Count);
 						}
 					}
@@ -1237,7 +1321,7 @@ public class Logic : MonoBehaviour {
 		}
 		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
 //		Debug.Log ("best keys count : " + bestKeys.Count);
-		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
+//		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
 
 		model.currentChallenge.SetPresetCount (bestPresetCount);
 		model.currentChallenge.SetConditionalLogic (bestKeyUsesModusPonens, bestKeyUsesModusTollens, bestKeyUsesBAndNotA);
@@ -1247,17 +1331,19 @@ public class Logic : MonoBehaviour {
 
 	}
 
+
+
 	bool PreviousSubmissionValidForNewPreset( string preset)
 	{
-		if( previousSubmissionsInRound.Count == 0 )
+		if( previousSubmissions.Count == 0 )
 		{
 			return false;
 		}
 	
-		for( int i = 0; i < previousSubmissionsInRound.Count; i ++ )
+		for( int i = 0; i < previousSubmissions.Count; i ++ )
 		{
 			//if previous correct submission uses all presets
-			if( trialRules.WildCardSubmissionKeyNameMatch( preset, previousSubmissionsInRound[ i ] ))
+			if( trialRules.WildCardSubmissionKeyNameMatch( preset, previousSubmissions[ i ] ))
 			{
 				return true;
 			}
@@ -1273,6 +1359,7 @@ public class Logic : MonoBehaviour {
 
 		return presetInstances;
 	}
+	
 
 
 
@@ -1355,7 +1442,8 @@ public class Logic : MonoBehaviour {
 		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
 //		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 1, 2 );
 		int minPresetTiles = 1;
-		
+
+
 		while( presetTiles.Count == 0 && minPresetTiles <= maxPresetTiles )
 		{
 			for( int i = 0; i < allRuleCombos.Count; i ++ )
@@ -1412,7 +1500,13 @@ public class Logic : MonoBehaviour {
 			Debug.Log ("CREATING IMPOSSIBLE BOARD");
 			model.SetImpossible( true );
 			impossiblesUsed ++;
-			Debug.Log ("found valid preset tile order ");
+			Debug.Log ("RULES BROKEN: " + previousRulesBroken.Count );
+
+			for( int i = 0; i < previousRulesBroken.Count; i ++ )
+			{
+				Debug.Log ( previousRulesBroken[ i ].verbal );
+			}
+
 
 			presets = presetTiles[ Random.Range( 0, presetTiles.Count) ];
 //			previousImpossiblePresetKey = presets;
@@ -1958,7 +2052,7 @@ public class Level
 	public void SetImpossibleBoardParameters( int rulesToSetBoard, int impChance, int maxImp )
 	{
 		maxRulesToSetImpossibleBoard = rulesToSetBoard;
-		minRulesToSetImpossibleBoard = Mathf.Max (0, maxRulesToSetImpossibleBoard - 1 );
+		minRulesToSetImpossibleBoard = Mathf.Max (1, maxRulesToSetImpossibleBoard - 1 );
 		chanceOfImpossible = impChance;
 		maxImpossiblePerTrial = maxImp;
 	}

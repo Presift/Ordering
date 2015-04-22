@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class Menu : MonoBehaviour {
 
 	public Toggle debug;
+	public Toggle shortGame;
 
 	// Use this for initialization
 	void Start () {
@@ -51,5 +52,21 @@ public class Menu : MonoBehaviour {
 
 		GameData.dataControl.Save();
 
+	}
+
+	public void OnShortGameDown()
+	{
+		if ( shortGame.isOn )
+		{
+			GameData.dataControl.shortGame = true;
+
+		}
+		else
+		{
+			GameData.dataControl.shortGame = false;
+
+		}
+		
+		GameData.dataControl.Save();
 	}
 }

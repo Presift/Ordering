@@ -8,6 +8,7 @@ public class Model : MonoBehaviour {
 	public int currentLevel;
 	public float currentNuancedLevel;
 
+//	public bool shortGame 
 	public int pointsForCorrect = 100;
 	public int score;
 	public int currentTrialInRound;
@@ -30,6 +31,7 @@ public class Model : MonoBehaviour {
 	public int responseTotal = 0;
 //	public int roundsPerPlaySession = 5;
 	public int maxResponsesInPlaySession = 15;
+	public int maxResponsesInShort = 5;
 
 	public int maxSecondsForTimeBonus = 60;
 	public int pointsPerSecondUnderBonusTime;
@@ -59,7 +61,7 @@ public class Model : MonoBehaviour {
 		GameData.dataControl.Load ();
 		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
 		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
-//		currentLevel = 160;
+		currentLevel = 170;
 
 		if( GameData.dataControl.fitTestTaken )
 		{
@@ -68,6 +70,11 @@ public class Model : MonoBehaviour {
 		else
 		{
 			TakeFitTest( true );
+		}
+
+		if( GameData.dataControl.shortGame )
+		{
+			maxResponsesInPlaySession = maxResponsesInShort;
 		}
 		
 	}
