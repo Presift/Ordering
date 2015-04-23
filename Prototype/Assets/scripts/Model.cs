@@ -54,6 +54,8 @@ public class Model : MonoBehaviour {
 
 	public int firstLevelWithImpossibles = 0;
 
+	public bool paused = false;
+
 	// Use this for initialization
 	void Awake () {
 //		currentRound = 0;
@@ -62,6 +64,7 @@ public class Model : MonoBehaviour {
 		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
 		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
 		currentLevel = 170;
+		currentNuancedLevel = 170;
 
 		if( GameData.dataControl.fitTestTaken )
 		{

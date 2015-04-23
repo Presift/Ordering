@@ -23,6 +23,7 @@ public class Logic : MonoBehaviour {
 //	public string previousPossiblePresetKey;
 	public List< string > previousSubmissions;
 	List< string > bestPossiblePresets;
+
 	bool attemptedCollectionOfBestPossible;
 	public string currentPresetKey;
 	List< string > previousImpossiblePresets;
@@ -715,10 +716,7 @@ public class Logic : MonoBehaviour {
 
 		if( attemptedCollectionOfBestPossible && bestPossiblePresets.Count > 0 )
 		{
-			//remove any matching previous submissions from presets
-//			presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
 			presetTiles = GetBestKeyFromList();
-//			return presetTiles;
 		}
 
 		else if( !attemptedCollectionOfBestPossible )
@@ -728,7 +726,7 @@ public class Logic : MonoBehaviour {
 
 			List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
 			
-			bestPossiblePresets = GetBestPresetToCompleteBoard ( 2, tileBank);
+			bestPossiblePresets = GetBestPresetToCompleteBoard ( 3, tileBank);
 			
 			if( bestPossiblePresets.Count > 0 )
 			{
@@ -996,7 +994,7 @@ public class Logic : MonoBehaviour {
 		}
 	}
 
-	bool CompletionCountIsWorthPresetCount( int newKeyPresetCount, int bestPresetCount, int newKeyInstances, int fewestPossibleCompletions )
+	bool CompletionCountIsWorthReplacementOfBest( int newKeyPresetCount, int bestPresetCount, int newKeyInstances, int fewestPossibleCompletions )
 	{
 		if( newKeyPresetCount > bestPresetCount && fewestPossibleCompletions > 0 )
 		{
@@ -1257,13 +1255,6 @@ public class Logic : MonoBehaviour {
 									testKeyUsesBAndNotA = true;
 								}
 
-//								if( testKeyUsesModusPonens )
-//								{
-//									Debug.Log ( "PONENS : " + preset );
-//									Debug.Log(" uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
-//								}
-
-
 							}
 
 							if( !PresetUsesConditionalLogicInLeveling( testKeyUsesBAndNotA, testKeyUsesModusTollens, testKeyUsesTollensAndImpliesA, testKeyUsesModusPonens ))
@@ -1277,7 +1268,7 @@ public class Logic : MonoBehaviour {
 //								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
 //								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
-							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthPresetCount( currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions ))
+							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthReplacementOfBest( currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions ))
 							{
 								presetReplacesBest = true;
 //								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
@@ -1287,7 +1278,7 @@ public class Logic : MonoBehaviour {
 						// if no conditionals in stack
 						else
 						{
-							if ( CompletionCountIsWorthPresetCount(currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions) )
+							if ( CompletionCountIsWorthReplacementOfBest(currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions) )
 							{
 //								fewestPossibleCompletions = ReplaceBestKeysWithTestKey( bestKeys, preset, instances );
 								presetReplacesBest = true;
@@ -1323,14 +1314,168 @@ public class Logic : MonoBehaviour {
 //		Debug.Log ("best keys count : " + bestKeys.Count);
 //		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
 
-		model.currentChallenge.SetPresetCount (bestPresetCount);
-		model.currentChallenge.SetConditionalLogic (bestKeyUsesModusPonens, bestKeyUsesModusTollens, bestKeyUsesBAndNotA);
+//		model.currentChallenge.SetPresetCount (bestPresetCount);
+//		model.currentChallenge.SetConditionalLogic (bestKeyUsesModusPonens, bestKeyUsesModusTollens, bestKeyUsesBAndNotA);
 //		Debug.Log ("current challenge using tollens : " + model.currentChallenge.usesModusTollens);
 
 		return bestKeys;
 
 	}
 
+
+//	List<string> GetBestPresetForConditionals ( int maxPresets, List< string > tileBank, string conditionalLogic )
+//	{
+//	
+//		List< string > bestKeysMP = new List< string >();
+//		int fewestCompletionsMP = 1000;
+//		int bestPresetCountMP = 10;
+//
+//		List< string > bestKeysTP = new List< string >();
+//		int fewestCompletionsTP = 1000;
+//		int bestPresetCountTP = 10;
+//
+//		List< string > bestKeysBNotA = new List< string >();
+//		int fewestCompletionsBNotA = 1000;
+//		int bestPresetCountBNotA = 10;
+//		
+//		List< Conditional > condRules = GetConditionalsFromStack (trialRules);
+//		List<Rule> otherRules = GetNonConditionalRules ();
+//		
+//		int currentPresets = 1;
+//		
+//		while( currentPresets <= maxPresets )
+//		{
+//			List< List<string> > tileCombos = new List< List<string> >();
+//			List< string > newCombo = new List< string > ();
+//			GetAllCombinationsForPresets( tileBank, newCombo, currentPresets, tileCombos);
+//			
+//
+//			//for each combo in allCombos
+//			for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
+//			{
+//				List<int> digitBank = CreateDigitBank( tileBank.Count );
+//				
+//				List< string > presetKeyCombos = new List< string > ();
+//				
+//				List<int> currPosOrder = new List<int> ();
+//				
+//				GetPresetOrdersFromCombos( currPosOrder, digitBank, digitBank.Count, tileCombos[ comboIndex ], presetKeyCombos );
+//				
+//				for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
+//				{
+//					string preset = presetKeyCombos[ presetOrderIndex ];
+//					
+//					//					if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions) && trialRules.WildCardKeyInDictionary( preset, trialRules.incorrectSubmissions ) && !PreviousSubmissionValidForNewPreset( preset) && KeySatisfiesAnyNonConditionalRules)
+//					if( IsGoodPreset( preset, otherRules ))
+//					{
+//						//test to see if preset has fewer possibilites than best
+//						int correctSubmissions = GetInstancesOfCorrectSubmissions ( preset );
+//						
+//						//						int incorrectSubmissions = GetInstancesOfIncorrectSubmissions ( preset );
+//						
+//						bool presetReplacesBest = false;
+//
+//							
+//						bool testKeyUsesBAndNotA = false;
+//						bool testKeyUsesModusTollens = false;
+//						bool testKeyUsesTollensAndImpliesA = false;
+//						bool testKeyUsesModusPonens = false;
+//						
+////						bool presetOnlyUsesLogicSetInLeveling = true;
+//						
+//						for( int cond = 0; cond < condRules.Count; cond ++ )
+//						{
+//							Conditional condRule = condRules[ cond ];
+//
+//							bool alwaysBreaksRule1 = KeyAlwaysBreaksRule( preset, condRule.rule1 );
+//							bool neverBreaksRule1 = KeyNeverBreaksRule( preset, condRule.rule1 );
+//							bool alwaysBreaksRule2 = KeyAlwaysBreaksRule( preset, condRule.rule2 );
+//							bool neverBreaksRule2 = KeyNeverBreaksRule( preset, condRule.rule2 );
+//							
+//							bool presetForcesPonens = KeyIsPositiveOfConditional( neverBreaksRule1 );
+//							
+//							bool presetForcesBAndNotA =  KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 );
+//							
+//							bool presetForcesTollens = KeyIsContraPositiveOfConditional( alwaysBreaksRule2 );
+//							
+//							bool onlyShowsNotB = false;
+//							
+//							if( presetForcesTollens && !alwaysBreaksRule1 )
+//							{
+//								testKeyUsesTollensAndImpliesA = true;
+//							}
+//							
+//							if( presetForcesPonens )
+//							{
+//								testKeyUsesModusPonens = true;
+//							}
+//
+////							if( presetForcesTollens )
+////							{
+////								testKeyUsesModusTollens = true;
+////								
+////								if( onlyShowsNotB )
+////								{
+////									testKeyUsesTollensAndImpliesA = true;
+////								}
+////							}
+//							if( presetForcesBAndNotA )
+//							{
+//								testKeyUsesBAndNotA = true;
+//							}
+//
+//							if( testKeyUsesModusPonens && correctSubmissions == fewestCompletionsMP && currentPresets == bestPresetCountMP )
+//							{
+//								bestKeysMP.Add ( preset );
+//							}
+//							else if( testKeyUsesModusPonens && CompletionCountIsWorthReplacementOfBest( currentPresets, bestPresetCountMP, correctSubmissions, fewestCompletionsMP ))
+//							{
+//								bestKeysMP = new List< string >();
+//								bestKeysMP.Add ( preset );
+//
+//								fewestCompletionsMP.A
+//							}
+//							
+//							if( !PresetUsesConditionalLogicInLeveling( testKeyUsesBAndNotA, testKeyUsesModusTollens, testKeyUsesTollensAndImpliesA, testKeyUsesModusPonens ))
+//							{
+//								presetOnlyUsesLogicSetInLeveling = false;
+//							}
+//							
+//							if( presetOnlyUsesLogicSetInLeveling && correctSubmissions == fewestPossibleCompletions && currentPresets == bestPresetCount )
+//							{
+//								bestKeys.Add ( preset );
+//								//								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
+//								//								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
+//							}
+//							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthReplacementOfBest( currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions ))
+//							{
+//								presetReplacesBest = true;
+//								//								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
+//							}
+//							
+//						}
+//						
+//						if( presetReplacesBest )
+//						{
+////							bestKeys = new List< string >();
+////							bestKeys.Add ( preset );
+////
+////							fewestPossibleCompletions = correctSubmissions;
+////							bestPresetCount = currentPresets;
+//
+//						}
+//					}
+//					
+//				}
+//			}
+//			
+//			currentPresets ++;
+//
+//		}
+//		
+//		return bestKeys;
+//		
+//	}
 
 
 	bool PreviousSubmissionValidForNewPreset( string preset)
@@ -1998,7 +2143,11 @@ public class Level
 	public bool modusPonens; //if a then b
 	public bool modusTollens; //if !b, then !a
 	public bool modusTollensImplyNotA;
-	
+
+	public int chanceOfPonens;
+	public int chanceOfTollens;
+	public int chanceOfBNotA;
+
 	public bool showClauseBNotA;  // b and !a
 	//	bool showClauseBImplyNotA;  // b and make a impossible
 	

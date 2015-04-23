@@ -13,6 +13,8 @@ public class Controller : MonoBehaviour {
 	public Button impossibleButton;
 	public Button continueButton;
 	public Button playAgainButton;
+	public Button pauseButton;
+	public Button playButton;
 
 	public Toggle debugToggle;
 
@@ -543,8 +545,21 @@ public class Controller : MonoBehaviour {
 		}
 	}
 
-//	public void EmergencyReset()
-//	{
-//		NewRound ();
-//	}
+	public void Pause()
+	{
+		Time.timeScale = 0;
+		pauseButton.gameObject.SetActive (false);
+		playButton.gameObject.SetActive (true);
+		Debug.Log ("pause");	
+	}
+
+	public void Play()
+	{
+		Time.timeScale = 1;
+		pauseButton.gameObject.SetActive (true);
+		playButton.gameObject.SetActive (false);
+		Debug.Log ("play");	
+	}
+
+
 }
