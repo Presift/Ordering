@@ -37,7 +37,7 @@ public class Model : MonoBehaviour {
 	public int pointsPerSecondUnderBonusTime;
 
 	float maxLevelChange = 4f;
-	float minLevelChange = -.5f;
+	float minLevelChange = -.75f;
 
 	float fitTestMaxLevelChange = 13f;
 	float fitTestMinLevelChange = -5f;
@@ -69,11 +69,15 @@ public class Model : MonoBehaviour {
 		if( GameData.dataControl.fitTestTaken )
 		{
 			TakeFitTest( false );
+			Debug.Log ("fit test taken");
 		}
 		else
 		{
 			TakeFitTest( true );
+			Debug.Log ("fit test NOT taken");
 		}
+
+		TakeFitTest (false);
 
 		if( GameData.dataControl.shortGame )
 		{

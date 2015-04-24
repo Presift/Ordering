@@ -29,18 +29,18 @@ public class Logic : MonoBehaviour {
 	List< string > previousImpossiblePresets;
 //	string previousImpossiblePresetKey;
 //	public List< string > previousSubmissionsInRound;
-	List<Rule> previousRulesBroken;
+	List<List<Rule>> previousRulesBroken;
 
 	List<Level> allLevels = new List<Level> ();
 
 	public Level currentLeveling;
 	public int maxAttemptsToCreateRules = 10;
 
-	float readingTimeConditional = 1.25f;
+	float readingTimeConditional = 1.0f;
 	float readingTimeOther = .5f;
 	float constantTime = 1.5f;
 	float timePerTile = .5f;
-	float worstTimeMultiplier = 5;
+	float worstTimeMultiplier = 3.5f;
 
 	void Awake()
 	{
@@ -84,8 +84,8 @@ public class Logic : MonoBehaviour {
 
 		model.responseTimeForMaxLevelChange = timeForTilePlacement + minReadingTime + constantTime;
 		model.responseTimeForMinLevelChange = model.responseTimeForMaxLevelChange * worstTimeMultiplier;
-//		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
-//		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
+		Debug.Log ("TimeForMaxLevelChange : " + model.responseTimeForMaxLevelChange);
+		Debug.Log ("TimeForMinLevelChange : " + model.responseTimeForMinLevelChange);
 	}
 
 	void ResetForNewRound()
@@ -96,7 +96,7 @@ public class Logic : MonoBehaviour {
 		attemptedCollectionOfBestPossible = false;
 		currentPresetKey = null;
 
-		previousRulesBroken = null;
+		previousRulesBroken = new List<List<Rule>>();
 //		previousSubmissions = new List< string > ();
 		model.SetImpossible (false);
 		impossiblesUsed = 0;
@@ -262,6 +262,8 @@ public class Logic : MonoBehaviour {
 		SetMinMaxResponseTimesForLevelChange ();
 
 		model.currentChallenge.SetPresetCount ( 0 );
+
+		Debug.Log ("correct : " + trialRules.correctSubmissions.Count + ",  incorrect : " + trialRules.incorrectSubmissions.Count);
 
 		return trialRules.verbal;
 	}
@@ -624,8 +626,10 @@ public class Logic : MonoBehaviour {
 		bool createImpossible = false;
 		string presetTiles = null;
 
+		Debug.Log (" impossible enabled : " + model.impossibleEnabled);
 		if( impossiblesUsed < currentLeveling.maxImpossiblePerTrial && model.impossibleEnabled )
 		{
+//			Debug.Log (currentLeveling.chanceOfImpossible);
 			createImpossible = HappenedByChance( currentLeveling.chanceOfImpossible );
 			Debug.Log ( " create impossible : " + createImpossible );
 
@@ -798,7 +802,7 @@ public class Logic : MonoBehaviour {
 				if( positionMatchesFound == maxPositionMatches )
 				{
 					presetsToRemove.Add ( bestPossiblePresets[ i ] );
-					Debug.Log ("REMOVED " + bestPossiblePresets[ i ] + " FROM BEST PRESETS");
+//					Debug.Log ("REMOVED " + bestPossiblePresets[ i ] + " FROM BEST PRESETS");
 				}
 			}
 
@@ -1158,6 +1162,7 @@ public class Logic : MonoBehaviour {
 	List< string > GetBestPresetToCompleteBoard ( int maxPresets, List< string > tileBank )
 	{
 		int fewestPossibleCompletions = 1000;
+		int incorrectSubmissions = 0;
 		List< string > bestKeys = new List< string >();
 		int bestPresetCount = 10;
 
@@ -1265,11 +1270,13 @@ public class Logic : MonoBehaviour {
 							if( presetOnlyUsesLogicSetInLeveling && correctSubmissions == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
 								bestKeys.Add ( preset );
+								incorrectSubmissions = GetInstancesOfIncorrectSubmissions ( preset );
 //								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
 //								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
 							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthReplacementOfBest( currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions ))
 							{
+
 								presetReplacesBest = true;
 //								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
 							}
@@ -1286,6 +1293,7 @@ public class Logic : MonoBehaviour {
 							}
 							else if ( correctSubmissions == fewestPossibleCompletions && currentPresets == bestPresetCount )
 							{
+								incorrectSubmissions = GetInstancesOfIncorrectSubmissions ( preset );
 								bestKeys.Add ( preset );
 //								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
 //								Debug.Log ( " added : " + preset );
@@ -1294,6 +1302,7 @@ public class Logic : MonoBehaviour {
 
 						if( presetReplacesBest )
 						{
+							incorrectSubmissions = GetInstancesOfIncorrectSubmissions ( preset );
 							bestKeys = new List< string >();
 							bestKeys.Add ( preset );
 //							Debug.Log ( " added : " + preset );
@@ -1310,7 +1319,7 @@ public class Logic : MonoBehaviour {
 			currentPresets ++;
 //			Debug.Log ( "increase presets to : " + currentPresets );
 		}
-		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions);
+		Debug.Log ("fewest possible completions : " + fewestPossibleCompletions + ",  incorrect : " + incorrectSubmissions);
 //		Debug.Log ("best keys count : " + bestKeys.Count);
 //		Debug.Log (" modus Ponens : " + bestKeyUsesModusPonens + ", modus Tollens : " + bestKeyUsesModusTollens + ", bAndNotA : " + bestKeyUsesBAndNotA);
 
@@ -1530,7 +1539,23 @@ public class Logic : MonoBehaviour {
 		{
 			rulesToBreak.Add( rules [ i ] );
 		}
-		
+
+		Debug.Log ("previous impossible : " + previousRulesBroken.Count);
+//		for( int i = 0; i < previousRulesBroken.Count; i ++ )
+//		{
+//			for( int j = 0; j < previousRulesBroken[ i ].Count; j ++ )
+//			{
+//				Debug.Log (previousRulesBroken[ i ][ j ].verbal );
+//			}
+//		}
+
+		if( previousRulesBroken.Contains( rulesToBreak ))
+		{
+			Debug.Log ("DID NOT USE RULE COMBO ALREADY USED ");
+			return null;
+		}
+
+		previousRulesBroken.Add (rulesToBreak);
 		return rulesToBreak;
 	}
 
@@ -1570,7 +1595,7 @@ public class Logic : MonoBehaviour {
 	string AttemptToCreateImpossibleBoard( List<Tile> tilesToOrder )
 	{
 
-		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
+//		Debug.Log ("ATTEMPTING TO CREATE IMPOSSIBLE");
 		List< List<Rule> > allRuleCombos = new List< List<Rule> > ();
 		List< Rule > newCombo = new List<Rule > ();
 		List< Rule > ruleBank = new List<Rule>( trialRules.ruleStack );
@@ -1581,7 +1606,7 @@ public class Logic : MonoBehaviour {
 		List<string> presetTiles = new List<string>();
 		string presets;
 
-		Debug.Log (" combo list count : " + allRuleCombos.Count); 
+//		Debug.Log (" combo list count : " + allRuleCombos.Count); 
 		List< string > tileBank = GetTilesAsListOfLetters (model.tilesToOrder);
 
 		int maxPresetTiles = Mathf.Min ( tilesToOrder.Count - 2, 3 );
@@ -1595,27 +1620,54 @@ public class Logic : MonoBehaviour {
 			{
 				List<Rule> rulesToBreak = ReturnRulesFromComboList ( allRuleCombos, i );
 
-//				if( rulesToBreak != previousRulesBroken )
-//				{
+				if( rulesToBreak != null )
+				{
 					List< Rule > otherRules = trialRules.GetRulesInStackNotInList (rulesToBreak);
 					
 					presetTiles = AttemptToGetImpossibleKey( minPresetTiles, tileBank, rulesToBreak, otherRules );
 					
 					if(  presetTiles.Count != 0 )
 					{
-						Debug.Log (presetTiles.Count + " impossible presets found ");
-						previousRulesBroken = rulesToBreak;
+//						Debug.Log (presetTiles.Count + " impossible presets found ");
+//						previousRulesBroken.Add ( rulesToBreak );
 						model.currentChallenge.SetPresetCount (minPresetTiles);
 						model.currentChallenge.SetImpossibleStats( true, rulesToSetImpossible );
+
+						Debug.Log ("RULES BROKEN: " + rulesToBreak.Count );
+						
+						for( int j = 0; j < rulesToBreak.Count; j ++ )
+						{
+							Debug.Log ( rulesToBreak[ j ].verbal );
+						}
+
+						Debug.Log ("NOT BREAKING : " + otherRules.Count );
+						for( int n = 0; n < otherRules.Count; n ++ )
+						{
+							Debug.Log ( otherRules[ n ].verbal );
+						}
+
 						break;
 					}
-//				}
+				}
+				else
+				{
+					Debug.Log ("SKIPPED RULE SET BECAUSE ALREADY USED");
+				}
 
 			}
 
 			if( presetTiles.Count != 0 )
 			{
-				Debug.Log ("breaking out of while loop ");
+				Debug.Log ( "IMPOSSIBLE KEYS");
+
+//				previousRulesBroken.Add ( rulesToBreak );
+//				Debug.Log ("breaking out of while loop ");
+				for( int i = 0; i < presetTiles.Count; i++ )
+				{
+					Debug.Log ( presetTiles[ i ] );
+				}
+
+
 				break;
 			}
 			//increase min preset tiles
@@ -1642,15 +1694,9 @@ public class Logic : MonoBehaviour {
 
 		if(  presetTiles.Count != 0 )
 		{
-			Debug.Log ("CREATING IMPOSSIBLE BOARD");
+//			Debug.Log ("CREATING IMPOSSIBLE BOARD");
 			model.SetImpossible( true );
 			impossiblesUsed ++;
-			Debug.Log ("RULES BROKEN: " + previousRulesBroken.Count );
-
-			for( int i = 0; i < previousRulesBroken.Count; i ++ )
-			{
-				Debug.Log ( previousRulesBroken[ i ].verbal );
-			}
 
 
 			presets = presetTiles[ Random.Range( 0, presetTiles.Count) ];
@@ -1700,7 +1746,6 @@ public class Logic : MonoBehaviour {
 			for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
 			{
 				if( !previousImpossiblePresets.Contains( presetKeyCombos[ presetOrderIndex ] ))
-//				if( presetKeyCombos[ presetOrderIndex ] != previousImpossiblePresetKey )
 				{
 					if( ImpossibleKey( presetKeyCombos[ presetOrderIndex ], rulesToBreak, nonBreakingRules, singleRuleBreak ))
 					{
@@ -1780,118 +1825,142 @@ public class Logic : MonoBehaviour {
 
 	bool ImpossibleKey( string possibleKey, List<Rule> rulesToBreak, List<Rule> nonbreakingRules,  bool singleRuleBreak )
 	{
-		
-		if(!PresetIsPossibleCorrectSubmission( possibleKey ))
+		if(PresetIsPossibleCorrectSubmission( possibleKey ))
 		{
-//			Debug.Log ("PRESET NOT IN CORRECT SUBMISSIONS : " + possibleKey);
-			
-			//test to see if preset is a possible correct answer each concerned breakable rule
-			bool passBreakableRulesTest = false;
+			return false;
+		}
 
-			
-			if( singleRuleBreak )
-			{
-				List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak[ 0 ] );
+		
+		//test to see if preset is a possible correct answer each concerned breakable rule
+		
+		if( singleRuleBreak )
+		{
+			List< string > correctSubmissions = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak[ 0 ] );
 //				Debug.Log ( "correct submissions : " + correctSubmissions.Count );
-				if( correctSubmissions.Count == 0 )
-				{
-					passBreakableRulesTest = true;
-				}
-
-			}
-			else
+			if( correctSubmissions.Count != 0 )
 			{
-				bool eachRuleHasAPossibleCorrect = true;
+				return false;
+			}
 
-				List< List< string > > correctSubmissionsForKeyByRule = new List< List< string > >();
+		}
+		else
+		{
+
+
+			List< List< string > > correctSubmissionsForKeyByRule = new List< List< string > >();
+
+			for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.Count; ruleToBreak ++ )
+			{
+				List< string > correctSubsForRule = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak[ ruleToBreak ] );
+
+				if( correctSubsForRule.Count == 0 )
+				{
+
+					return false;
+				}
+				else
+				{
+					correctSubmissionsForKeyByRule.Add ( correctSubsForRule );
+				}
+			}
+
+//					Debug.Log (" each rule has possible corrects : " + eachRuleHasAPossibleCorrect );
+
+			//check that each rule does not share a correct submission that is shared by the other breakable rules
+			for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.Count; ruleToExclude ++ )
+			{
+				List< string > subsToExclude = new List<string>();
+				List< List< string >> listOfSubsToFindShared = new List<List<string>> ();
 
 				for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.Count; ruleToBreak ++ )
 				{
-					List< string > correctSubsForRule = GetCorrectSubmissionsForWildKey( possibleKey, rulesToBreak[ ruleToBreak ] );
-					if( correctSubsForRule.Count == 0 )
+					if( ruleToBreak == ruleToExclude )
 					{
-						eachRuleHasAPossibleCorrect = false;
-						break;
+						subsToExclude = correctSubmissionsForKeyByRule[ ruleToBreak ];
 					}
 					else
 					{
-						correctSubmissionsForKeyByRule.Add ( correctSubsForRule );
+						listOfSubsToFindShared.Add ( correctSubmissionsForKeyByRule[ ruleToBreak ] );
 					}
 				}
 
+				bool ruleNeededToCreateImpossible = FoundASubmissionNotInExcludedListButSharedByAllLists( subsToExclude, listOfSubsToFindShared );
 
-				if( eachRuleHasAPossibleCorrect )
+				if( !ruleNeededToCreateImpossible )
 				{
-//					Debug.Log (" each rule has possible corrects : " + eachRuleHasAPossibleCorrect );
-
-					//check that each rule does not share a correct submission that is shared by the other breakable rules
-					for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.Count; ruleToExclude ++ )
-					{
-						List< string > subsToExclude = new List<string>();
-						List< List< string >> listOfSubsToFindShared = new List<List<string>> ();
-
-						for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.Count; ruleToBreak ++ )
-						{
-							if( ruleToBreak == ruleToExclude )
-							{
-								subsToExclude = correctSubmissionsForKeyByRule[ ruleToBreak ];
-							}
-							else
-							{
-								listOfSubsToFindShared.Add ( correctSubmissionsForKeyByRule[ ruleToBreak ] );
-							}
-						}
-
-						bool ruleNeededToCreateImpossible = FoundASubmissionNotInExcludedListButSharedByAllLists( subsToExclude, listOfSubsToFindShared );
-
-						if( !ruleNeededToCreateImpossible )
-						{
-							break;
-						}
-
-						else if( ruleToExclude == ( rulesToBreak.Count - 1 ))
-						{
-//							Debug.Log ( "EACH RULE NEEDED TO CREATE IMPOSSIBLE ");
-							passBreakableRulesTest = true; 
-						}
-					}
-
+					return false;
 				}
-				
+
+				else if( ruleToExclude == ( rulesToBreak.Count - 1 ))
+				{
+					Debug.Log ( "EACH RULE NEEDED TO CREATE IMPOSSIBLE ");
+//					passBreakableRulesTest = true; 
+				}
 			}
 
-			
-			if( passBreakableRulesTest )
+		}
+
+		//test to see if preset is impossible for non-concerned rules in trial rules
+		for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
+		{
+//			if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
+//			{
+////						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
+////				passOtherRulesTest = false;
+//				return false;
+//			}
+			List< Rule > rulesThatShouldNotFormBreak = new List< Rule >();
+			rulesThatShouldNotFormBreak.Add ( nonbreakingRules[ nonbreakingRule ] );
+
+			for ( int ruleToExclude = 0; ruleToExclude < rulesToBreak.Count; ruleToExclude ++ )
 			{
-//				Debug.Log ( "PRESET DOES NOT BREAK INDIVIDUAL RULE ");
-				bool passOtherRulesTest = true;
-				//test to see if preset is impossible for non-concerned rules in trial rules
-				for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
+				for ( int ruleToBreak = 0; ruleToBreak < rulesToBreak.Count; ruleToBreak ++ )
 				{
-					if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
+					if( ruleToBreak != ruleToExclude )
 					{
-//						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
-						passOtherRulesTest = false;
-						break;
+						rulesThatShouldNotFormBreak.Add ( rulesToBreak [ ruleToBreak ] );
 					}
+	
 				}
-				
-				if( passOtherRulesTest )
+
+				//if rules that should not form break share a common correct submission for preset key
+				if( !RulesShareCommonCorrectSubmissionForPresetKey( rulesThatShouldNotFormBreak, possibleKey ))
 				{
-//					Debug.Log ( "SUCCESSFUL PRESET BREAK" );
-					for( int i = 0; i < rulesToBreak.Count; i ++ )
-					{
-						Debug.Log (rulesToBreak[ i ].verbal);
-					}
+					return false;
+				}
+
+			}
+		}
+		
+		return true;
+
+	}
+
+	bool RulesShareCommonCorrectSubmissionForPresetKey( List< Rule > rules, string preset )
+	{
+		List< string > correctSubmissionsForKey = trialRules.GetWildCardStringsInDictionary (preset, trialRules.correctSubmissions);
+
+		for( int i = 0; i < correctSubmissionsForKey.Count; i ++ )
+		{
+			bool correctSubmissionFoundInAllRules = false;
+
+			for( int otherRule = 0; rules.Count < rules.Count; otherRule ++ )
+			{
+				if( !rules[ otherRule ].correctSubmissions.ContainsKey( correctSubmissionsForKey[ i ] ) ) 
+				{
+					break;
+				}
+				else if( otherRule == ( rules.Count - 1 ))
+				{
+					Debug.Log ( "FOUND CORRECT SUBMISSION SHARED BY ALL RULES ");
 					return true;
 				}
 			}
 		}
-		
+
+		Debug.Log ( "FOUND NO CORRECT SUBMISSION SHARED BY ALL RULES FOR " + preset );
 		return false;
 	}
-
-
 
 	void GetAllCombinationsOfRules ( List<Rule> ruleBank, List<Rule> currRuleCombo, int maxRulesInStack, List< List<Rule> > allCombos )
 	{
@@ -2023,7 +2092,8 @@ public class Logic : MonoBehaviour {
 //				Debug.Log (" chance of impossible : " + newLevel.chanceOfImpossible + ", Level : " + i );
 //			}
 
-//			newLevel.chanceOfImpossible = 50;
+			newLevel.chanceOfImpossible = 100;
+			newLevel.chanceOfPresetsOnFirstTrial = 100;
 //			newLevel.maxTrialsInRuleSet = 6;
 
 			allLevels.Add( newLevel );

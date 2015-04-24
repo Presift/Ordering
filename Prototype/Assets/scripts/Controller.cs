@@ -63,9 +63,7 @@ public class Controller : MonoBehaviour {
 
 	void Start () {
 
-		UpdateDisplay ();
 
-		NewRound ();
 
 		if( GameData.dataControl.debugOn )
 		{
@@ -80,16 +78,21 @@ public class Controller : MonoBehaviour {
 
 		logic.consecutiveTollensErrors = GameData.dataControl.consecutiveModusTollensIncorrect;
 
-		if( model.currentLevel >= model.firstLevelWithImpossibles )
-		{
-			EnableImpossible( true );
-		}
-		else
-		{
-			EnableImpossible( false );
-		}
+//		if( model.currentLevel >= model.firstLevelWithImpossibles )
+//		{
+//			EnableImpossible( true );
+//		}
+//		else
+//		{
+//			EnableImpossible( false );
+//		}
 
-//		Debug.Log ("FONT SIZE: " + rules.fontSize);
+
+		EnableImpossible (true);
+	
+		UpdateDisplay ();
+		
+		NewRound ();
 
 	}
 	
@@ -99,6 +102,17 @@ public class Controller : MonoBehaviour {
 		{
 			string inversion = logic.trialRules.ConstructVerbalWithInvertedConditionals();
 			Debug.Log (inversion);
+		}
+
+		if( Input.GetKeyDown( KeyCode.Space ) && !model.paused )
+		{
+			model.paused = true;
+			Pause();
+		}
+		else if( Input.GetKeyDown( KeyCode.Space ))
+		{
+			model.paused = false;
+			Play ();
 		}
 
 	}
@@ -174,7 +188,7 @@ public class Controller : MonoBehaviour {
 		//debug
 		string submissionKey = model.OrderedTileKey ();
 //		submissionKey = GetSubmissionWithSansPresets (submissionKey);
-		Debug.Log ("Submission : " + submissionKey);
+//		Debug.Log ("Submission : " + submissionKey);
 		if(model.impossible)
 		{
 			Debug.Log ("INCORRECT");
@@ -240,12 +254,13 @@ public class Controller : MonoBehaviour {
 			}
 		}
 
-		int responseTime = metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
+		float responseTime = metaData.SetStatsOnAnswer ( correctAnswer, Time.time);
 		int timeBonus = CalculateTimeBonusEarned (correctAnswer, responseTime);
 		model.score += timeBonus;
 		UpdateScoreDisplay ();
 
 		float levelChange = model.CalculateLevelChange (correctAnswer, responseTime);
+		Debug.Log ("LEVEL CHANGE: " + levelChange);
 		model.UpdateLevel (levelChange);
 		Debug.Log ("RESPONSE TIME : " + responseTime);
 		Debug.Log ("BONUS POINTS : " + timeBonus);
@@ -254,7 +269,7 @@ public class Controller : MonoBehaviour {
 	
 	}
 
-	int CalculateTimeBonusEarned( bool correctAnswer, int responseTime )
+	int CalculateTimeBonusEarned( bool correctAnswer, float responseTime )
 	{
 		if( !correctAnswer )
 		{
@@ -262,9 +277,9 @@ public class Controller : MonoBehaviour {
 		}
 		else
 		{
-			int secondsToSpare = model.maxSecondsForTimeBonus - responseTime;
+			float secondsToSpare = model.maxSecondsForTimeBonus - responseTime;
 
-			int timeBonus = Mathf.Min ( 0, secondsToSpare * model.pointsPerSecondUnderBonusTime);
+			int timeBonus = (int)Mathf.Max ( 0, secondsToSpare * model.pointsPerSecondUnderBonusTime);
 
 			return timeBonus;
 		}
@@ -313,7 +328,7 @@ public class Controller : MonoBehaviour {
 
 	public void EnableImpossible( bool enable )
 	{
-//		Debug.Log (enable);
+		Debug.Log ("impossible enabled " + enable);
 		if( enable )
 		{
 			model.impossibleEnabled = true;

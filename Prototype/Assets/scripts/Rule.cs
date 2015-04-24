@@ -126,6 +126,23 @@ public class Rule
 		return appearanceInDict;
 	}
 
+	public List< string > GetWildCardStringsInDictionary( string testKey, Dictionary<string, List<Tile>> dict )
+	{
+		List< string > submissionMatchesInDict = new List< string > ();
+		
+		
+		foreach( KeyValuePair<string, List<Tile>> pair in dict )
+		{ 
+			//if test key match found dict
+			if( WildCardSubmissionKeyNameMatch( pair.Key, testKey ))
+			{
+				submissionMatchesInDict.Add( pair.Key );
+			}
+		}
+		
+		return submissionMatchesInDict;
+	}
+
 
 	public bool WildCardSubmissionKeyNameMatch( string key1, string key2 ) //assumes keys are of equal length
 	{

@@ -147,9 +147,9 @@ public class View : MonoBehaviour {
 		SpriteRenderer holderRenderer = (SpriteRenderer)tileHolder.GetComponent (typeof(SpriteRenderer));
 		float originalTileSizeHolder = holderRenderer.bounds.extents.x * 2;
 		float scaleChangeHolder = tileHolderWidth / originalTileSizeHolder;
-		Debug.Log ("holder width : " + tileHolderWidth + ",  original size : " + originalTileSizeHolder);
+//		Debug.Log ("holder width : " + tileHolderWidth + ",  original size : " + originalTileSizeHolder);
 		tileHolder.transform.localScale *= scaleChangeHolder;
-		Debug.Log (scaleChangeHolder);
+//		Debug.Log (scaleChangeHolder);
 
 		//scale tile
 		SpriteRenderer tileRenderer = (SpriteRenderer)coloredTile.GetComponent (typeof(SpriteRenderer));
