@@ -449,6 +449,7 @@ public class Controller : MonoBehaviour {
 		view.gameObject.SetActive (true);
 
 		model.responseTotal = 0;
+		model.score = 0;
 
 		NewRound ();
 	}

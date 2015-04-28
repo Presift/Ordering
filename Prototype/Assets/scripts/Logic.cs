@@ -1906,7 +1906,7 @@ public class Logic : MonoBehaviour {
 //			}
 
 //			newLevel.chanceOfImpossible = 100;
-			newLevel.chanceOfPresetsOnFirstTrial = 100;
+//			newLevel.chanceOfPresetsOnFirstTrial = 100;
 //			newLevel.maxTrialsInRuleSet = 6;
 
 			allLevels.Add( newLevel );
