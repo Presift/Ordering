@@ -60,29 +60,29 @@ public class Model : MonoBehaviour {
 	void Awake () {
 //		currentRound = 0;
 
-		GameData.dataControl.Load ();
-		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
-		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
-		currentLevel = 170;
-		currentNuancedLevel = 170;
-
-		if( GameData.dataControl.fitTestTaken )
-		{
-			TakeFitTest( false );
-			Debug.Log ("fit test taken");
-		}
-		else
-		{
-			TakeFitTest( true );
-			Debug.Log ("fit test NOT taken");
-		}
-
-		TakeFitTest (false);
-
-		if( GameData.dataControl.shortGame )
-		{
-			maxResponsesInPlaySession = maxResponsesInShort;
-		}
+//		GameData.dataControl.Load ();
+//		currentNuancedLevel = GameData.dataControl.previousFinalLevel;
+//		currentLevel = (int)Mathf.Floor (currentNuancedLevel);
+//		currentLevel = 100;
+//		currentNuancedLevel = 100;
+//
+//		if( GameData.dataControl.fitTestTaken )
+//		{
+//			TakeFitTest( false );
+//			Debug.Log ("fit test taken");
+//		}
+//		else
+//		{
+//			TakeFitTest( true );
+//			Debug.Log ("fit test NOT taken");
+//		}
+//
+////		TakeFitTest (false);
+//
+//		if( GameData.dataControl.shortGame )
+//		{
+//			maxResponsesInPlaySession = maxResponsesInShort;
+//		}
 		
 	}
 	

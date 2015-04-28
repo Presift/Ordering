@@ -81,12 +81,12 @@ public class MetaData : MonoBehaviour {
 		timeAtStartOfProblem = timeAtStart;
 	}
 
-	public int SetStatsOnAnswer( bool correct, float timeResponded )
+	public float SetStatsOnAnswer( bool correct, float timeResponded )
 	{
 		correctAnswer = correct;
 		CalculateResonseTime (timeResponded);
 
-		return ( int )responseTime;
+		return responseTime;
 	}
 
 	public void ResetStats()

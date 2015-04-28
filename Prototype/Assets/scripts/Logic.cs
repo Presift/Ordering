@@ -30,6 +30,7 @@ public class Logic : MonoBehaviour {
 //	string previousImpossiblePresetKey;
 //	public List< string > previousSubmissionsInRound;
 	List<List<Rule>> previousRulesBroken;
+	List< int > comboIndexOfPreviousRulesBroken;
 
 	List<Level> allLevels = new List<Level> ();
 
@@ -40,7 +41,10 @@ public class Logic : MonoBehaviour {
 	float readingTimeOther = .5f;
 	float constantTime = 1.5f;
 	float timePerTile = .5f;
-	float worstTimeMultiplier = 3.5f;
+	float worstTimeMultiplier;
+
+	float timeMultiplierFitTest = 5f;
+	float timeMultiplierNormal = 3.5f;
 
 	void Awake()
 	{
@@ -62,6 +66,18 @@ public class Logic : MonoBehaviour {
 	public void AddPreviousSubmission( string submission )
 	{
 		previousSubmissions.Add (submission);
+	}
+
+	public void SetTimeMultiplier( bool fitTest )
+	{
+		if( fitTest )
+		{
+			worstTimeMultiplier = timeMultiplierFitTest;
+		}
+		else
+		{
+			worstTimeMultiplier = timeMultiplierNormal;
+		}
 	}
 
 	public void SetMinMaxResponseTimesForLevelChange()
@@ -97,6 +113,7 @@ public class Logic : MonoBehaviour {
 		currentPresetKey = null;
 
 		previousRulesBroken = new List<List<Rule>>();
+		comboIndexOfPreviousRulesBroken = new List< int >();
 //		previousSubmissions = new List< string > ();
 		model.SetImpossible (false);
 		impossiblesUsed = 0;
@@ -626,12 +643,13 @@ public class Logic : MonoBehaviour {
 		bool createImpossible = false;
 		string presetTiles = null;
 
-		Debug.Log (" impossible enabled : " + model.impossibleEnabled);
+//		Debug.Log (" impossible enabled : " + model.impossibleEnabled);
+//		Debug.Log ("chance of impossible : " + currentLeveling.chanceOfImpossible);
 		if( impossiblesUsed < currentLeveling.maxImpossiblePerTrial && model.impossibleEnabled )
 		{
 //			Debug.Log (currentLeveling.chanceOfImpossible);
 			createImpossible = HappenedByChance( currentLeveling.chanceOfImpossible );
-			Debug.Log ( " create impossible : " + createImpossible );
+//			Debug.Log ( " create impossible : " + createImpossible );
 
 		}
 //		Debug.Log ("create impossible : " + createImpossible );
@@ -650,7 +668,7 @@ public class Logic : MonoBehaviour {
 			presetTiles = AttemptToCreateImpossibleBoard( model.tilesToOrder );
 		}
 
-		Debug.Log (presetTiles);
+//		Debug.Log (presetTiles);
 
 		return presetTiles;
 	}
@@ -712,7 +730,7 @@ public class Logic : MonoBehaviour {
 
 	string CreatePossibleBoard()
 	{
-		Debug.Log ("CREATING POSSIBLE BOARD");
+//		Debug.Log ("CREATING POSSIBLE BOARD");
 		//create  key string from previousSubmission
 
 		RemoveMatchingBestPresetsIfPreviousSubmissionIsMatch ();
@@ -734,22 +752,18 @@ public class Logic : MonoBehaviour {
 			
 			if( bestPossiblePresets.Count > 0 )
 			{
-				Debug.Log ("BEST PRESETS");
-
-				for( int i = 0; i < bestPossiblePresets.Count; i ++ )
-				{
-					Debug.Log ( bestPossiblePresets[ i ] );
-				}
+//				Debug.Log ("BEST PRESETS");
+//
+//				for( int i = 0; i < bestPossiblePresets.Count; i ++ )
+//				{
+//					Debug.Log ( bestPossiblePresets[ i ] );
+//				}
 
 //				presetTiles = bestPossiblePresets [Random.Range (0, bestPossiblePresets.Count)];
 				presetTiles = GetBestKeyFromList();
 
-				Debug.Log (" preset : " + presetTiles);
-				//	create string with only 1 placed tile in newSubmission
-				
-//				previousSubmissions.Add ( presetTiles );
-				//	previousPossiblePresetKey = presetTiles;
-//				return presetTiles;
+//				Debug.Log (" preset : " + presetTiles);
+
 			}
 
 		}
@@ -1068,33 +1082,7 @@ public class Logic : MonoBehaviour {
 		return true;
 	}
 
-//	bool ForcesModusPonens( bool rule1AlwaysTrue, 
-//	bool PresetOnlyUsesConditionalLogicInLeveling( bool rule1AlwaysTrue, bool rule1AlwaysFalse, bool rule2AlwaysTrue, bool rule2AlwaysFalse )
-//	{
-//
-//		if( !currentLeveling.showClauseBNotA )
-//		{
-//			//if preset forces bAndNotA
-//			return false;
-//		}
-//		if(!currentLeveling.modusTollens )
-//		{
-//			//if preset forces tollens
-//			return false;
-//		}
-//		if( !currentLeveling.modusTollensImplyNotA )
-//		{
-//			//if preset forces
-//			return false;
-//		}
-//		if (!currentLeveling.showClauseBNotA  && !currentLeveling.modusTollens && currentLeveling.modusPonens) 
-//		{
-//			//if preset does not force ponens
-//			return false;	
-//		}
-//		
-//		return true;
-//	}
+
 
 	bool PresetAlwaysSatisfiesRule( string preset, Rule rule )
 	{
@@ -1106,16 +1094,29 @@ public class Logic : MonoBehaviour {
 		return false;
 	}
 
-	bool KeySatisfiesAnyNonConditionalRules( string preset, List<Rule> nonConditionalRules )
+//	bool KeySatisfiesAnyNonConditionalRules( string preset, List<Rule> nonConditionalRules )
+//	{
+//		for( int i = 0; i < nonConditionalRules.Count; i ++ )
+//		{
+//			if( PresetAlwaysSatisfiesRule( preset, nonConditionalRules[ i ] ))
+//			{
+//				return true;
+//			}
+//		}
+//
+//		return false;
+//	}
+
+	bool KeyAlwaysSatisfiesAnyRules( string preset, List<Rule> rules )
 	{
-		for( int i = 0; i < nonConditionalRules.Count; i ++ )
+		for( int i = 0; i < rules.Count; i ++ )
 		{
-			if( PresetAlwaysSatisfiesRule( preset, nonConditionalRules[ i ] ))
+			if( PresetAlwaysSatisfiesRule( preset, rules[ i ] ))
 			{
 				return true;
 			}
 		}
-
+		
 		return false;
 	}
 
@@ -1134,7 +1135,7 @@ public class Logic : MonoBehaviour {
 		return otherRules;
 	}
 
-	bool IsGoodPreset( string preset, List<Rule> nonConditionalRules )
+	bool IsGoodPreset( string preset, List<Rule> rules )
 	{
 		if( !PresetIsNew( preset ))
 		{
@@ -1152,7 +1153,7 @@ public class Logic : MonoBehaviour {
 		{
 			return false;
 		}
-		if( KeySatisfiesAnyNonConditionalRules( preset, nonConditionalRules ))
+		if( KeyAlwaysSatisfiesAnyRules( preset, rules ))
 		{
 			return false;
 		}
@@ -1167,7 +1168,7 @@ public class Logic : MonoBehaviour {
 		int bestPresetCount = 10;
 
 		List< Conditional > condRules = GetConditionalsFromStack (trialRules);
-		List<Rule> otherRules = GetNonConditionalRules ();
+//		List<Rule> otherRules = GetNonConditionalRules ();
 
 		bool containsConditional = condRules.Count > 0;
 		//only important for conditionals
@@ -1202,7 +1203,7 @@ public class Logic : MonoBehaviour {
 					string preset = presetKeyCombos[ presetOrderIndex ];
 
 //					if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions) && trialRules.WildCardKeyInDictionary( preset, trialRules.incorrectSubmissions ) && !PreviousSubmissionValidForNewPreset( preset) && KeySatisfiesAnyNonConditionalRules)
-					if( IsGoodPreset( preset, otherRules ))
+					if( IsGoodPreset( preset, trialRules.ruleStack ))
 					{
 						//test to see if preset has fewer possibilites than best
 						int correctSubmissions = GetInstancesOfCorrectSubmissions ( preset );
@@ -1332,159 +1333,6 @@ public class Logic : MonoBehaviour {
 	}
 
 
-//	List<string> GetBestPresetForConditionals ( int maxPresets, List< string > tileBank, string conditionalLogic )
-//	{
-//	
-//		List< string > bestKeysMP = new List< string >();
-//		int fewestCompletionsMP = 1000;
-//		int bestPresetCountMP = 10;
-//
-//		List< string > bestKeysTP = new List< string >();
-//		int fewestCompletionsTP = 1000;
-//		int bestPresetCountTP = 10;
-//
-//		List< string > bestKeysBNotA = new List< string >();
-//		int fewestCompletionsBNotA = 1000;
-//		int bestPresetCountBNotA = 10;
-//		
-//		List< Conditional > condRules = GetConditionalsFromStack (trialRules);
-//		List<Rule> otherRules = GetNonConditionalRules ();
-//		
-//		int currentPresets = 1;
-//		
-//		while( currentPresets <= maxPresets )
-//		{
-//			List< List<string> > tileCombos = new List< List<string> >();
-//			List< string > newCombo = new List< string > ();
-//			GetAllCombinationsForPresets( tileBank, newCombo, currentPresets, tileCombos);
-//			
-//
-//			//for each combo in allCombos
-//			for( int comboIndex = 0; comboIndex < tileCombos.Count; comboIndex ++ )
-//			{
-//				List<int> digitBank = CreateDigitBank( tileBank.Count );
-//				
-//				List< string > presetKeyCombos = new List< string > ();
-//				
-//				List<int> currPosOrder = new List<int> ();
-//				
-//				GetPresetOrdersFromCombos( currPosOrder, digitBank, digitBank.Count, tileCombos[ comboIndex ], presetKeyCombos );
-//				
-//				for( int presetOrderIndex = 0; presetOrderIndex < presetKeyCombos.Count; presetOrderIndex ++ )
-//				{
-//					string preset = presetKeyCombos[ presetOrderIndex ];
-//					
-//					//					if( PresetIsNew( preset ) && trialRules.WildCardKeyInDictionary( preset, trialRules.correctSubmissions) && trialRules.WildCardKeyInDictionary( preset, trialRules.incorrectSubmissions ) && !PreviousSubmissionValidForNewPreset( preset) && KeySatisfiesAnyNonConditionalRules)
-//					if( IsGoodPreset( preset, otherRules ))
-//					{
-//						//test to see if preset has fewer possibilites than best
-//						int correctSubmissions = GetInstancesOfCorrectSubmissions ( preset );
-//						
-//						//						int incorrectSubmissions = GetInstancesOfIncorrectSubmissions ( preset );
-//						
-//						bool presetReplacesBest = false;
-//
-//							
-//						bool testKeyUsesBAndNotA = false;
-//						bool testKeyUsesModusTollens = false;
-//						bool testKeyUsesTollensAndImpliesA = false;
-//						bool testKeyUsesModusPonens = false;
-//						
-////						bool presetOnlyUsesLogicSetInLeveling = true;
-//						
-//						for( int cond = 0; cond < condRules.Count; cond ++ )
-//						{
-//							Conditional condRule = condRules[ cond ];
-//
-//							bool alwaysBreaksRule1 = KeyAlwaysBreaksRule( preset, condRule.rule1 );
-//							bool neverBreaksRule1 = KeyNeverBreaksRule( preset, condRule.rule1 );
-//							bool alwaysBreaksRule2 = KeyAlwaysBreaksRule( preset, condRule.rule2 );
-//							bool neverBreaksRule2 = KeyNeverBreaksRule( preset, condRule.rule2 );
-//							
-//							bool presetForcesPonens = KeyIsPositiveOfConditional( neverBreaksRule1 );
-//							
-//							bool presetForcesBAndNotA =  KeyIsBAndNeverA( neverBreaksRule2, alwaysBreaksRule2 );
-//							
-//							bool presetForcesTollens = KeyIsContraPositiveOfConditional( alwaysBreaksRule2 );
-//							
-//							bool onlyShowsNotB = false;
-//							
-//							if( presetForcesTollens && !alwaysBreaksRule1 )
-//							{
-//								testKeyUsesTollensAndImpliesA = true;
-//							}
-//							
-//							if( presetForcesPonens )
-//							{
-//								testKeyUsesModusPonens = true;
-//							}
-//
-////							if( presetForcesTollens )
-////							{
-////								testKeyUsesModusTollens = true;
-////								
-////								if( onlyShowsNotB )
-////								{
-////									testKeyUsesTollensAndImpliesA = true;
-////								}
-////							}
-//							if( presetForcesBAndNotA )
-//							{
-//								testKeyUsesBAndNotA = true;
-//							}
-//
-//							if( testKeyUsesModusPonens && correctSubmissions == fewestCompletionsMP && currentPresets == bestPresetCountMP )
-//							{
-//								bestKeysMP.Add ( preset );
-//							}
-//							else if( testKeyUsesModusPonens && CompletionCountIsWorthReplacementOfBest( currentPresets, bestPresetCountMP, correctSubmissions, fewestCompletionsMP ))
-//							{
-//								bestKeysMP = new List< string >();
-//								bestKeysMP.Add ( preset );
-//
-//								fewestCompletionsMP.A
-//							}
-//							
-//							if( !PresetUsesConditionalLogicInLeveling( testKeyUsesBAndNotA, testKeyUsesModusTollens, testKeyUsesTollensAndImpliesA, testKeyUsesModusPonens ))
-//							{
-//								presetOnlyUsesLogicSetInLeveling = false;
-//							}
-//							
-//							if( presetOnlyUsesLogicSetInLeveling && correctSubmissions == fewestPossibleCompletions && currentPresets == bestPresetCount )
-//							{
-//								bestKeys.Add ( preset );
-//								//								Debug.Log ( "preset : " + preset + ", incorrect : " + incorrectSubmissions + ", correct : " + correctSubmissions );
-//								//								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
-//							}
-//							else if( presetOnlyUsesLogicSetInLeveling && CompletionCountIsWorthReplacementOfBest( currentPresets, bestPresetCount, correctSubmissions, fewestPossibleCompletions ))
-//							{
-//								presetReplacesBest = true;
-//								//								Debug.Log("best key " + preset + " : " + ", uses ponens : " + testKeyUsesModusPonens + ", uses bAndNotA : " + testKeyUsesBAndNotA + ", uses tollens : " + testKeyUsesModusTollens + " , uses tollens, implies a : " + testKeyUsesTollensAndImpliesA );
-//							}
-//							
-//						}
-//						
-//						if( presetReplacesBest )
-//						{
-////							bestKeys = new List< string >();
-////							bestKeys.Add ( preset );
-////
-////							fewestPossibleCompletions = correctSubmissions;
-////							bestPresetCount = currentPresets;
-//
-//						}
-//					}
-//					
-//				}
-//			}
-//			
-//			currentPresets ++;
-//
-//		}
-//		
-//		return bestKeys;
-//		
-//	}
 
 
 	bool PreviousSubmissionValidForNewPreset( string preset)
@@ -1514,24 +1362,17 @@ public class Logic : MonoBehaviour {
 		return presetInstances;
 	}
 	
-
-
-
-//	RuleStack ReturnRuleStackFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
-//	{
-//		RuleStack rulesToBreak = new RuleStack ();
-//		List<Rule> rules = allRuleCombos [ comboListIndex ];
-//
-//		for( int i = 0; i < rules.Count; i ++ )
-//		{
-//			rulesToBreak.AddRule ( rules [ i ] );
-//		}
-//
-//		return rulesToBreak;
-//	}
+	
 
 	List<Rule> ReturnRulesFromComboList( List< List<Rule> > allRuleCombos, int comboListIndex )
 	{
+//		if( comboIndexOfPreviousRulesBroken.Contains( comboListIndex ))
+//		{
+//			Debug.Log ("DID NOT USE RULE COMBO ALREADY USED ");
+//			return null;
+//		}
+
+
 		List<Rule> rulesToBreak = new List<Rule> ();
 		List<Rule> rules = allRuleCombos [ comboListIndex ];
 		
@@ -1540,22 +1381,10 @@ public class Logic : MonoBehaviour {
 			rulesToBreak.Add( rules [ i ] );
 		}
 
-		Debug.Log ("previous impossible : " + previousRulesBroken.Count);
-//		for( int i = 0; i < previousRulesBroken.Count; i ++ )
-//		{
-//			for( int j = 0; j < previousRulesBroken[ i ].Count; j ++ )
-//			{
-//				Debug.Log (previousRulesBroken[ i ][ j ].verbal );
-//			}
-//		}
+//		Debug.Log ("previous impossible : " + comboIndexOfPreviousRulesBroken.Count);
 
-		if( previousRulesBroken.Contains( rulesToBreak ))
-		{
-			Debug.Log ("DID NOT USE RULE COMBO ALREADY USED ");
-			return null;
-		}
 
-		previousRulesBroken.Add (rulesToBreak);
+//		comboIndexOfPreviousRulesBroken.Add (comboListIndex);
 		return rulesToBreak;
 	}
 
@@ -1633,39 +1462,37 @@ public class Logic : MonoBehaviour {
 						model.currentChallenge.SetPresetCount (minPresetTiles);
 						model.currentChallenge.SetImpossibleStats( true, rulesToSetImpossible );
 
-						Debug.Log ("RULES BROKEN: " + rulesToBreak.Count );
-						
-						for( int j = 0; j < rulesToBreak.Count; j ++ )
-						{
-							Debug.Log ( rulesToBreak[ j ].verbal );
-						}
-
-						Debug.Log ("NOT BREAKING : " + otherRules.Count );
-						for( int n = 0; n < otherRules.Count; n ++ )
-						{
-							Debug.Log ( otherRules[ n ].verbal );
-						}
+//						Debug.Log ("RULES BROKEN: " + rulesToBreak.Count );
+//						
+//						for( int j = 0; j < rulesToBreak.Count; j ++ )
+//						{
+//							Debug.Log ( rulesToBreak[ j ].verbal );
+//						}
+//
+//						Debug.Log ("NOT BREAKING : " + otherRules.Count );
+//						for( int n = 0; n < otherRules.Count; n ++ )
+//						{
+//							Debug.Log ( otherRules[ n ].verbal );
+//						}
 
 						break;
 					}
 				}
 				else
 				{
-					Debug.Log ("SKIPPED RULE SET BECAUSE ALREADY USED");
+//					Debug.Log ("SKIPPED RULE SET BECAUSE ALREADY USED");
 				}
 
 			}
 
 			if( presetTiles.Count != 0 )
 			{
-				Debug.Log ( "IMPOSSIBLE KEYS");
-
-//				previousRulesBroken.Add ( rulesToBreak );
-//				Debug.Log ("breaking out of while loop ");
-				for( int i = 0; i < presetTiles.Count; i++ )
-				{
-					Debug.Log ( presetTiles[ i ] );
-				}
+//				Debug.Log ( "IMPOSSIBLE KEYS");
+//
+//				for( int i = 0; i < presetTiles.Count; i++ )
+//				{
+//					Debug.Log ( presetTiles[ i ] );
+//				}
 
 
 				break;
@@ -1891,11 +1718,10 @@ public class Logic : MonoBehaviour {
 					return false;
 				}
 
-				else if( ruleToExclude == ( rulesToBreak.Count - 1 ))
-				{
-					Debug.Log ( "EACH RULE NEEDED TO CREATE IMPOSSIBLE ");
-//					passBreakableRulesTest = true; 
-				}
+//				else if( ruleToExclude == ( rulesToBreak.Count - 1 ))
+//				{
+//					Debug.Log ( "EACH RULE NEEDED TO CREATE IMPOSSIBLE ");
+//				}
 			}
 
 		}
@@ -1903,12 +1729,6 @@ public class Logic : MonoBehaviour {
 		//test to see if preset is impossible for non-concerned rules in trial rules
 		for( int nonbreakingRule = 0; nonbreakingRule < nonbreakingRules.Count; nonbreakingRule ++ )
 		{
-//			if( !nonbreakingRules[ nonbreakingRule ].WildCardKeyInDictionary( possibleKey, nonbreakingRules[ nonbreakingRule ].correctSubmissions ))
-//			{
-////						Debug.Log ( "PRESET NOT IN OTHER RULE'S POSSIBLE CORRECTS ");
-////				passOtherRulesTest = false;
-//				return false;
-//			}
 			List< Rule > rulesThatShouldNotFormBreak = new List< Rule >();
 			rulesThatShouldNotFormBreak.Add ( nonbreakingRules[ nonbreakingRule ] );
 
@@ -1952,13 +1772,13 @@ public class Logic : MonoBehaviour {
 				}
 				else if( otherRule == ( rules.Count - 1 ))
 				{
-					Debug.Log ( "FOUND CORRECT SUBMISSION SHARED BY ALL RULES ");
+//					Debug.Log ( "FOUND CORRECT SUBMISSION SHARED BY ALL RULES ");
 					return true;
 				}
 			}
 		}
 
-		Debug.Log ( "FOUND NO CORRECT SUBMISSION SHARED BY ALL RULES FOR " + preset );
+//		Debug.Log ( "FOUND NO CORRECT SUBMISSION SHARED BY ALL RULES FOR " + preset );
 		return false;
 	}
 
@@ -1985,6 +1805,7 @@ public class Logic : MonoBehaviour {
 			allCombos.Add ( currRuleCombo );
 		}
 	}
+
 
 	
 	RuleStack CreateRuleStackFromRuleList( List< Rule > rulesList )  //nothing here ensures that rules will share common impossibilities
@@ -2031,16 +1852,8 @@ public class Logic : MonoBehaviour {
 			currentLeveling = availableLevels[ Random.Range( 0, availableLevels.Count ) ];
 		}
 
-		Debug.Log (" level of current problem : " + currentLeveling.level);
-//		if ( !model.impossibleEnabled )
-//		{
-//			chanceOfImpossible = 0;
-//		}
-//		else
-//		{
-//			chanceOfImpossible = currentLeveling.chanceOfImpossible;
-//			Debug.Log ( "chance of impossible : " + chanceOfImpossible );
-//		}
+//		Debug.Log (" level of current problem : " + currentLeveling.level);
+
 	}
 
 	
@@ -2092,7 +1905,7 @@ public class Logic : MonoBehaviour {
 //				Debug.Log (" chance of impossible : " + newLevel.chanceOfImpossible + ", Level : " + i );
 //			}
 
-			newLevel.chanceOfImpossible = 100;
+//			newLevel.chanceOfImpossible = 100;
 			newLevel.chanceOfPresetsOnFirstTrial = 100;
 //			newLevel.maxTrialsInRuleSet = 6;
 
@@ -2103,7 +1916,7 @@ public class Logic : MonoBehaviour {
 			//set first level with impossible option
 			if( model.firstLevelWithImpossibles == 0 && newLevel.maxRulesToSetImpossibleBoard > 0 )
 			{
-				Debug.Log ( "Level " + i + " is first level with Impossible ");
+//				Debug.Log ( "Level " + i + " is first level with Impossible ");
 				model.firstLevelWithImpossibles = i;
 			}
 

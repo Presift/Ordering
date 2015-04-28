@@ -55,10 +55,32 @@ public class Controller : MonoBehaviour {
 			verticalRules.gameObject.SetActive ( false );
 		}
 
-//		if( GameData.dataControl.shortGame )
-//		{
-//			model.maxResponsesInPlaySession = model.maxResponsesInShort;
-//		}
+		GameData.dataControl.Load ();
+		model.currentNuancedLevel = GameData.dataControl.previousFinalLevel;
+		model.currentLevel = (int)Mathf.Floor (model.currentNuancedLevel);
+//		model.currentLevel = 100;
+//		model.currentNuancedLevel = 100;
+		
+		if( GameData.dataControl.fitTestTaken )
+		{
+			model.TakeFitTest( false );
+			logic.SetTimeMultiplier( false );
+			Debug.Log ("fit test taken");
+		}
+		else
+		{
+			model.TakeFitTest( true );
+			logic.SetTimeMultiplier( true );
+			Debug.Log ("fit test NOT taken");
+		}
+		
+//				model.TakeFitTest (false);
+		
+		if( GameData.dataControl.shortGame )
+		{
+			model.maxResponsesInPlaySession = model.maxResponsesInShort;
+		}
+
 	}
 
 	void Start () {
@@ -78,17 +100,17 @@ public class Controller : MonoBehaviour {
 
 		logic.consecutiveTollensErrors = GameData.dataControl.consecutiveModusTollensIncorrect;
 
-//		if( model.currentLevel >= model.firstLevelWithImpossibles )
-//		{
-//			EnableImpossible( true );
-//		}
-//		else
-//		{
-//			EnableImpossible( false );
-//		}
+		if( model.currentLevel >= model.firstLevelWithImpossibles )
+		{
+			EnableImpossible( true );
+		}
+		else
+		{
+			EnableImpossible( false );
+		}
 
 
-		EnableImpossible (true);
+//		EnableImpossible (true);
 	
 		UpdateDisplay ();
 		
@@ -106,12 +128,10 @@ public class Controller : MonoBehaviour {
 
 		if( Input.GetKeyDown( KeyCode.Space ) && !model.paused )
 		{
-			model.paused = true;
 			Pause();
 		}
 		else if( Input.GetKeyDown( KeyCode.Space ))
 		{
-			model.paused = false;
 			Play ();
 		}
 
@@ -178,7 +198,7 @@ public class Controller : MonoBehaviour {
 					trueSubmission += submission[ charIndex ];
 				}
 			}
-			Debug.Log ( trueSubmission );
+//			Debug.Log ( trueSubmission );
  			return trueSubmission;
 		}
 	}
@@ -263,7 +283,7 @@ public class Controller : MonoBehaviour {
 		Debug.Log ("LEVEL CHANGE: " + levelChange);
 		model.UpdateLevel (levelChange);
 		Debug.Log ("RESPONSE TIME : " + responseTime);
-		Debug.Log ("BONUS POINTS : " + timeBonus);
+//		Debug.Log ("BONUS POINTS : " + timeBonus);
 		metaData.SaveStats ();
 		view.DisplayFeedback ( true, correctAnswer );
 	
@@ -468,21 +488,21 @@ public class Controller : MonoBehaviour {
 
 		if( createPresets )
 		{
-			Debug.Log ("PRESETS IN FIRST TRIAL OF ROUND");
+//			Debug.Log ("PRESETS IN FIRST TRIAL OF ROUND");
 			NewTrial();
 		}
 	}
 	
 	public void NewTrial()
 	{
-//		UpdateDisplay ();
-		UpdateTrialDisplay ();
+		UpdateDisplay ();
+//		UpdateTrialDisplay ();
 
 		model.CreateNewChallengeSet ();
 
 		view.WipePreviousProblem (model.tilesToOrder, model.holders, model.stagingAreas);
 
-		Debug.Log ("creating new problem");
+//		Debug.Log ("creating new problem");
 		//determine logic for new problem and set board for new problem
 		string presetBoard = logic.NewTrialSetUp ();
 
@@ -562,18 +582,21 @@ public class Controller : MonoBehaviour {
 
 	public void Pause()
 	{
+		model.paused = true;
 		Time.timeScale = 0;
 		pauseButton.gameObject.SetActive (false);
 		playButton.gameObject.SetActive (true);
-		Debug.Log ("pause");	
+		Debug.Log ("paused at " + Time.time);	
 	}
 
 	public void Play()
 	{
+		model.paused = false;
 		Time.timeScale = 1;
 		pauseButton.gameObject.SetActive (true);
 		playButton.gameObject.SetActive (false);
-		Debug.Log ("play");	
+		Debug.Log ("unpaused at " + Time.time);	
+//		Debug.Log ("play");	
 	}
 
 

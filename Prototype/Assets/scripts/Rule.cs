@@ -753,16 +753,31 @@ public class RuleStack: Rule
 	
 	bool RuleSharesAllCorrectSubmissionsOfRule( Rule rule1, Rule rule2 )
 	{
+		bool rule2SharesAllCorrectSubsInRule1 = true;
+		bool rule1SharesAllCorrectSubsInRule2 = true;
+
 		foreach( KeyValuePair<string, List<Tile>> pair in rule1.correctSubmissions )
 		{ 
 			if( !rule2.correctSubmissions.ContainsKey( pair.Key ))
 			{
-				return false;
+				rule2SharesAllCorrectSubsInRule1 = false;
 			}
 
 		}
-		return true;
+
+		foreach( KeyValuePair<string, List<Tile>> pair in rule2.correctSubmissions )
+		{ 
+			if( !rule1.correctSubmissions.ContainsKey( pair.Key ))
+			{
+				rule1SharesAllCorrectSubsInRule2 = false;
+			}
+			
+		}
+
+		return rule1SharesAllCorrectSubsInRule2 || rule2SharesAllCorrectSubsInRule1;
+
 	}
+
 
 	public bool RuleConflictsWithRuleStack( Rule newRule, int requiredSharedPossibleSubmissions )
 	{
